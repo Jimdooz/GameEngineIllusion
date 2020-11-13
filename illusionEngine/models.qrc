@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>gameResources/models/sphere.obj</file>
+        <file>gameResources/models/sphere.off</file>
+    </qresource>
+</RCC>
