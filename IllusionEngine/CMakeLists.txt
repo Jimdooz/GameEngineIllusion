@@ -36,6 +36,9 @@ target_link_libraries(IllusionEngine
 	${ALL_LIBS}
 )
 
+#add c++17 deps
+target_compile_features(IllusionEngine PUBLIC cxx_std_17)
+
 #source groups to organize sources in your ide
 SOURCE_GROUP(src REGULAR_EXPRESSION "src.*" )
 SOURCE_GROUP(include REGULAR_EXPRESSION "include.*" )

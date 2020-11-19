@@ -3,15 +3,14 @@ void test() {
 	std::cout << "test" << std::endl;
 }
 
-
 int main(int argc, char* argv[]) {
 	char* s = "hell";
 	int test;
 	ILSENGINE_INTERNAL_INFO(s, "o");
-	IllusionEngine::Window::Create(1280,720,"IllusionEngine");
-	while (!IllusionEngine::Window::ShouldClose())
+	illusion::window::Create(1280,720,"IllusionEngine");
+	while (!illusion::window::ShouldClose())
 	{
-		IllusionEngine::Window::Update();
+		illusion::window::Update();
 	}
-	IllusionEngine::Window::Destroy();
+	illusion::window::Destroy();
 }

@@ -10,5 +10,5 @@ echo %Src%
 
 IF NOT EXIST build mkdir build
 pushd build
-cl.exe -FC -Zi -EHsc -MD -FeIllusionEngine.exe %IncludePaths% %IncludePaths% %IncludePaths% %Defines% %Src% %Libs%
+cl.exe -std:c++17 -FC -Zi -EHsc -MD -FeIllusionEngine.exe %IncludePaths% %IncludePaths% %IncludePaths% %Defines% %Src% %Libs%
 popd
