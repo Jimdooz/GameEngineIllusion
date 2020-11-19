@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "windows",
+            "includePath": [
+                "${workspaceFolder}/IllusionEngine/include",
+                "${workspaceFolder}/librairies/Glad/include",
+                "${workspaceFolder}/librairies/glfw/include"
+            ],
+            "defines": [
+                "ILSENGINE_DEBUG",
+                "ILSENGINE_INTERNAL_DEBUG",
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.18362.0",
+            "intelliSenseMode": "msvc-x64",
+            "cppStandard": "c++17",
+            "cStandard": "c11",
+            "forcedInclude": []
+        }
+    ],
+    "version": 4
+}
