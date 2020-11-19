@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "CommonHeaders.h"
+#include "common/CommonHeaders.h"
 
 namespace illusion::window {		
 	extern int width, height;

@@ -53,8 +53,7 @@ project "IllusionEngine"
 
 		defines
 		{
-			"ILS_PLATFORM_WINDOWS",
-			"GLFW_INCLUDE_NONE"
+			"ILS_PLATFORM_WINDOWS"
 		}
 
 		postbuildcommands
