@@ -5,8 +5,11 @@ void test() {
 
 int main(int argc, char* argv[]) {
 	char* s = "hell";
-	int test;
-	ILSENGINE_INTERNAL_INFO(s, "o");
+	test();
+	ILSENGINE_INFO(s, "o");
+	glm::vec3 v(0, 0, 0);
+	ILSENGINE_INFO("vector : ",glm::to_string(v));
+	illusion::log("haha");
 	illusion::window::Create(1280,720,"IllusionEngine");
 	while (!illusion::window::ShouldClose())
 	{

@@ -1,0 +1,3 @@
+[submodule "Illusion/libs/glm"]
+	path = Illusion/libs/glm
+	url = https://github.com/g-truc/glm.git
