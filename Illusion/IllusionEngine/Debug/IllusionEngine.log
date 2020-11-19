@@ -1,0 +1,13 @@
+﻿Window.obj : error LNK2019: symbole externe non résolu _glfwInit référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwTerminate référencé dans la fonction "void __cdecl illusion::window::Destroy(void)" (?Destroy@window@illusion@@YAXXZ)
+Window.obj : error LNK2019: symbole externe non résolu _glfwSetErrorCallback référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwWindowHint référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwCreateWindow référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwDestroyWindow référencé dans la fonction "void __cdecl illusion::window::Destroy(void)" (?Destroy@window@illusion@@YAXXZ)
+Window.obj : error LNK2019: symbole externe non résolu _glfwWindowShouldClose référencé dans la fonction "bool __cdecl illusion::window::ShouldClose(void)" (?ShouldClose@window@illusion@@YA_NXZ)
+Window.obj : error LNK2019: symbole externe non résolu _glfwSetWindowCloseCallback référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwPollEvents référencé dans la fonction "void __cdecl illusion::window::Update(void)" (?Update@window@illusion@@YAXXZ)
+Window.obj : error LNK2019: symbole externe non résolu _glfwMakeContextCurrent référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+Window.obj : error LNK2019: symbole externe non résolu _glfwGetProcAddress référencé dans la fonction "void __cdecl illusion::window::Create(int,int,char const *)" (?Create@window@illusion@@YAXHHPBD@Z)
+D:\GitHub\GameEngineIllusion\Illusion\libs\glfw\lib-vc2019\\glfw3.lib : warning LNK4272: type d'ordinateur bibliothèque 'x64' en conflit avec le type d'ordinateur cible 'x86'
+D:\GitHub\GameEngineIllusion\Illusion\Debug\IllusionEngine.exe : fatal error LNK1120: 11 externes non résolus

@@ -1,0 +1,2 @@
+D:\GitHub\GameEngineIllusion\Illusion\x64\Debug\Glad.pdb
+D:\GitHub\GameEngineIllusion\Illusion\libs\Glad\x64\Debug\Glad.pdb
