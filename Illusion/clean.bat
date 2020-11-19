@@ -1,6 +1,6 @@
 del /s *.vcxproj
 del /s *.vcxproj.filters
 del /s *.sln
-rmdir /Q /S bin
+rmdir /Q /S build
 rmdir /Q /S .vs
-rmdir /Q /S bin-int
+rmdir /Q /S obj
