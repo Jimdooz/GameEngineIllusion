@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#remove build path
+*/x64/[Dd]ebug
+*/x64/[Rr]elease
+
 # User-specific files
 *.rsuser
 *.suo
