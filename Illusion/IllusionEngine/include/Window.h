@@ -1,7 +1,11 @@
 ﻿#pragma once
 #include "common/CommonHeaders.h"
 
-namespace illusion::window {		
+/*
+ * FONCTIONNEMENT GLOBAL
+ */
+
+namespace illusion::window {
 	extern int width, height;
 	extern std::string title;
 	extern GLFWwindow* glfwWindow;

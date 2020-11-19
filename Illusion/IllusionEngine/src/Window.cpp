@@ -10,13 +10,13 @@ namespace illusion::window {
 		width = _width;
 		height = _height;
 		title = _title;
-		ILSENGINE_INTERNAL_INFO("Init GLFW");
+		INTERNAL_INFO("Init GLFW");
 		glfwSetErrorCallback([](int error, const char* description)
 			{
-				ILSENGINE_INTERNAL_ERROR("GLFW error - ", error, " : ", description);
+				INTERNAL_ERR("GLFW error - ", error, " : ", description);
 			});
 		if (!glfwInit()) {
-			ILSENGINE_INTERNAL_ERROR("Failed Initializing GLFW");
+			INTERNAL_ERR("Failed Initializing GLFW");
 		}
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -25,32 +25,35 @@ namespace illusion::window {
 		glfwWindow = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 		if (!glfwWindow)
 		{
-			ILSENGINE_INTERNAL_ERROR("Failed to Create GLFW Window");
+			INTERNAL_ERR("Failed to Create GLFW Window");
 		}
 		glfwMakeContextCurrent(glfwWindow);
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		{
-			ILSENGINE_INTERNAL_ERROR("Failed to initialize GLAD");
+			INTERNAL_ERR("Failed to initialize GLAD");
 		}
-		ILSENGINE_INTERNAL_INFO("GLAD initialized - OpenGL version : ", GLVersion.major, ".", GLVersion.minor);
+		INTERNAL_INFO("GLAD initialized - OpenGL version : ", GLVersion.major, ".", GLVersion.minor);
 		glfwSetWindowCloseCallback(glfwWindow, [](GLFWwindow* _glfwWindow)
 			{
-				ILSENGINE_INTERNAL_INFO("Closing Window");
+				INTERNAL_INFO("Closing Window");
 			});
 	}
 	void Destroy()
 	{
-		ILSENGINE_INTERNAL_INFO("Destoying GLFW Window");
+		INTERNAL_INFO("Destoying GLFW Window");
 		glfwDestroyWindow(glfwWindow);
-		ILSENGINE_INTERNAL_INFO("GLFW Window Destroyed");
-		ILSENGINE_INTERNAL_INFO("Terminating GLFW");
+		INTERNAL_INFO("GLFW Window Destroyed");
+		INTERNAL_INFO("Terminating GLFW");
 		glfwTerminate();
-		ILSENGINE_INTERNAL_INFO("GLFW Terminated");
+		INTERNAL_INFO("GLFW Terminated");
 	}
 	void Update()
 	{
+		glClearColor(1.0,0.0,0.0,1.0);
 		glfwMakeContextCurrent(glfwWindow);
 		glfwPollEvents();
+
+		glfwSwapBuffers(glfwWindow);
 	}
 	bool ShouldClose(){
 		return glfwWindowShouldClose(glfwWindow);

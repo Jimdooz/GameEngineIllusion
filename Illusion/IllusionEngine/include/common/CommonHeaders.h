@@ -10,9 +10,6 @@
 #include <string>
 #include <stdint.h>
 
-//Add primitives types
-#include "PrimitivesTypes.h"
-
 //glfw include
 #include "GLFW/glfw3.h"
 
@@ -22,3 +19,6 @@
 //glm includes
 #include "glm/glm.hpp"
 #include "glm/ext.hpp"
+
+//Add primitives types
+#include "PrimitivesTypes.h"
