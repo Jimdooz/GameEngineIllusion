@@ -1,5 +1,5 @@
 #pragma once
-#include "common/CommonHeaders.h"
+#include <iostream>
 
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 

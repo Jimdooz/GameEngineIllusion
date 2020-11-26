@@ -38,32 +38,48 @@ namespace illusion::ecs::id {
     static_assert (sizeof (generation_type) * 8 >= generation_bits, "Invalid generation type size");
     static_assert (sizeof (id_type) - sizeof (generation_type) > 0, "generation_type size must fit into id_type size");
 
+    //Generation System with Alive value Functions
     inline bool
-    is_valid(id_type id){
+    IsGenerationAlive(generation_type generation) {
+        return generation >> generation_bits;
+    }
+
+    inline generation_type
+    SetGenerationAlive(generation_type generation, bool alive) {
+        generation_type aliveValue = (alive ? 1 : 0) << (generation_bits);
+        return (generation & generation_mask) + aliveValue;
+    }
+
+    inline generation_type
+    GetGenerationValue(generation_type generation) {
+        return generation & generation_mask;
+    }
+
+    inline bool
+        IsValid(id_type id) {
         return id != invalid_id;
     }
 
     inline id_type
-    index(id_type id){
+    Index(id_type id){
         id_type index{ id & index_mask };
         assert(index != index_mask);
         return id & index_mask;
     }
 
     inline id_type
-    generation(id_type id){
+    Generation(id_type id){
         return (id >> index_bit) & generation_mask;
     }
 
-    inline id_type set_generation(id_type id, id_type generation){
-        assert(generation < generation_mask);
-        return index(id) | (generation << index_bit);
+    inline id_type SetGeneration(id_type id, id_type generation){
+        if (generation >= generation_mask) generation = 0;
+        return Index(id) | (generation << index_bit);
     }
 
-    inline id_type new_generation(id_type id){
-        const id_type generation{ id::generation(id) + 1 };
-        assert(generation < generation_mask);
-        return set_generation(id, generation);
+    inline id_type NewGeneration(id_type id){
+        id_type generation{ id::Generation(id) + 1 };
+        return SetGeneration(id, generation);
     }
 
     //System to differenciate between id in debug mode & reduce to u32 type in release build
@@ -87,7 +103,7 @@ namespace illusion::ecs::id {
     };
 
 #else
-#define DEFINE_TYPED_ID(name) using id::id_type;
+#define DEFINE_TYPED_ID(name) using name = id::id_type;
 #endif
 
 }

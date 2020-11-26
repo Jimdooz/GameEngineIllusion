@@ -1,9 +1,8 @@
 #pragma once
 
-#include "ecs/Ecs.h"
+#include "ecs/Entity.h"
 
 namespace illusion::ecs {
-
 	DEFINE_TYPED_ID(component_id);
 
 	// 1 - les data components	 [CUSTOM]

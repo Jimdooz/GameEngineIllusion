@@ -21,5 +21,6 @@
 #include "glm/ext.hpp"
 
 //Add primitives types
+#include "Logger.h"
 #include "PrimitivesTypes.h"
 #include "utilities/Utilities.h"
