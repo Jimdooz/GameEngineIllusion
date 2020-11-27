@@ -6,6 +6,8 @@ namespace illusion::util {
 	template<typename T>
 	class ChunckArray {
 	public:
+		using ValueType = T;
+	public:
 		ChunckArray(u32 size = 0, u32 reserved = -1, u32 chunckSize = -1) {
 			if (reserved == -1) reserved = size;
 
@@ -44,9 +46,21 @@ namespace illusion::util {
 			m_size = m_realSize;
 		}
 
+		T* begin() {
+			return m_content;
+		}
+
+		T* end() {
+			return m_content + m_size;
+		}
+
 		T& back() {
 			if (m_size <= 0) throw "Invalid Index";
 			return m_content[m_size - 1];
+		}
+
+		void clear() {
+			m_size = 0;
 		}
 
 		u32 size() {

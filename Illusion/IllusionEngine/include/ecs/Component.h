@@ -11,14 +11,31 @@ namespace illusion::ecs {
 	// 3 - entity id to data     [STATIC]
 	struct Component {
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
-		illusion::util::Array<entity_id> ToEntity;
+		util::Array<entity_id> ToEntity;
 
 		// Tableau avec pour index l'id des entités, et pour valeur la position des données
 		// Elle permet de pointer vers la liste des données qui est compactée
-		illusion::util::Array<component_id> ToData;
+		util::Array<component_id> ToData;
 
-		inline void AddComponent(entity_id id);
-		inline void RemoveComponent(entity_id id);
+		void AddComponent(entity_id id);
+		void RemoveComponent(entity_id id);
+
+		void CreateEntity(entity_id id);
+		void DestroyEntity(entity_id id);
+
+		component_id getIndex(entity_id id);
+
+	protected:
+		template<typename T> void RemoveComponentData(illusion::util::Array<T>& array, entity_id index) {
+			util::EraseUnordered(array, index);
+		}
+
+		template<typename T> void AddComponentData(illusion::util::Array<T>& array, T& data) {
+			array.push_back(data);
+		}
+
+		// /!\ to override
+		virtual void AddComponentDatas(entity_id id) {}
+		virtual void RemoveComponentDatas(entity_id index) {}
 	};
-
 }
