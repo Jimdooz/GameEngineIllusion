@@ -47,14 +47,14 @@ namespace illusion::ecs {
 		template<typename C> void AddComponentEntity(entity_id id) {
 			GetComponentSystem<C>()->AddComponent(id);
 			for (auto const& [key, val] : systems) {
-				val->OnComponentAdd<C>(*this, id);
+				val->OnComponentAdd<C>(id);
 			}
 		}
 		template<typename C> void RemoveComponentEntity(entity_id id) {
+			GetComponentSystem<C>()->RemoveComponent(id);
 			for (auto const& [key, val] : systems) {
 				val->OnComponentRemove<C>(id);
 			}
-			GetComponentSystem<C>()->RemoveComponent(id);
 		}
 	};
 }

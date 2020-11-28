@@ -47,29 +47,38 @@ struct RigidbodyComponentSY : public ecs::Component {
 
 ecs::Scene scene1;
 
+#define UPDATE_LOOP(BEHAVIOUR) \
+	virtual void Update() override { \
+	u32 size = ToEntity.size(); \
+	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
+
+#define GETTER_DATA(NAME, COMPONENT, DATA, TYPE) \
+	inline TYPE& NAME() {		\
+		return COMPONENT->DATA[COMPONENT->getIndex(ToEntity[currIndex])]; \
+	}
+
 ///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
 
 	TransformComponentSY* transform;
 
-	virtual void Update() override {
-		u32 size = ToEntity.size();
-		for (u32 i = 0; i < size; i++) {
-			getPosition(i).x += 5;
-		}
-	}
+	/* la fonction Update */
+	UPDATE_LOOP(
+		position().x += 5;
+		rotation().x++;
+		rotation().y++;
+		scale().x++;
+	)
 
-	inline Vec3& getPosition(u32 index) {
-		return transform->position[transform->getIndex(ToEntity[index])];
-	}
+	/* Définition des variables utiles */
+	GETTER_DATA(position, transform, position, Vec3)
+	GETTER_DATA(rotation, transform, rotation, Quaternion)
+	GETTER_DATA(scale, transform, scale, Vec3)
 
+	/* Initialisation relative à la scène parente */
 	virtual void Initialize(ecs::Scene& scene) override {
 		transform = scene.GetComponent<TransformComponentSY>();
-	}
-
-	virtual bool AcceptedComponent(ecs::Scene& scene, size_t hashComponent) override {
-		if (hashComponent == typeid(TransformComponentSY).hash_code()) return true;
-		return false;
+		AddComponents(transform);
 	}
 };
 
@@ -80,14 +89,15 @@ int main(int argc, char* argv[]) {
 	scene1.AddSystem<TwerkSystem>();
 
 	f64 average = 0.0;
-	f64 timeIteration = 100;
+	f64 timeIteration = 50;
 
 	ecs::entity_id id;
-	for (u32 i = 0; i < 10000; i++) {
+	for (u32 i = 0; i < 1000; i++) {
 		id = scene1.CreateEntity();
 		scene1.AddComponentEntity<TransformComponentSY>(id);
-		//if (i % 2 == 0) scene1.DestroyEntity(id);
 	}
+
+	INTERNAL_INFO("INIT END")
 
 	for (int test = 0; test < timeIteration; test++) {
 		auto start = high_resolution_clock::now();
@@ -96,7 +106,7 @@ int main(int argc, char* argv[]) {
 
 		auto stop = high_resolution_clock::now();
 		average += duration_cast<microseconds>(stop - start).count() ;
-		//std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
+		std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
 	}
 
 	std::cout << "AVERAGE : " << 1.0 / ((average / 1000000.0) / timeIteration) << " FPS" << std::endl;

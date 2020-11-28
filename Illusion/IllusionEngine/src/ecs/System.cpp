@@ -17,6 +17,7 @@ namespace illusion::ecs {
 	}
 
 	void System::RemoveEntity(entity_id id) {
+		if (ToEntity.size() <= 0) return;
 		const entity_id getId{ id::Index(id) };
 		const entity_id lastId{ id::Index(ToEntity.back()) };
 		const entity_id index{ ToData[getId] };
@@ -31,6 +32,4 @@ namespace illusion::ecs {
 
 	// /!\ to override
 	void System::Initialize(Scene& scene) {}
-
-	bool System::AcceptedComponent(Scene& scene, size_t hashComponent) { return false; }
 }
