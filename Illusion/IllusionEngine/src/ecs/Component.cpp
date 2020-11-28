@@ -27,8 +27,4 @@ namespace illusion::ecs {
 		if (ToData[index] != component_id{ id::invalid_id }) RemoveComponent(id);
 		ToData[index] = component_id{ id::invalid_id };
 	}
-
-	component_id Component::getIndex(entity_id id) {
-		return ToData[id::Index(id)];
-	}
 }

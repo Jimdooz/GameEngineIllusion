@@ -7,13 +7,13 @@ namespace illusion::ecs {
 		for (auto const& [key, val] : components) {
 			val->CreateEntity(id);
 		}
-		for (auto const& val : systems) {
+		for (auto const& [key, val] : systems) {
 			val->OnEntityCreate(id);
 		}
 		return id;
 	}
 	void Scene::DestroyEntity(entity_id id) {
-		for (auto const& val : systems) {
+		for (auto const& [key, val] : systems) {
 			val->OnEntityDestroy(id);
 		}
 		for (auto const& [key, val] : components) {
@@ -23,7 +23,7 @@ namespace illusion::ecs {
 	}
 
 	void Scene::Update() {
-		for (auto const& val : systems) {
+		for (auto const& [key, val] : systems) {
 			val->Update();
 		}
 	}

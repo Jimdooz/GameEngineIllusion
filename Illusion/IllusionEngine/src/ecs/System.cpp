@@ -20,9 +20,9 @@ namespace illusion::ecs {
 		const entity_id getId{ id::Index(id) };
 		const entity_id lastId{ id::Index(ToEntity.back()) };
 		const entity_id index{ ToData[getId] };
+		if (index == id::invalid_id) return;
 
 		RemoveData(ToEntity, index);
-		RemoveDatas(index);
 		ToData[lastId] = component_id{ index };
 		ToData[getId] = component_id{ id::invalid_id };
 	}
@@ -30,8 +30,7 @@ namespace illusion::ecs {
 	//Helpers
 
 	// /!\ to override
-	void System::AddDatas(Scene& scene, entity_id id) {}
-	void System::RemoveDatas(entity_id index) {}
+	void System::Initialize(Scene& scene) {}
 
 	bool System::AcceptedComponent(Scene& scene, size_t hashComponent) { return false; }
 }

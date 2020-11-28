@@ -23,14 +23,16 @@ namespace illusion::ecs {
 		void CreateEntity(entity_id id);
 		void DestroyEntity(entity_id id);
 
-		component_id getIndex(entity_id id);
+		inline component_id getIndex(entity_id id) {
+			return ToData[id::Index(id)];
+		}
 
 	protected:
 		template<typename T> void RemoveComponentData(illusion::util::Array<T>& array, entity_id index) {
 			util::EraseUnordered(array, index);
 		}
 
-		template<typename T> void AddComponentData(illusion::util::Array<T>& array, T& data) {
+		template<typename T> void AddComponentData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 

@@ -22,7 +22,6 @@ namespace illusion::ecs {
 			if (AcceptedComponent(scene, typeid(C).hash_code())) {
 				ToData[id::Index(id)] = component_id{ static_cast<u32>(ToEntity.size()) };
 				AddData(ToEntity, id);
-				AddDatas(scene, id);
 			}
 		}
 		template<typename C> void OnComponentRemove(entity_id id) {
@@ -31,6 +30,9 @@ namespace illusion::ecs {
 			}
 		}
 		void RemoveEntity(entity_id id);
+
+		// /!\ to override
+		virtual void Initialize(Scene& scene);
 
 	protected:
 		//Helpers
@@ -42,9 +44,6 @@ namespace illusion::ecs {
 		}
 
 		// /!\ to override
-		virtual void AddDatas(Scene& scene, entity_id id);
-		virtual void RemoveDatas(entity_id index);
-
 		virtual bool AcceptedComponent(Scene& scene, size_t hashComponent);
 	};
 }

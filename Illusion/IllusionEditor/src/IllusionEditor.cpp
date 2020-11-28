@@ -45,25 +45,26 @@ struct RigidbodyComponentSY : public ecs::Component {
 	}
 };
 
+ecs::Scene scene1;
+
 ///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
 
-	util::Array<Vec3*> position;
+	TransformComponentSY* transform;
 
 	virtual void Update() override {
 		u32 size = ToEntity.size();
 		for (u32 i = 0; i < size; i++) {
-			INTERNAL_INFO(i, " ", position[i], " ", size);
-			position[i]->x += 5;
+			getPosition(i).x += 5;
 		}
 	}
 
-	virtual void AddDatas(ecs::Scene& scene, ecs::entity_id id) override {
-		TransformComponentSY &t = scene.GetComponent<TransformComponentSY>();
-		AddData(position, &t.position[t.getIndex(id)]);
+	inline Vec3& getPosition(u32 index) {
+		return transform->position[transform->getIndex(ToEntity[index])];
 	}
-	virtual void RemoveDatas(ecs::entity_id index) override {
-		RemoveData(position, index);
+
+	virtual void Initialize(ecs::Scene& scene) override {
+		transform = scene.GetComponent<TransformComponentSY>();
 	}
 
 	virtual bool AcceptedComponent(ecs::Scene& scene, size_t hashComponent) override {
@@ -73,31 +74,30 @@ struct TwerkSystem : public ecs::System {
 };
 
 int main(int argc, char* argv[]) {
-	ecs::Scene scene1;
 	scene1.AddComponent<TransformComponentSY>();
 	scene1.AddComponent<RigidbodyComponentSY>();
 
 	scene1.AddSystem<TwerkSystem>();
 
+	f64 average = 0.0;
+	f64 timeIteration = 100;
+
 	ecs::entity_id id;
-	for (u32 i = 0; i < 1000; i++) {
+	for (u32 i = 0; i < 10000; i++) {
 		id = scene1.CreateEntity();
 		scene1.AddComponentEntity<TransformComponentSY>(id);
+		//if (i % 2 == 0) scene1.DestroyEntity(id);
 	}
-	scene1.Update();
 
-	/*for (int test = 0; test < 10; test++) {
+	for (int test = 0; test < timeIteration; test++) {
 		auto start = high_resolution_clock::now();
 
-		for (int i = 0; i < 1000; i++) {
-			scene1.Update();
-		}
+		scene1.Update();
 
 		auto stop = high_resolution_clock::now();
-		std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
+		average += duration_cast<microseconds>(stop - start).count() ;
+		//std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
 	}
 
-	INTERNAL_INFO(scene1.systems[0]->ToEntity.size())*/
-
-	std::cin.get();
+	std::cout << "AVERAGE : " << 1.0 / ((average / 1000000.0) / timeIteration) << " FPS" << std::endl;
 }

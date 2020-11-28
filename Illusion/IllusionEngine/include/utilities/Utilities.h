@@ -1,11 +1,11 @@
 #pragma once
 
-#define USE_STL_VECTOR 0
+#define USE_STL_VECTOR 1
 #define USE_STL_DEQUE 1
 #define USE_STL_MAP 1
 #define USE_STL_UNORDERED_MAP 1
 
-#define USE_CHUNCK_ARRAY 1
+#define USE_CHUNCK_ARRAY 0
 
 
 /**
