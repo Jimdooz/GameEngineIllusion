@@ -16,69 +16,28 @@
 using namespace std::chrono;
 using namespace illusion;
 
-///--> COMPONENTS
-struct TransformComponentSY : public ecs::Component {
-	util::Array<Vec3> position;
-	util::Array<Quaternion> rotation;
-	util::Array<Vec3> scale;
-
-	virtual void AddComponentDatas(ecs::entity_id id) override {
-		AddComponentData(position, Vec3(0, 0, 0));
-		AddComponentData(rotation, Quaternion(0,0,0,1));
-		AddComponentData(scale, Vec3(1,1,1));
-	}
-	virtual void RemoveComponentDatas(ecs::entity_id index) {
-		RemoveComponentData(position, index);
-		RemoveComponentData(rotation, index);
-		RemoveComponentData(scale, index);
-	}
-};
-
-struct RigidbodyComponentSY : public ecs::Component {
-	util::Array<Vec3> velocity;
-
-	virtual void AddComponentDatas(ecs::entity_id id) override {
-		AddComponentData(velocity, Vec3(0, 0, 0));
-	}
-	virtual void RemoveComponentDatas(ecs::entity_id index) {
-		RemoveComponentData(velocity, index);
-	}
-};
-
-ecs::Scene scene1;
-
-#define UPDATE_LOOP(BEHAVIOUR) \
-	virtual void Update() override { \
-	u32 size = ToEntity.size(); \
-	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
-
-#define GETTER_DATA(NAME, COMPONENT, DATA, TYPE) \
-	inline TYPE& NAME() {		\
-		return COMPONENT->DATA[COMPONENT->getIndex(ToEntity[currIndex])]; \
-	}
-
 ///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
 
-	TransformComponentSY* transform;
+	ecs::core::Transform* transform;
 
 	/* la fonction Update */
-	UPDATE_LOOP(
+	SYSTEM_UPDATE_LOOP(
 		position().x += 5;
 		rotation().x++;
 		rotation().y++;
 		scale().x++;
 	)
 
-	/* Définition des variables utiles */
-	GETTER_DATA(position, transform, position, Vec3)
-	GETTER_DATA(rotation, transform, rotation, Quaternion)
-	GETTER_DATA(scale, transform, scale, Vec3)
+	/* D?finition des variables utiles */
+	SYSTEM_USE_DATA(position, transform, position, Vec3)
+	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
+	SYSTEM_USE_DATA(scale, transform, scale, Vec3)
 
-	/* Initialisation relative à la scène parente */
+	/* Initialisation relative ? la sc?ne parente */
 	virtual void Initialize(ecs::Scene& scene) override {
-		transform = scene.GetComponent<TransformComponentSY>();
-		AddComponents(transform);
+		transform = scene.GetComponent<ecs::core::Transform>();
+		SetDependencies(transform);
 	}
 };
 
@@ -101,18 +60,17 @@ int main(int argc, char* argv[]) {
 	Window::Destroy();
 
 	/*
-	scene1.AddComponent<TransformComponentSY>();
-	scene1.AddComponent<RigidbodyComponentSY>();
+	ecs::Scene scene1; // E C S
+	scene1.UseSystem<TwerkSystem>();
 
-	scene1.AddSystem<TwerkSystem>();
 
 	f64 average = 0.0;
 	f64 timeIteration = 50;
 
 	ecs::entity_id id;
+	ecs::entity_id firstId;
 	for (u32 i = 0; i < 1000; i++) {
 		id = scene1.CreateEntity();
-		scene1.AddComponentEntity<TransformComponentSY>(id);
 	}
 
 	INTERNAL_INFO("INIT END")
@@ -121,6 +79,7 @@ int main(int argc, char* argv[]) {
 		auto start = high_resolution_clock::now();
 
 		scene1.Update();
+		//scene1.DestroyEntity(firstId);
 
 		auto stop = high_resolution_clock::now();
 		average += duration_cast<microseconds>(stop - start).count() ;
