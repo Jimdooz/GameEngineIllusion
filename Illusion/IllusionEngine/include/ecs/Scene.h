@@ -30,6 +30,10 @@ namespace illusion::ecs {
 
 		// ECS System
 		Entities entities;
+
+		// @Ask : peut être utiliser u32 ou u12 à la place de size_t qui est un long long pour plus de perfs ?
+		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs 
+		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
 
@@ -52,6 +56,8 @@ namespace illusion::ecs {
 		 * >>> Component Part
 		 */
 
+		// @Ask : peut être assert si le type C hérite bien de Component en Debug ?
+		// car rien n'oblige avec le C++ il me semble
 		/**
 		 * Fonction signalant à la scène qu'il doit utiliser un type de Component donné
 		 */
