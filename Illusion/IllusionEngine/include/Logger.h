@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtx/io.hpp>
 
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
@@ -39,6 +41,5 @@ namespace illusion {
 	{
 		std::cout << _arg1;
 	}
-
 };
 #endif

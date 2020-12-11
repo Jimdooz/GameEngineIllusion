@@ -2,13 +2,13 @@
 #include "ecs/Component.h"
 #include "ecs/System.h"
 #include "ecs/Scene.h"
+#include "IllusionEngine.h"
 
 #include <iostream>
 #include <vector>
 #include <bitset>
 #include <chrono>
 #include <map>
-
 //auto start = high_resolution_clock::now();
 //auto stop = high_resolution_clock::now();
 //std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
@@ -83,6 +83,24 @@ struct TwerkSystem : public ecs::System {
 };
 
 int main(int argc, char* argv[]) {
+	Window::Create(1280,720,"MyGame");
+	while (!Window::shouldClose) {
+		if (Input::isKeyDown(GLFW_KEY_A)) {
+			INFO("PRESSED KEY A");
+		}
+		if (Input::getMouseWheelDelta() != 0)
+		{
+			INFO("MOUSE WHEEL : ", Input::getMouseWheelDelta());
+		}
+		if (Input::isKeyDown(GLFW_KEY_ESCAPE)) {
+			INFO("PRESSED KEY ESCAPE");
+			Window::Close();
+		}
+		Window::Update();		
+	}
+	Window::Destroy();
+
+	/*
 	scene1.AddComponent<TransformComponentSY>();
 	scene1.AddComponent<RigidbodyComponentSY>();
 
@@ -110,4 +128,5 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "AVERAGE : " << 1.0 / ((average / 1000000.0) / timeIteration) << " FPS" << std::endl;
+	*/
 }
