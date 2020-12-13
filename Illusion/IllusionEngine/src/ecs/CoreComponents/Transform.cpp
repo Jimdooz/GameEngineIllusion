@@ -78,7 +78,8 @@ namespace illusion::ecs::core {
 		// On Supprime les enfants
 		u32 nbChilds = childs[index].size();
 		for (u32 i = 0; i < nbChilds; i++) {
-			index = getIndex(id); // On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+			// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+			index = getIndex(id);
 			scene->DestroyEntity(childs[index][i]);
 		}
 		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant

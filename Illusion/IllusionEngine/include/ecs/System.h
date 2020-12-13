@@ -155,4 +155,5 @@ namespace illusion::ecs {
 	inline TYPE& NAME() {		\
 		return COMPONENT->DATA[COMPONENT->getIndex(ToEntity[currIndex])]; \
 	}
+
 }

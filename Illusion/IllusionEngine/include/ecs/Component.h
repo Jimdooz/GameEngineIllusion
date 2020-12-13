@@ -104,4 +104,11 @@ namespace illusion::ecs {
 			util::EraseUnordered(array, index);
 		}
 	};
+
+	/**
+	 * Macro permettant d'abstraire la création d'un type de donnée d'un component
+	 */
+#define COMPONENT_DATA(TYPE, NAME) \
+	util::Array<TYPE> NAME
+
 }

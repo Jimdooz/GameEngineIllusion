@@ -7,12 +7,12 @@ namespace illusion::ecs::core {
 	struct Transform : public Component {
 		Transform(Scene* scene) : Component(scene) {}
 
-		util::Array<Vec3> position;
-		util::Array<Quaternion> rotation;
-		util::Array<Vec3> scale;
+		COMPONENT_DATA(Vec3, position);
+		COMPONENT_DATA(Quaternion, rotation);
+		COMPONENT_DATA(Vec3, scale);
 
-		util::Array<ecs::entity_id> parent;
-		util::Array<util::Array<ecs::entity_id>> childs;
+		COMPONENT_DATA(ecs::entity_id, parent);
+		COMPONENT_DATA(util::Array<ecs::entity_id>, childs);
 
 		/**
 		 * Permet de définir le parent d'une entité

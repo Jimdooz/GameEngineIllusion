@@ -20,6 +20,8 @@ namespace illusion::ecs {
 		// On supprime toutes les données liées à l'id
 		RemoveComponentDatas(index, id);
 
+		//// Inversion pour tableau compact
+
 		// On récupère le nouvel index qui a pû être modifié lors de la fonction précédente
 		// Ainsi que le dernier index de ToEntity pour l'échange
 		component_id index_post{ ToData[getId] };
