@@ -35,6 +35,15 @@ namespace illusion::ecs::core {
 		 */
 		void RemoveChild(ecs::entity_id id, ecs::entity_id childId);
 
+		/**
+		 * Permet de savoir si une entité à pour parent une autre entité recursivement
+		 * Retourne faux si les deux entités sont égales ou l'une d'entre elle est invalide
+		 * @param	id l'id de l'entité 
+		 * @param	parentId l'id du parent
+		 * @return	vrai si le parent existe, faux sinon
+		 */
+		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
+
 		virtual void AddComponentDatas(ecs::entity_id id) override;
 
 		virtual void RemoveComponentDatas(ecs::component_id index, ecs::entity_id id);

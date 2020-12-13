@@ -46,6 +46,65 @@ struct TwerkSystem : public ecs::System {
 	}
 };
 
+bool itemAlreadyDropped = false;
+ecs::entity_id selected = (ecs::entity_id)(ecs::id::invalid_id);
+
+void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Scene &scene) {
+	ecs::component_id parentIndex = transform->getIndex(parentId);
+	if (parentIndex != ecs::id::invalid_id) {
+		util::Array<ecs::entity_id>& childs = transform->childs[parentIndex];
+		std::string name = std::to_string(parentId);
+
+		bool open = ImGui::TreeNodeEx(name.c_str(),
+			ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
+			"Entity %s", name.c_str());
+		if (ImGui::IsItemClicked()) {
+			itemAlreadyDropped = false;
+			selected = parentId;
+		}
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
+				ecs::entity_id id;
+				memcpy(&id, payload->Data, sizeof(ecs::entity_id));
+				if (!itemAlreadyDropped) {
+					INTERNAL_INFO(">  MOVE");
+					transform->SetParent(id, parentId);
+					itemAlreadyDropped = true;
+					INTERNAL_INFO(">> MOVE");
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+		if (ImGui::BeginDragDropSource()) {
+			ImGui::Text("Moving Entity");
+			ImGui::SetDragDropPayload("MoveEntity", &parentId, sizeof(ecs::entity_id), ImGuiCond_Once);
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+			ImGui::OpenPopup("Menu Entity");
+		}
+
+		if (ImGui::BeginPopup("Menu Entity")) {
+			if (ImGui::MenuItem("Delete")) {
+				INTERNAL_INFO(">  DELETE ", parentId);
+				scene.DestroyEntity(parentId);
+				INTERNAL_INFO(">> DELETE ", parentId);
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (open) {
+
+			for (u32 i = 0; i < childs.size(); i++) {
+				ShowChild(childs[i], transform, scene);
+			}
+			ImGui::TreePop();
+		}
+	}
+}
+
 float* my_color = new float(0);
 
 int main(int argc, char* argv[]) {
@@ -66,11 +125,7 @@ int main(int argc, char* argv[]) {
 	//----------
 	ecs::Scene scene;
 	scene.UseSystem<TwerkSystem>();
-
-	for (u32 i = 0; i < 10; i++)
-		scene.CreateEntity();
-	
-	ecs::core::Transform *transforms = scene.GetComponent<ecs::core::Transform>();
+	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();	
 
 	std::vector<float> fpsMesure;
 
@@ -95,7 +150,7 @@ int main(int argc, char* argv[]) {
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Hello, world!");
+			ImGui::Begin("Speed Test");
 
 			float fps[100];
 			float average = 0.0;
@@ -106,39 +161,23 @@ int main(int argc, char* argv[]) {
 			std::string plotLineTitle = "Frame Times : " + std::to_string((u32)round(average / 100.0)) + " fps";
 			ImGui::PlotLines(plotLineTitle.c_str(), fps, 100);
 
+			ImGui::End();
+		}
+
+		{
+			ImGui::Begin("Hierarchy");
+
 			std::string ButtonTitle = "Add Entity (" + std::to_string(transforms->ToEntity.size()) + ")";
 			if (ImGui::Button(ButtonTitle.c_str())) {
 				scene.CreateEntity();
 			}
 
-			/*u32 nb = transforms->ToEntity.size();
-			for (u32 i = 0; i < nb; i++) {
-				std::string name = std::to_string(transforms->ToEntity[i]);
-				if (ImGui::Button(name.c_str())) {
-					scene.DestroyEntity(transforms->ToEntity[i]);
-					nb--;
+			//u32 nb = transforms->ToEntity.size();
+			for (u32 i = 0; i < transforms->ToEntity.size(); i++) {
+				if (transforms->parent[i] == ecs::id::invalid_id) {
+					ShowChild(transforms->ToEntity[i], transforms, scene);
 				}
-			}*/
-			/*if (ImGui::TreeNode("Loxel Entities"))
-			{
-				if (ImGui::TreeNode("Base"))
-				{
-					ImGui::Indent();
-					ImGui::Text("Num Slots");
-					ImGui::Text("Count");
-					ImGui::Unindent();
-					ImGui::TreePop();
-				}
-				if (ImGui::TreeNode("Slots"))
-				{
-					ImGui::TreePop();
-				}
-				ImGui::TreePop();
 			}
-			ImGui::Indent();
-			ImGui::Text("Previous Modifications");
-			ImGui::Text("Debug Ticks");
-			ImGui::Unindent();*/
 			ImGui::End();
 		}
 

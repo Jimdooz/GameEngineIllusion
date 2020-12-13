@@ -6,6 +6,7 @@ namespace illusion::ecs::core {
 	void Transform::SetParent(ecs::entity_id id, ecs::entity_id parentId) {
 		// If id or parentId not valid -> Stop
 		if (!illusion::ecs::id::IsValid(id) || !illusion::ecs::id::IsValid(parentId)) return;
+		if (HaveParentRecursive(parentId, id)) return;
 
 		illusion::ecs::component_id indexId = getIndex(id);
 		illusion::ecs::component_id indexParentId = getIndex(parentId);
@@ -23,7 +24,7 @@ namespace illusion::ecs::core {
 
 		// 2.	On modifie le parent de l'id et on signale au parent qu'il a un nouvel enfant
 		SetChild(parentId, id);
-		parent[id] = parentId;
+		parent[indexId] = parentId;
 	}
 
 	void Transform::SetChild(ecs::entity_id id, ecs::entity_id childId) {
@@ -63,6 +64,19 @@ namespace illusion::ecs::core {
 		parent[indexChildId] = ecs::entity_id{ id::invalid_id };
 	}
 
+	bool Transform::HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId) {
+		if (parentId == id::invalid_id || id == id::invalid_id) return false;
+		if (id == parentId) return false; // Une entité ne peut pas se contenir soit même
+		component_id index = getIndex(id);
+		while (index != id::invalid_id) {
+			id = parent[index];
+			if (id == parentId) return true;
+			if (id == id::invalid_id) return false;
+			index = getIndex(id);
+		}
+		return false;
+	}
+
 	void Transform::AddComponentDatas(ecs::entity_id id) {
 		AddComponentData(position, Vec3(0, 0, 0));
 		AddComponentData(rotation, Quaternion(0, 0, 0, 1));
@@ -82,6 +96,7 @@ namespace illusion::ecs::core {
 			index = getIndex(id);
 			scene->DestroyEntity(childs[index][i]);
 		}
+
 		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
 		index = getIndex(id);
 
