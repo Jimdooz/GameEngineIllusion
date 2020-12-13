@@ -9,16 +9,18 @@ namespace illusion::ecs {
 
 	void Component::UseComponent(entity_id id) {
 		ToData[id::Index(id)] = component_id{ static_cast<u32>(ToEntity.size()) };
-		AddComponentData(ToEntity, id);
-		AddComponentDatas(id);
+		AddData(ToEntity, id);
+		AddDatas(id);
 	}
 
 	void Component::RemoveComponent(entity_id id) {
 		const entity_id getId{ id::Index(id) };
 		component_id index{ ToData[getId] };
 
+		if (index == id::invalid_id) return;
+
 		// On supprime toutes les données liées à l'id
-		RemoveComponentDatas(index, id);
+		RemoveDatas(index, id);
 
 		//// Inversion pour tableau compact
 
@@ -28,12 +30,16 @@ namespace illusion::ecs {
 		entity_id lastId{ id::Index(ToEntity.back()) };
 
 		// On supprime la position vers ToEntity
-		RemoveComponentData(ToEntity, index_post);
+		RemoveData(ToEntity, index_post);
 
 		// On procède à l'échange
 		ToData[lastId] = component_id{ index_post };
 		ToData[getId] = component_id{ id::invalid_id };
+
+		AfterRemoveComponent(id);
 	}
+
+	void Component::AfterRemoveComponent(entity_id id){}
 
 	void Component::OnEntityCreate(entity_id id) {
 		id::id_type index = id::Index(id);

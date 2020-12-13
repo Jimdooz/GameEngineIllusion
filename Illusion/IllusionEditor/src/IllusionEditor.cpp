@@ -21,8 +21,26 @@
 using namespace std::chrono;
 using namespace illusion;
 
+struct RigidBodyComponent : public ecs::Component {
+	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {}
+	COMPONENT_NAME("RIGIDBODY");
+
+	COMPONENT_DATA(Vec3, velocity);
+
+	virtual void AddDatas(ecs::entity_id id) override;
+	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id);
+};
+
+void RigidBodyComponent::AddDatas(ecs::entity_id id){
+	AddData(velocity, Vec3(0, 0, 0));
+}
+void RigidBodyComponent::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+	RemoveData(velocity, index);
+}
+
 ///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
+	SYSTEM_NAME("TWERK");
 
 	ecs::core::Transform* transform;
 
@@ -46,15 +64,45 @@ struct TwerkSystem : public ecs::System {
 	}
 };
 
+struct DireBonjour : public ecs::System {
+	SYSTEM_NAME("BONJOUR");
+
+	ecs::Scene *scene;
+
+	ecs::core::Transform* transform;
+	RigidBodyComponent* rigidbody;
+
+	/* la fonction Update */
+	SYSTEM_UPDATE_LOOP(
+		for (u32 i = 0; i < 10000; i++) {
+			velocity().x += 0.001f;
+		}
+	);
+
+	/* Definition des variables utiles */
+	SYSTEM_USE_DATA(velocity, rigidbody, velocity, Vec3);
+
+	/* Initialisation relative à la scène parente */
+	virtual void Initialize(ecs::Scene& scene) override {
+		this->scene = &scene;
+		transform = scene.GetComponent<ecs::core::Transform>();
+		rigidbody = scene.GetComponent<RigidBodyComponent>();
+		SetDependencies(transform, rigidbody);
+	}
+};
+
 bool itemAlreadyDropped = false;
 ecs::entity_id selected = (ecs::entity_id)(ecs::id::invalid_id);
+float position[] = { 0 , 0 , 0 };
+float rotation[] = { 0 , 0 , 0 };
+float scale[] = { 1, 1 , 1 };
 
 void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Scene &scene) {
 	ecs::component_id parentIndex = transform->getIndex(parentId);
 	if (parentIndex != ecs::id::invalid_id) {
 		util::Array<ecs::entity_id>& childs = transform->childs[parentIndex];
-		std::string name = std::to_string(parentId);
-
+		std::string name = std::to_string(ecs::id::Index(parentId)) + " [" + std::to_string(ecs::id::Generation(parentId)) + "]";
+		 
 		bool open = ImGui::TreeNodeEx(name.c_str(),
 			ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
 			"Entity %s", name.c_str());
@@ -82,12 +130,14 @@ void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Sc
 		std::string popupName = "Menu Entity###" + std::to_string(parentId);
 
 		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+			selected = parentId;
 			ImGui::OpenPopup(popupName.c_str());
 		}
 
 		if (ImGui::BeginPopup(popupName.c_str())) {
 			if (ImGui::MenuItem("Delete")) {
 				scene.DestroyEntity(parentId);
+				selected = (ecs::entity_id)ecs::id::invalid_id;
 			}
 
 			if (ImGui::MenuItem("Soft Delete")) {
@@ -95,6 +145,7 @@ void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Sc
 					transform->SetParent(childs[0], transform->parent[parentIndex]);
 				}
 				scene.DestroyEntity(parentId);
+				selected = (ecs::entity_id)ecs::id::invalid_id;
 			}
 
 			ImGui::EndPopup();
@@ -128,7 +179,9 @@ int main(int argc, char* argv[]) {
 	// Init Scene
 	//----------
 	ecs::Scene scene;
+	scene.UseComponent<RigidBodyComponent>();
 	scene.UseSystem<TwerkSystem>();
+	scene.UseSystem<DireBonjour>();
 	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();	
 
 	std::vector<float> fpsMesure;
@@ -186,12 +239,56 @@ int main(int argc, char* argv[]) {
 			ImGui::End();
 		}
 
+		{
+			ImGui::Begin("Inspector");
+
+			if (selected != ecs::id::invalid_id) {
+				//FILL
+				/*ecs::component_id component = transforms->getIndex(selected);
+				position[0] = transforms->position[component].x;
+				position[1] = transforms->position[component].y;
+				position[2] = transforms->position[component].z;
+
+				ImGui::DragFloat3("position", position, 0.1f);
+				ImGui::DragFloat3("rotation", rotation, 0.1f);
+				ImGui::DragFloat3("scale", scale, 0.1f);
+
+				transforms->position[component].x = position[0];
+				transforms->position[component].y = position[1];
+				transforms->position[component].z = position[2];*/
+
+				ecs::component_id iSelected = (ecs::component_id)ecs::id::Index(selected);
+
+				ImGui::Text("> Components");
+				for (auto const& [key, val] : scene.components) {
+					if (val->ToData[iSelected] != ecs::id::invalid_id) {
+						std::string name = "Remove " + val->getName();
+						if (ImGui::Button(name.c_str())) {
+							scene.EntityRemoveComponent(selected, key);
+						}
+					}
+					else {
+						std::string name = "Add " + val->getName();
+						if (ImGui::Button(name.c_str())) {
+							scene.EntityAddComponent(selected, key);
+						}
+					}
+				}
+				ImGui::Text("> Systems");
+				for (auto const& [key, val] : scene.systems) {
+					if (val->ToData[iSelected] != ecs::id::invalid_id) ImGui::Text(val->getName().c_str());
+				}
+			}
+
+			ImGui::End();
+		}
+
 		//Render
 		ImGui::Render();
 		int display_w, display_h;
 		glfwGetFramebufferSize(Window::glfwWindow, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
-		glClearColor(0.0, 1.0, 0.0, 1.0);
+		glClearColor(0.25f, 0.25f, 0.5f, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

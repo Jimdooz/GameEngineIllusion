@@ -7,6 +7,8 @@ namespace illusion::ecs::core {
 	struct Transform : public Component {
 		Transform(Scene* scene) : Component(scene) {}
 
+		COMPONENT_NAME("TRANSFORM");
+
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);
 		COMPONENT_DATA(Vec3, scale);
@@ -50,9 +52,11 @@ namespace illusion::ecs::core {
 		 */
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
 
-		virtual void AddComponentDatas(ecs::entity_id id) override;
+		virtual void AddDatas(ecs::entity_id id) override;
 
-		virtual void RemoveComponentDatas(ecs::component_id index, ecs::entity_id id);
+		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id);
+
+		virtual void AfterRemoveComponent(entity_id id);
 	};
 
 }

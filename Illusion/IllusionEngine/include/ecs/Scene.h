@@ -86,22 +86,30 @@ namespace illusion::ecs {
 		 * @param	id l'id de l'entité
 		 */
 		template<typename C> void EntityAddComponent(entity_id id) {
-			GetComponentSystem<C>()->UseComponent(id);
-			for (auto const& [key, val] : systems) {
-				val->OnComponentAdd<C>(id);
-			}
+			return EntityAddComponent(id, typeid(C).hash_code());
 		}
+
+		/**
+		 * Permet de signaler qu'une Entité va utiliser un Component donné
+		 * @param	id l'id de l'entité
+		 * @param	componentHash le hash du component
+		 */
+		void EntityAddComponent(entity_id id, size_t componentHash);
 
 		/**
 		 * Permet de signaler qu'une Entité ne va plus utiliser un Component donné
 		 * @param	id l'id de l'entité
 		 */
 		template<typename C> void EntityRemoveComponent(entity_id id) {
-			GetComponentSystem<C>()->RemoveComponent(id);
-			for (auto const& [key, val] : systems) {
-				val->OnComponentRemove<C>(id);
-			}
+			return EntityRemoveComponent(id, typeid(C).hash_code());
 		}
+
+		/**
+		 * Permet de signaler qu'une Entité ne va plus utiliser un Component donné
+		 * @param	id l'id de l'entité
+		 * @param	componentHash le hash du component
+		 */
+		void EntityRemoveComponent(entity_id id, size_t componentHash);
 
 		/**
 		 * >>> System Part

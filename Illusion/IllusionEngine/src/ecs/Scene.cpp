@@ -32,4 +32,20 @@ namespace illusion::ecs {
 			val->Update();
 		}
 	}
+	void Scene::EntityAddComponent(entity_id id, size_t componentHash) {
+		if (!entities.IsAlive(id)) return;
+		components[componentHash]->UseComponent(id);
+		for (auto const& [key, val] : systems) {
+			val->OnComponentAdd(id);
+		}
+	}
+
+	void Scene::EntityRemoveComponent(entity_id id, size_t componentHash) {
+		if (!entities.IsAlive(id)) return;
+		components[componentHash]->RemoveComponent(id);
+		for (auto const& [key, val] : systems) {
+			val->OnComponentRemove(id);
+		}
+	}
+
 }

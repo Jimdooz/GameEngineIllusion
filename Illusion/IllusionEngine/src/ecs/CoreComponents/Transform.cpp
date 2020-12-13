@@ -94,15 +94,15 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
-	void Transform::AddComponentDatas(ecs::entity_id id) {
-		AddComponentData(position, Vec3(0, 0, 0));
-		AddComponentData(rotation, Quaternion(0, 0, 0, 1));
-		AddComponentData(scale, Vec3(1, 1, 1));
-		AddComponentData(parent, entity_id{ ecs::id::invalid_id });
-		AddComponentData(childs, util::Array<ecs::entity_id>());
+	void Transform::AddDatas(ecs::entity_id id) {
+		AddData(position, Vec3(0, 0, 0));
+		AddData(rotation, Quaternion(0, 0, 0, 1));
+		AddData(scale, Vec3(1, 1, 1));
+		AddData(parent, entity_id{ ecs::id::invalid_id });
+		AddData(childs, util::Array<ecs::entity_id>());
 	}
 
-	void Transform::RemoveComponentDatas(ecs::component_id index, ecs::entity_id id) {
+	void Transform::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		// On signale au parent que l'id a été supprimé
 		RemoveChild(id, parent[index]);
 
@@ -117,10 +117,15 @@ namespace illusion::ecs::core {
 		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
 		index = getIndex(id);
 
-		RemoveComponentData(position, index);
-		RemoveComponentData(rotation, index);
-		RemoveComponentData(scale, index);
-		RemoveComponentData(parent, index);
-		RemoveComponentData(childs, index);
+		RemoveData(position, index);
+		RemoveData(rotation, index);
+		RemoveData(scale, index);
+		RemoveData(parent, index);
+		RemoveData(childs, index);
+	}
+
+	void Transform::AfterRemoveComponent(entity_id id) {
+		INTERNAL_INFO("DELETE ELEMENT !")
+		scene->DestroyEntity(id);
 	}
 }

@@ -2,6 +2,16 @@
 
 #include "ecs/Entity.h"
 
+/**
+* Macro permettant d'abstraire la création d'un type de donnée d'un component
+*/
+#define COMPONENT_DATA(TYPE, NAME) \
+	util::Array<TYPE> NAME
+
+#define COMPONENT_NAME(NAME)\
+	inline static const std::string CNAME = ##NAME;\
+	virtual std::string getName() { return CNAME; }
+
 namespace illusion::ecs {
 	// On déclare Scene sans inclure ses headers par question de double dépendances
 	struct Scene;
@@ -27,8 +37,9 @@ namespace illusion::ecs {
 	 */
 	struct Component {
 		Component(Scene* scene);
-
 		Scene *scene;
+
+		COMPONENT_NAME("DEFAULT COMPONENT");
 
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
 		util::Array<entity_id> ToEntity;
@@ -50,6 +61,13 @@ namespace illusion::ecs {
 		 * @param	id l'identifiant de l'entité
 		 */
 		void RemoveComponent(entity_id id);
+
+		/**
+		 * @brief Fonction appelé après RemoveComponent
+		 *
+		 * @param	id l'identifiant de l'entité
+		 */
+		virtual void AfterRemoveComponent(entity_id id);
 
 		/**
 		 * Evenements
@@ -79,7 +97,7 @@ namespace illusion::ecs {
 		 *			[!] Doit étendre les données rajoutées lors de l'héritage
 		 * @param	id l'identifiant de l'entité
 		 */
-		virtual void AddComponentDatas(entity_id id){}
+		virtual void AddDatas(entity_id id){}
 
 		/**
 		 * @brief	Fonction appelé lors de la suppression du component à une entité.
@@ -88,27 +106,21 @@ namespace illusion::ecs {
 		 *			[!] Doit supprimer les données rajoutées lors de l'héritage
 		 * @param	id l'identifiant de l'entité
 		 */
-		virtual void RemoveComponentDatas(component_id index, entity_id id){}
+		virtual void RemoveDatas(component_id index, entity_id id){}
 
 		/**
 		 * Wrapper pour ajouter une donnée à un tableau de données ( rajout du component à une entité )
 		 */
-		template<typename T> inline void AddComponentData(illusion::util::Array<T>& array, T data) {
+		template<typename T> inline void AddData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 
 		/**
 		 * Wrapper pour supprimer une donnée à un tableau de données depuis un index ( ducoup une entité )
 		 */
-		template<typename T> inline void RemoveComponentData(illusion::util::Array<T>& array, component_id index) {
+		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
 		}
 	};
-
-	/**
-	 * Macro permettant d'abstraire la création d'un type de donnée d'un component
-	 */
-#define COMPONENT_DATA(TYPE, NAME) \
-	util::Array<TYPE> NAME
 
 }
