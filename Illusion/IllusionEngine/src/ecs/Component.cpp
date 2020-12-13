@@ -28,7 +28,7 @@ namespace illusion::ecs {
 		entity_id lastId{ id::Index(ToEntity.back()) };
 
 		// On supprime la position vers ToEntity
-		RemoveComponentData(ToEntity, index);
+		RemoveComponentData(ToEntity, index_post);
 
 		// On procède à l'échange
 		ToData[lastId] = component_id{ index_post };
