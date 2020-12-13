@@ -5,7 +5,11 @@ namespace illusion::ecs::core {
 
 	void Transform::SetParent(ecs::entity_id id, ecs::entity_id parentId) {
 		// If id or parentId not valid -> Stop
-		if (!illusion::ecs::id::IsValid(id) || !illusion::ecs::id::IsValid(parentId)) return;
+		if (!illusion::ecs::id::IsValid(id)) return;
+		if (!illusion::ecs::id::IsValid(parentId)) {
+			RemoveParent(id);
+			return;
+		}
 		if (HaveParentRecursive(parentId, id)) return;
 
 		illusion::ecs::component_id indexId = getIndex(id);
@@ -25,6 +29,19 @@ namespace illusion::ecs::core {
 		// 2.	On modifie le parent de l'id et on signale au parent qu'il a un nouvel enfant
 		SetChild(parentId, id);
 		parent[indexId] = parentId;
+	}
+
+	void Transform::RemoveParent(ecs::entity_id id) {
+		if (!illusion::ecs::id::IsValid(id)) return;
+
+		illusion::ecs::component_id indexId = getIndex(id);
+
+		if (!illusion::ecs::id::IsValid(indexId)) return;
+
+		ecs::entity_id parentId = parent[indexId];
+		if (parentId != id::invalid_id) RemoveChild(parentId, id);
+
+		parent[indexId] = (ecs::entity_id)id::invalid_id;
 	}
 
 	void Transform::SetChild(ecs::entity_id id, ecs::entity_id childId) {

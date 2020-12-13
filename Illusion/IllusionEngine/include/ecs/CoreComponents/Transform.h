@@ -22,6 +22,12 @@ namespace illusion::ecs::core {
 		void SetParent(ecs::entity_id id, ecs::entity_id parentId);
 
 		/**
+		 * Permet de supprimer le parent d'un element
+		 * @param	id l'id de l'entité
+		 */
+		void RemoveParent(ecs::entity_id id);
+
+		/**
 		 * Permet d'ajouter un enfant à la liste d'un id
 		 * @param	id l'id de l'entité
 		 * @param	childId l'id de l'enfant à ajouter

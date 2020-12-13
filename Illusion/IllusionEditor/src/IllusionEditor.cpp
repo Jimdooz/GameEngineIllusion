@@ -67,10 +67,8 @@ void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Sc
 				ecs::entity_id id;
 				memcpy(&id, payload->Data, sizeof(ecs::entity_id));
 				if (!itemAlreadyDropped) {
-					INTERNAL_INFO(">  MOVE");
 					transform->SetParent(id, parentId);
 					itemAlreadyDropped = true;
-					INTERNAL_INFO(">> MOVE");
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -81,22 +79,28 @@ void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Sc
 			ImGui::EndDragDropSource();
 		}
 
+		std::string popupName = "Menu Entity###" + std::to_string(parentId);
+
 		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-			ImGui::OpenPopup("Menu Entity");
+			ImGui::OpenPopup(popupName.c_str());
 		}
 
-		if (ImGui::BeginPopup("Menu Entity")) {
+		if (ImGui::BeginPopup(popupName.c_str())) {
 			if (ImGui::MenuItem("Delete")) {
-				INTERNAL_INFO(">  DELETE ", parentId);
 				scene.DestroyEntity(parentId);
-				INTERNAL_INFO(">> DELETE ", parentId);
+			}
+
+			if (ImGui::MenuItem("Soft Delete")) {
+				for (u32 i = 0; i < childs.size();) {
+					transform->SetParent(childs[0], transform->parent[parentIndex]);
+				}
+				scene.DestroyEntity(parentId);
 			}
 
 			ImGui::EndPopup();
 		}
 
 		if (open) {
-
 			for (u32 i = 0; i < childs.size(); i++) {
 				ShowChild(childs[i], transform, scene);
 			}
@@ -158,8 +162,9 @@ int main(int argc, char* argv[]) {
 				fps[i] = fpsMesure[i];
 				average += fps[i];
 			}
-			std::string plotLineTitle = "Frame Times : " + std::to_string((u32)round(average / 100.0)) + " fps";
-			ImGui::PlotLines(plotLineTitle.c_str(), fps, 100);
+			std::string plotLineTitle = std::to_string((u32)round(average / 100.0)) + " fps";
+			ImGui::Text(plotLineTitle.c_str());
+			ImGui::PlotLines("###fpsPlotLines", fps, 100);
 
 			ImGui::End();
 		}
