@@ -26,12 +26,12 @@ namespace illusion::views::GameInspector {
 			vec3[componentId].z = vec3a[2];
 		}else if (data.type == typeid(illusion::util::Array<Quaternion>).hash_code()) {
 			illusion::util::Array<Quaternion>& vec4 = *(illusion::util::Array<Quaternion>*)data.data;
-			float vec4a[4] = { vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w };
+			float vec4a[4] = { vec4[componentId].w, vec4[componentId].x, vec4[componentId].y, vec4[componentId].z };
 			ImGui::DragFloat4(data.name.c_str(), vec4a, 0.01f);
-			vec4[componentId].x = vec4a[0];
-			vec4[componentId].y = vec4a[1];
-			vec4[componentId].z = vec4a[2];
-			vec4[componentId].w = vec4a[3];
+			vec4[componentId].w = vec4a[0];
+			vec4[componentId].x = vec4a[1];
+			vec4[componentId].y = vec4a[2];
+			vec4[componentId].z = vec4a[3];
 		}
 	}
 	
