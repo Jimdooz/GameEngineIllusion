@@ -15,6 +15,7 @@ IncludeDir = {}
 IncludeDir["glfw"] = "%{wks.location}/libs/glfw/include"
 IncludeDir["Glad"] = "%{wks.location}/libs/Glad/include"
 IncludeDir["glm"] = "%{wks.location}/libs/glm/"
+IncludeDir["imgui"] = "%{wks.location}/libs/imgui/"
 IncludeDir["IllusionEngine"] = "%{wks.location}/IllusionEngine/include"
 project "IllusionEngine"
 	location "%{wks.location}/%{prj.name}"
@@ -99,6 +100,21 @@ project "IllusionEditor"
 
 	files
 	{
+		"%{wks.location}/libs/imgui/imconfig.h",
+		"%{wks.location}/libs/imgui/imgui.h",
+		"%{wks.location}/libs/imgui/imgui_internal.h",
+		"%{wks.location}/libs/imgui/imstb_rectpack.h",
+		"%{wks.location}/libs/imgui/imstb_textedit.h",
+		"%{wks.location}/libs/imgui/imstb_truetype.h",
+		"%{wks.location}/libs/imgui/imgui_impl_opengl3.h",
+		"%{wks.location}/libs/imgui/imgui_impl_glfw.h",
+		"%{wks.location}/libs/imgui/imgui.cpp",
+		"%{wks.location}/libs/imgui/imgui_draw.cpp",
+		"%{wks.location}/libs/imgui/imgui_widgets.cpp",
+		"%{wks.location}/libs/imgui/imgui_impl_opengl3.cpp",
+		"%{wks.location}/libs/imgui/imgui_impl_glfw.cpp",
+		"%{wks.location}/libs/imgui/imgui_demo.cpp",
+
 		"%{prj.location}/include/**.h",
 		"%{prj.location}/src/**.cpp"
 	}
@@ -109,6 +125,7 @@ project "IllusionEditor"
 		"%{IncludeDir.glfw}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.Glad}",
+		"%{IncludeDir.imgui}",
 		"%{IncludeDir.IllusionEngine}"
 	}
 

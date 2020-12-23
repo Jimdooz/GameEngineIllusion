@@ -3,13 +3,13 @@
 #include "ecs/Entity.h"
 
 /**
-* Macro permettant d'abstraire la création d'un type de donnée d'un component
+* Macro permettant d'abstraire la crï¿½ation d'un type de donnï¿½e d'un component
 */
 #define COMPONENT_DATA(TYPE, NAME) \
 	util::Array<TYPE> NAME
 
 #define COMPONENT_NAME(NAME)\
-	inline static const std::string CNAME = ##NAME;\
+	inline static const std::string CNAME = NAME;\
 	virtual std::string getName() { return CNAME; }
 
 #define COMPONENT_PUBLIC(NAME) \
@@ -62,7 +62,7 @@ namespace illusion::ecs {
 		// Elle permet de pointer vers la liste des donn×™es qui est compact×™e
 		util::Array<component_id> ToData;
 
-		// Tableau des variables publiques du component, elle permet principalement d'afficher des éléments d'UI
+		// Tableau des variables publiques du component, elle permet principalement d'afficher des ï¿½lï¿½ments d'UI
 		util::Array<PublicComponentDatas> publicDatas;
 
 		/**
@@ -80,9 +80,9 @@ namespace illusion::ecs {
 		void RemoveComponent(entity_id id);
 
 		/**
-		 * @brief Fonction appelé après RemoveComponent
+		 * @brief Fonction appelï¿½ aprï¿½s RemoveComponent
 		 *
-		 * @param	id l'identifiant de l'entité
+		 * @param	id l'identifiant de l'entitï¿½
 		 */
 		virtual void AfterRemoveComponent(entity_id id);
 

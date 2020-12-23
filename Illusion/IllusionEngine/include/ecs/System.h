@@ -4,9 +4,9 @@
 #include "ecs/Component.h"
 
 /**
- * Macro permettant de décorer la fonction Update à override
- * Il permet d'automatiser la boucle sur toutes les entités ciblé par le System
- * Il est conseillé d'utiliser la macro SYSTEM_USE_DATA pour automatiser la récupération de datas des components
+ * Macro permettant de dï¿½corer la fonction Update ï¿½ override
+ * Il permet d'automatiser la boucle sur toutes les entitï¿½s ciblï¿½ par le System
+ * Il est conseillï¿½ d'utiliser la macro SYSTEM_USE_DATA pour automatiser la rï¿½cupï¿½ration de datas des components
  */
 #define SYSTEM_UPDATE_LOOP(BEHAVIOUR) \
 	virtual void Update() override { \
@@ -14,13 +14,13 @@
 	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
 
  /**
-  * Macro permettant d'automatiser la déclaration de fonctions inline pour obtenir des données de components
-  * Cette macro pourra être utilisé pour permettre d'obtenir facilement les donnée de l'entité actuelle dans les différentes boucles [Update, FixedUpdate, LateUpdate]
+  * Macro permettant d'automatiser la dï¿½claration de fonctions inline pour obtenir des donnï¿½es de components
+  * Cette macro pourra ï¿½tre utilisï¿½ pour permettre d'obtenir facilement les donnï¿½e de l'entitï¿½ actuelle dans les diffï¿½rentes boucles [Update, FixedUpdate, LateUpdate]
   *
-  * - NAME : le nom de la fonction à appeler
-  * - COMPONENT : le [Component] ciblé (doit appartenir aux dépendances du System)
-  * - DATA : la donnée à récupérer, par exemple la [position] d'un [Component] transform
-  * - TYPE : le type de la donnée, par exemple pour [position] -> [Vec3]
+  * - NAME : le nom de la fonction ï¿½ appeler
+  * - COMPONENT : le [Component] ciblï¿½ (doit appartenir aux dï¿½pendances du System)
+  * - DATA : la donnï¿½e ï¿½ rï¿½cupï¿½rer, par exemple la [position] d'un [Component] transform
+  * - TYPE : le type de la donnï¿½e, par exemple pour [position] -> [Vec3]
   */
 #define SYSTEM_USE_DATA(NAME, COMPONENT, DATA, TYPE) \
 	inline TYPE& NAME() {		\
@@ -28,20 +28,20 @@
 	}
 
 #define SYSTEM_NAME(NAME)\
-	inline static const std::string SNAME = ##NAME;\
+	inline static const std::string SNAME = NAME;\
 	virtual std::string getName() { return SNAME; }
 
 namespace illusion::ecs {
 
-	// On déclare Scene sans inclure ses headers par question de double dépendances
+	// On dï¿½clare Scene sans inclure ses headers par question de double dï¿½pendances
 	struct Scene;
 
 	/**
 	 * System
 	 *
-	 * Un Système est une structure qui possèdes les mechaniques et comportements
-	 * L'entité en soit ne fait rien, c'est les Systèmes qui auront pour but de modifier les données des components
-	 * des entités ciblés
+	 * Un Systï¿½me est une structure qui possï¿½des les mechaniques et comportements
+	 * L'entitï¿½ en soit ne fait rien, c'est les Systï¿½mes qui auront pour but de modifier les donnï¿½es des components
+	 * des entitï¿½s ciblï¿½s
 	 *
 	 *	+---------------------------+
 	 *	| ToEntity ( compact )		|
@@ -56,36 +56,36 @@ namespace illusion::ecs {
 		virtual void LateUpdate();
 		virtual void FixedUpdate();
 
-		util::Array<entity_id> ToEntity;		// Liste compacte des entités ciblés par le System
-		util::Array<component_id> ToData;		// Liste non compacte de pointeurs vers les entités ciblés par le System ( id::invalid si non )
-		util::Array<Component*> componentsDeps;	// Liste des Components dont dépend le System
+		util::Array<entity_id> ToEntity;		// Liste compacte des entitï¿½s ciblï¿½s par le System
+		util::Array<component_id> ToData;		// Liste non compacte de pointeurs vers les entitï¿½s ciblï¿½s par le System ( id::invalid si non )
+		util::Array<Component*> componentsDeps;	// Liste des Components dont dï¿½pend le System
 
-		// Permet de récupérer l'id de l'entité actuellement dans la boucle
+		// Permet de rï¿½cupï¿½rer l'id de l'entitï¿½ actuellement dans la boucle
 		inline entity_id id() {
 			return ToEntity[currIndex];
 		}
 
-		// Lors de l'itération d'un [Update, LateUpdate, FixedUpdate] c'est cette variable qui sera incrémenté
-		// Elle permet de faciliter la récupération des données des components lors des différentes boucles
+		// Lors de l'itï¿½ration d'un [Update, LateUpdate, FixedUpdate] c'est cette variable qui sera incrï¿½mentï¿½
+		// Elle permet de faciliter la rï¿½cupï¿½ration des donnï¿½es des components lors des diffï¿½rentes boucles
 		// Voir Macro SYSTEM_USE_DATA
 		u32 currIndex = 0;
 		
 		/**
-		 * Evénement appelé lorsqu'une entité à été créé par la scène
-		 * @param	id l'id de l'entité
+		 * Evï¿½nement appelï¿½ lorsqu'une entitï¿½ ï¿½ ï¿½tï¿½ crï¿½ï¿½ par la scï¿½ne
+		 * @param	id l'id de l'entitï¿½
 		 */
 		void OnEntityCreate(entity_id id);
 
 		/**
-		 * Evénement appelé lorsqu'une entité à été détruite par la scène
-		 * @param	id l'id de l'entité
+		 * Evï¿½nement appelï¿½ lorsqu'une entitï¿½ ï¿½ ï¿½tï¿½ dï¿½truite par la scï¿½ne
+		 * @param	id l'id de l'entitï¿½
 		 */
 		void OnEntityDestroy(entity_id id);
 
 		/**
-		 * Evénement appelé lorsqu'une entité a ajouté un nouveau component
-		 * Elle permet d'ajouter l'entité au System si celle-ci corresponds au critères
-		 * @param	id l'id de l'entité
+		 * Evï¿½nement appelï¿½ lorsqu'une entitï¿½ a ajoutï¿½ un nouveau component
+		 * Elle permet d'ajouter l'entitï¿½ au System si celle-ci corresponds au critï¿½res
+		 * @param	id l'id de l'entitï¿½
 		 */
 		inline void OnComponentAdd(entity_id id) {
 			if (!AcceptedEntity(id) && CanAcceptEntity(id)) {
@@ -95,9 +95,9 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Evénement appelé lorsqu'une entité a supprimé un component qu'elle posssédais
-		 * Elle permet de supprimer l'entité au System si celle-ci ne corresponds plus au critères
-		 * @param	id l'id de l'entité
+		 * Evï¿½nement appelï¿½ lorsqu'une entitï¿½ a supprimï¿½ un component qu'elle posssï¿½dais
+		 * Elle permet de supprimer l'entitï¿½ au System si celle-ci ne corresponds plus au critï¿½res
+		 * @param	id l'id de l'entitï¿½
 		 */
 		inline void OnComponentRemove(entity_id id) {
 			if (AcceptedEntity(id) && !CanAcceptEntity(id)) {
@@ -106,48 +106,48 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Fonction permettant de savoir si une entité est possédé par le System
-		 * @param	id l'id de l'entité
-		 * @return	vrai si l'entité est possédé par le System, faux sinon
+		 * Fonction permettant de savoir si une entitï¿½ est possï¿½dï¿½ par le System
+		 * @param	id l'id de l'entitï¿½
+		 * @return	vrai si l'entitï¿½ est possï¿½dï¿½ par le System, faux sinon
 		 */
 		inline bool AcceptedEntity(ecs::entity_id id) {
 			return ToData[id::Index(id)] != id::invalid_id;
 		}
 
 		/**
-		 * Fonction d'Initialisation du System selon la scène qui le possède
-		 * Celle-ci aura pour but de récupérer les components dont le System dépends provenant de la scène via scene.getComponent<Component>()
-		 * Et d'ajouter ces même components au dépendances de celui-ci via la méthode SetDependencies()
-		 * @param	scene la scène possédant le System
+		 * Fonction d'Initialisation du System selon la scï¿½ne qui le possï¿½de
+		 * Celle-ci aura pour but de rï¿½cupï¿½rer les components dont le System dï¿½pends provenant de la scï¿½ne via scene.getComponent<Component>()
+		 * Et d'ajouter ces mï¿½me components au dï¿½pendances de celui-ci via la mï¿½thode SetDependencies()
+		 * @param	scene la scï¿½ne possï¿½dant le System
 		 */
 		virtual void Initialize(Scene& scene);
 
 	protected:
 		/**
-		 * Permet de supprimer l'entité du System
-		 * @param	id l'id de l'entité
+		 * Permet de supprimer l'entitï¿½ du System
+		 * @param	id l'id de l'entitï¿½
 		 */
 		void RemoveEntity(entity_id id);
 
 		/**
-		 * Wrapper pour supprimer d'un Array l'élement à la position index
+		 * Wrapper pour supprimer d'un Array l'ï¿½lement ï¿½ la position index
 		 */
 		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, entity_id index) {
 			util::EraseUnordered(array, index);
 		}
 
 		/**
-		 * Wrapper pour ajouter un element à un Array donné
+		 * Wrapper pour ajouter un element ï¿½ un Array donnï¿½
 		 */
 		template<typename T> inline void AddData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 
 		/**
-		 * Fonction pour savoir si une entité est conforme aux dépendances du System
-		 * Pour qu'une entité soit conforme elle doit utiliser tous les components dont le System dépend
-		 * @param	id l'id de l'entité
-		 * @return	vrai si l'entité est acceptable, faux sinon
+		 * Fonction pour savoir si une entitï¿½ est conforme aux dï¿½pendances du System
+		 * Pour qu'une entitï¿½ soit conforme elle doit utiliser tous les components dont le System dï¿½pend
+		 * @param	id l'id de l'entitï¿½
+		 * @return	vrai si l'entitï¿½ est acceptable, faux sinon
 		 */
 		inline bool CanAcceptEntity(ecs::entity_id id) {
 			for (auto const& val : componentsDeps) {
@@ -157,8 +157,8 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Fonction permettant d'ajouter les Components dont dépend le System
-		 * Cette fonction doit être appelé lors de la fonction d'Initialisation du System
+		 * Fonction permettant d'ajouter les Components dont dï¿½pend le System
+		 * Cette fonction doit ï¿½tre appelï¿½ lors de la fonction d'Initialisation du System
 		 */
 		constexpr void SetDependencies() {}
 		template<typename Arg1, class... Args> inline void SetDependencies(Arg1 c1, Args... cNext) {

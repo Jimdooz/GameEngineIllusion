@@ -18,9 +18,9 @@
 //auto stop = high_resolution_clock::now();
 //std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 using namespace std::chrono;
 using namespace illusion;
@@ -161,11 +161,12 @@ int main(int argc, char* argv[]) {
 
 		glfwSwapBuffers(Window::glfwWindow);
 	}
-	Window::Destroy();
 
 	//Shutdown
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 
 	ImGui::DestroyContext();
+
+	Window::Destroy();
 }
