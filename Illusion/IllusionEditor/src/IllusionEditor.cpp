@@ -26,116 +26,55 @@ using namespace std::chrono;
 using namespace illusion;
 
 struct RigidBodyComponent : public ecs::Component {
-	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {}
+	// Declare component name
+	COMPONENT_NAME("Rigidbody");
 
-	COMPONENT_NAME("RIGIDBODY");
+	// Declare constructor
+	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {
+		// Display on inspector
+		COMPONENT_PUBLIC(velocity);
+	}
 
+	// Declare datas
 	COMPONENT_DATA(Vec3, velocity);
 
+	// On Data added
 	virtual void AddDatas(ecs::entity_id id) override {
 		AddData(velocity, Vec3(0, 0, 0));
 	}
+
+	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		RemoveData(velocity, index);
 	}
 };
 
-///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
 	SYSTEM_NAME("TWERK");
 
 	ecs::core::Transform* transform;
+	RigidBodyComponent* rigidbody;
 
 	/* la fonction Update */
 	SYSTEM_UPDATE_LOOP(
-		position().x += 5;
+		/*position().x += 5;
 		rotation().x++;
 		rotation().y++;
-		scale().x++;
+		scale().x++;*/
 	)
 
-	/* D?finition des variables utiles */
+	/* Definition des variables utiles */
 	SYSTEM_USE_DATA(position, transform, position, Vec3)
 	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
 	SYSTEM_USE_DATA(scale, transform, scale, Vec3)
 
-	/* Initialisation relative ? la sc?ne parente */
+	/* Initialisation relative a la scene parente */
 	virtual void Initialize(ecs::Scene& scene) override {
 		transform = scene.GetComponent<ecs::core::Transform>();
-		SetDependencies(transform);
+		rigidbody = scene.GetComponent<RigidBodyComponent>();
+		SetDependencies(transform, rigidbody);
 	}
 };
-
-bool itemAlreadyDropped = false;
-ecs::entity_id selected = (ecs::entity_id)(ecs::id::invalid_id);
-float position[] = { 0 , 0 , 0 };
-float rotation[] = { 0 , 0 , 0 };
-float scale[] = { 1, 1 , 1 };
-
-void ShowChild(ecs::entity_id parentId, ecs::core::Transform *transform, ecs::Scene &scene) {
-	ecs::component_id parentIndex = transform->getIndex(parentId);
-	if (parentIndex != ecs::id::invalid_id) {
-		util::Array<ecs::entity_id>& childs = transform->childs[parentIndex];
-		std::string name = std::to_string(ecs::id::Index(parentId)) + " [" + std::to_string(ecs::id::Generation(parentId)) + "]";
-		 
-		bool open = ImGui::TreeNodeEx(name.c_str(),
-			ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
-			"Entity %s", name.c_str());
-		if (ImGui::IsItemClicked()) {
-			itemAlreadyDropped = false;
-			selected = parentId;
-		}
-		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
-				ecs::entity_id id;
-				memcpy(&id, payload->Data, sizeof(ecs::entity_id));
-				if (!itemAlreadyDropped) {
-					transform->SetParent(id, parentId);
-					itemAlreadyDropped = true;
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
-		if (ImGui::BeginDragDropSource()) {
-			ImGui::Text("Moving Entity");
-			ImGui::SetDragDropPayload("MoveEntity", &parentId, sizeof(ecs::entity_id), ImGuiCond_Once);
-			ImGui::EndDragDropSource();
-		}
-
-		std::string popupName = "Menu Entity###" + std::to_string(parentId);
-
-		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-			selected = parentId;
-			ImGui::OpenPopup(popupName.c_str());
-		}
-
-		if (ImGui::BeginPopup(popupName.c_str())) {
-			if (ImGui::MenuItem("Delete")) {
-				scene.DestroyEntity(parentId);
-				selected = (ecs::entity_id)ecs::id::invalid_id;
-			}
-
-			if (ImGui::MenuItem("Soft Delete")) {
-				for (u32 i = 0; i < childs.size();) {
-					transform->SetParent(childs[0], transform->parent[parentIndex]);
-				}
-				scene.DestroyEntity(parentId);
-				selected = (ecs::entity_id)ecs::id::invalid_id;
-			}
-
-			ImGui::EndPopup();
-		}
-
-		if (open) {
-			for (u32 i = 0; i < childs.size(); i++) {
-				ShowChild(childs[i], transform, scene);
-			}
-			ImGui::TreePop();
-		}
-	}
-}
-
-float* my_color = new float(0);
 
 int main(int argc, char* argv[]) {
 	// Create Window
@@ -199,11 +138,10 @@ int main(int argc, char* argv[]) {
 		}
 
 		views::GameHiearchy::SetScene(scene);
-		views::GameHiearchy::SetSelected(&selected);
 		views::GameHiearchy::Show();
 
 		views::GameInspector::SetScene(scene);
-		views::GameInspector::SetSelected(selected);
+		views::GameInspector::SetSelected(views::GameHiearchy::selected);
 		views::GameInspector::Show();
 
 		//Render

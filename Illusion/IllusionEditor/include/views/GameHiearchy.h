@@ -17,7 +17,7 @@ namespace illusion::views::GameHiearchy {
 		illusion::ecs::Scene* scene = nullptr;
 
 		bool itemAlreadyDropped = false;
-		ecs::entity_id *selected;
+		ecs::entity_id selected = (ecs::entity_id)ecs::id::invalid_id;
 	}
 
 	void ShowChild(ecs::entity_id parentId, ecs::core::Transform* transform, ecs::Scene& scene) {
@@ -27,11 +27,11 @@ namespace illusion::views::GameHiearchy {
 			std::string name = std::to_string(ecs::id::Index(parentId)) + " [" + std::to_string(ecs::id::Generation(parentId)) + "]";
 
 			bool open = ImGui::TreeNodeEx(name.c_str(),
-				ImGuiTreeNodeFlags_FramePadding | ((*selected) == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
+				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
 				"Entity %s", name.c_str());
 			if (ImGui::IsItemClicked()) {
 				itemAlreadyDropped = false;
-				(*selected) = parentId;
+				selected = parentId;
 			}
 			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
@@ -53,14 +53,14 @@ namespace illusion::views::GameHiearchy {
 			std::string popupName = "Menu Entity###" + std::to_string(parentId);
 
 			if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-				(*selected) = parentId;
+				selected = parentId;
 				ImGui::OpenPopup(popupName.c_str());
 			}
 
 			if (ImGui::BeginPopup(popupName.c_str())) {
 				if (ImGui::MenuItem("Delete")) {
 					scene.DestroyEntity(parentId);
-					(*selected) = (ecs::entity_id)ecs::id::invalid_id;
+					selected = (ecs::entity_id)ecs::id::invalid_id;
 				}
 
 				if (ImGui::MenuItem("Soft Delete")) {
@@ -68,7 +68,7 @@ namespace illusion::views::GameHiearchy {
 						transform->SetParent(childs[0], transform->parent[parentIndex]);
 					}
 					scene.DestroyEntity(parentId);
-					(*selected) = (ecs::entity_id)ecs::id::invalid_id;
+					selected = (ecs::entity_id)ecs::id::invalid_id;
 				}
 
 				ImGui::EndPopup();
@@ -106,7 +106,7 @@ namespace illusion::views::GameHiearchy {
 		scene = &currScene;
 	}
 
-	void SetSelected(illusion::ecs::entity_id* currSelected) {
+	void SetSelected(illusion::ecs::entity_id currSelected) {
 		selected = currSelected;
 	}
 } 

@@ -5,9 +5,13 @@
 namespace illusion::ecs::core {
 
 	struct Transform : public Component {
-		Transform(Scene* scene) : Component(scene) {}
+		Transform(Scene* scene) : Component(scene) {
+			COMPONENT_PUBLIC(position);
+			COMPONENT_PUBLIC(rotation);
+			COMPONENT_PUBLIC(scale);
+		}
 
-		COMPONENT_NAME("TRANSFORM");
+		COMPONENT_NAME("Transform");
 
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);

@@ -12,12 +12,26 @@
 	inline static const std::string CNAME = ##NAME;\
 	virtual std::string getName() { return CNAME; }
 
+#define COMPONENT_PUBLIC(NAME) \
+	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
+
 namespace illusion::ecs {
 	// On déclare Scene sans inclure ses headers par question de double dépendances
 	struct Scene;
 
 	// Permet de différencier l'id d'un component d'un autre id ( Voir Documentation Macro )
 	DEFINE_TYPED_ID(component_id);
+
+	struct PublicComponentDatas {
+		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name) {
+			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name };
+			return newData;
+		}
+
+		void* data;
+		size_t type;
+		std::string name;
+	};
 
 	/**
 	 * Component
@@ -47,6 +61,9 @@ namespace illusion::ecs {
 		// Tableau avec pour index l'id des entités, et pour valeur la position des données
 		// Elle permet de pointer vers la liste des données qui est compactée
 		util::Array<component_id> ToData;
+
+		// Tableau des variables publiques du component, elle permet principalement d'afficher des éléments d'UI
+		util::Array<PublicComponentDatas> publicDatas;
 
 		/**
 		 * @brief	Permet d'annoncer qu'une entité va utiliser le component
