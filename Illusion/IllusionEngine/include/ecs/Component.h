@@ -2,12 +2,36 @@
 
 #include "ecs/Entity.h"
 
+/**
+* Macro permettant d'abstraire la cr�ation d'un type de donn�e d'un component
+*/
+#define COMPONENT_DATA(TYPE, NAME) \
+	util::Array<TYPE> NAME
+
+#define COMPONENT_NAME(NAME)\
+	inline static const std::string CNAME = ##NAME;\
+	virtual std::string getName() { return CNAME; }
+
+#define COMPONENT_PUBLIC(NAME) \
+	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
+
 namespace illusion::ecs {
 	// On dיclare Scene sans inclure ses headers par question de double dיpendances
 	struct Scene;
 
 	// Permet de diffיrencier l'id d'un component d'un autre id ( Voir Documentation Macro )
 	DEFINE_TYPED_ID(component_id);
+
+	struct PublicComponentDatas {
+		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name) {
+			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name };
+			return newData;
+		}
+
+		void* data;
+		size_t type;
+		std::string name;
+	};
 
 	/**
 	 * Component
@@ -27,8 +51,9 @@ namespace illusion::ecs {
 	 */
 	struct Component {
 		Component(Scene* scene);
-
 		Scene *scene;
+
+		COMPONENT_NAME("DEFAULT COMPONENT");
 
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
 		util::Array<entity_id> ToEntity;
@@ -36,6 +61,9 @@ namespace illusion::ecs {
 		// Tableau avec pour index l'id des entitיs, et pour valeur la position des donnיes
 		// Elle permet de pointer vers la liste des donnיes qui est compactיe
 		util::Array<component_id> ToData;
+
+		// Tableau des variables publiques du component, elle permet principalement d'afficher des �l�ments d'UI
+		util::Array<PublicComponentDatas> publicDatas;
 
 		/**
 		 * @brief	Permet d'annoncer qu'une entitי va utiliser le component
@@ -50,6 +78,13 @@ namespace illusion::ecs {
 		 * @param	id l'identifiant de l'entitי
 		 */
 		void RemoveComponent(entity_id id);
+
+		/**
+		 * @brief Fonction appel� apr�s RemoveComponent
+		 *
+		 * @param	id l'identifiant de l'entit�
+		 */
+		virtual void AfterRemoveComponent(entity_id id);
 
 		/**
 		 * Evenements
@@ -79,7 +114,7 @@ namespace illusion::ecs {
 		 *			[!] Doit יtendre les donnיes rajoutיes lors de l'hיritage
 		 * @param	id l'identifiant de l'entitי
 		 */
-		virtual void AddComponentDatas(entity_id id){}
+		virtual void AddDatas(entity_id id){}
 
 		/**
 		 * @brief	Fonction appelי lors de la suppression du component א une entitי.
@@ -88,20 +123,21 @@ namespace illusion::ecs {
 		 *			[!] Doit supprimer les donnיes rajoutיes lors de l'hיritage
 		 * @param	id l'identifiant de l'entitי
 		 */
-		virtual void RemoveComponentDatas(component_id index, entity_id id){}
+		virtual void RemoveDatas(component_id index, entity_id id){}
 
 		/**
 		 * Wrapper pour ajouter une donnיe א un tableau de donnיes ( rajout du component א une entitי )
 		 */
-		template<typename T> inline void AddComponentData(illusion::util::Array<T>& array, T data) {
+		template<typename T> inline void AddData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 
 		/**
 		 * Wrapper pour supprimer une donnיe א un tableau de donnיes depuis un index ( ducoup une entitי )
 		 */
-		template<typename T> inline void RemoveComponentData(illusion::util::Array<T>& array, component_id index) {
+		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
 		}
 	};
+
 }

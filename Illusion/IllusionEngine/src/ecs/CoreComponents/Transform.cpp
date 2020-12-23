@@ -5,7 +5,12 @@ namespace illusion::ecs::core {
 
 	void Transform::SetParent(ecs::entity_id id, ecs::entity_id parentId) {
 		// If id or parentId not valid -> Stop
-		if (!illusion::ecs::id::IsValid(id) || !illusion::ecs::id::IsValid(parentId)) return;
+		if (!illusion::ecs::id::IsValid(id)) return;
+		if (!illusion::ecs::id::IsValid(parentId)) {
+			RemoveParent(id);
+			return;
+		}
+		if (HaveParentRecursive(parentId, id)) return;
 
 		illusion::ecs::component_id indexId = getIndex(id);
 		illusion::ecs::component_id indexParentId = getIndex(parentId);
@@ -13,7 +18,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexParentId)) return;
 
-		// 1. On signale à l'ancien parent si il existe de supprimer l'id de ses enfants
+		// 1. On signale � l'ancien parent si il existe de supprimer l'id de ses enfants
 		illusion::ecs::entity_id currentParentId = parent[indexId];
 		if (parentId != currentParentId
 			&& illusion::ecs::id::IsValid(currentParentId)
@@ -23,7 +28,20 @@ namespace illusion::ecs::core {
 
 		// 2.	On modifie le parent de l'id et on signale au parent qu'il a un nouvel enfant
 		SetChild(parentId, id);
-		parent[id] = parentId;
+		parent[indexId] = parentId;
+	}
+
+	void Transform::RemoveParent(ecs::entity_id id) {
+		if (!illusion::ecs::id::IsValid(id)) return;
+
+		illusion::ecs::component_id indexId = getIndex(id);
+
+		if (!illusion::ecs::id::IsValid(indexId)) return;
+
+		ecs::entity_id parentId = parent[indexId];
+		if (parentId != id::invalid_id) RemoveChild(parentId, id);
+
+		parent[indexId] = (ecs::entity_id)id::invalid_id;
 	}
 
 	void Transform::SetChild(ecs::entity_id id, ecs::entity_id childId) {
@@ -36,7 +54,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexChildId)) return;
 
-		// Si childId n'a pas déjà le parent en id
+		// Si childId n'a pas d�j� le parent en id
 		util::Array<ecs::entity_id>& childsId = childs[indexId];
 		if(parent[indexChildId] != id){
 			childsId.push_back(childId);
@@ -63,31 +81,51 @@ namespace illusion::ecs::core {
 		parent[indexChildId] = ecs::entity_id{ id::invalid_id };
 	}
 
-	void Transform::AddComponentDatas(ecs::entity_id id) {
-		AddComponentData(position, Vec3(0, 0, 0));
-		AddComponentData(rotation, Quaternion(0, 0, 0, 1));
-		AddComponentData(scale, Vec3(1, 1, 1));
-		AddComponentData(parent, entity_id{ ecs::id::invalid_id });
-		AddComponentData(childs, util::Array<ecs::entity_id>());
+	bool Transform::HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId) {
+		if (parentId == id::invalid_id || id == id::invalid_id) return false;
+		if (id == parentId) return false; // Une entit� ne peut pas se contenir soit m�me
+		component_id index = getIndex(id);
+		while (index != id::invalid_id) {
+			id = parent[index];
+			if (id == parentId) return true;
+			if (id == id::invalid_id) return false;
+			index = getIndex(id);
+		}
+		return false;
 	}
 
-	void Transform::RemoveComponentDatas(ecs::component_id index, ecs::entity_id id) {
-		// On signale au parent que l'id a été supprimé
+	void Transform::AddDatas(ecs::entity_id id) {
+		AddData(position, Vec3(0, 0, 0));
+		AddData(rotation, Quaternion(0, 0, 0, 1));
+		AddData(scale, Vec3(1, 1, 1));
+		AddData(parent, entity_id{ ecs::id::invalid_id });
+		AddData(childs, util::Array<ecs::entity_id>());
+	}
+
+	void Transform::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+		// On signale au parent que l'id a �t� supprim�
 		RemoveChild(id, parent[index]);
 
 		// On Supprime les enfants
 		u32 nbChilds = childs[index].size();
 		for (u32 i = 0; i < nbChilds; i++) {
-			index = getIndex(id); // On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+			// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
+			index = getIndex(id);
 			scene->DestroyEntity(childs[index][i]);
 		}
-		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+
+		// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
 		index = getIndex(id);
 
-		RemoveComponentData(position, index);
-		RemoveComponentData(rotation, index);
-		RemoveComponentData(scale, index);
-		RemoveComponentData(parent, index);
-		RemoveComponentData(childs, index);
+		RemoveData(position, index);
+		RemoveData(rotation, index);
+		RemoveData(scale, index);
+		RemoveData(parent, index);
+		RemoveData(childs, index);
+	}
+
+	void Transform::AfterRemoveComponent(entity_id id) {
+		INTERNAL_INFO("DELETE ELEMENT !")
+		scene->DestroyEntity(id);
 	}
 }

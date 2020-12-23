@@ -17,7 +17,7 @@ namespace illusion::ecs {
 	 * Une scène regroupe tout ce qu'il faut pour la création d'un niveau dans le jeux
 	 * Elle possède le System ECS ( Entité, Component, System ) pour pouvoir donner des comportements aux jeux
 	 * Ainsi que des fonctions permettant de rafraichir l'état du jeux
-	 * 
+	 *
 	 * +----------------+
 	 * | ECS			|
 	 * +----------------+
@@ -32,7 +32,7 @@ namespace illusion::ecs {
 		Entities entities;
 
 		// @Ask : peut être utiliser u32 ou u12 à la place de size_t qui est un long long pour plus de perfs ?
-		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs 
+		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs
 		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
@@ -92,22 +92,30 @@ namespace illusion::ecs {
 		 * @param	id l'id de l'entité
 		 */
 		template<typename C> void EntityAddComponent(entity_id id) {
-			GetComponentSystem<C>()->UseComponent(id);
-			for (auto const& [key, val] : systems) {
-				val->template OnComponentAdd<C>(id);
-			}
+			return EntityAddComponent(id, typeid(C).hash_code());
 		}
 
 		/**
-		 * Permet de signaler qu'une Entité ne va plus utiliser un Component donné
-		 * @param	id l'id de l'entité
+		 * Permet de signaler qu'une Entit� va utiliser un Component donn�
+		 * @param	id l'id de l'entit�
+		 * @param	componentHash le hash du component
+		 */
+		void EntityAddComponent(entity_id id, size_t componentHash);
+
+		/**
+		 * Permet de signaler qu'une Entit� ne va plus utiliser un Component donn�
+		 * @param	id l'id de l'entit�
 		 */
 		template<typename C> void EntityRemoveComponent(entity_id id) {
-			GetComponentSystem<C>()->RemoveComponent(id);
-			for (auto const& [key, val] : systems) {
-				val->template OnComponentRemove<C>(id);
-			}
+			return EntityRemoveComponent(id, typeid(C).hash_code());
 		}
+
+		/**
+		 * Permet de signaler qu'une Entit� ne va plus utiliser un Component donn�
+		 * @param	id l'id de l'entit�
+		 * @param	componentHash le hash du component
+		 */
+		void EntityRemoveComponent(entity_id id, size_t componentHash);
 
 		/**
 		 * >>> System Part
