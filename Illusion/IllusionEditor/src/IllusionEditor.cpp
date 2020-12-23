@@ -4,6 +4,10 @@
 #include "ecs/Scene.h"
 #include "IllusionEngine.h"
 
+#include "views/UiTheme.h"
+#include "views/GameInspector.h"
+#include "views/GameHiearchy.h"
+
 #include <iostream>
 #include <vector>
 #include <bitset>
@@ -23,20 +27,18 @@ using namespace illusion;
 
 struct RigidBodyComponent : public ecs::Component {
 	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {}
+
 	COMPONENT_NAME("RIGIDBODY");
 
 	COMPONENT_DATA(Vec3, velocity);
 
-	virtual void AddDatas(ecs::entity_id id) override;
-	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id);
+	virtual void AddDatas(ecs::entity_id id) override {
+		AddData(velocity, Vec3(0, 0, 0));
+	}
+	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+		RemoveData(velocity, index);
+	}
 };
-
-void RigidBodyComponent::AddDatas(ecs::entity_id id){
-	AddData(velocity, Vec3(0, 0, 0));
-}
-void RigidBodyComponent::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-	RemoveData(velocity, index);
-}
 
 ///--> SYSTEMS
 struct TwerkSystem : public ecs::System {
@@ -61,33 +63,6 @@ struct TwerkSystem : public ecs::System {
 	virtual void Initialize(ecs::Scene& scene) override {
 		transform = scene.GetComponent<ecs::core::Transform>();
 		SetDependencies(transform);
-	}
-};
-
-struct DireBonjour : public ecs::System {
-	SYSTEM_NAME("BONJOUR");
-
-	ecs::Scene *scene;
-
-	ecs::core::Transform* transform;
-	RigidBodyComponent* rigidbody;
-
-	/* la fonction Update */
-	SYSTEM_UPDATE_LOOP(
-		for (u32 i = 0; i < 10000; i++) {
-			velocity().x += 0.001f;
-		}
-	);
-
-	/* Definition des variables utiles */
-	SYSTEM_USE_DATA(velocity, rigidbody, velocity, Vec3);
-
-	/* Initialisation relative à la scène parente */
-	virtual void Initialize(ecs::Scene& scene) override {
-		this->scene = &scene;
-		transform = scene.GetComponent<ecs::core::Transform>();
-		rigidbody = scene.GetComponent<RigidBodyComponent>();
-		SetDependencies(transform, rigidbody);
 	}
 };
 
@@ -175,13 +150,13 @@ int main(int argc, char* argv[]) {
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
+	illusion::views::theme::InitTheme();
 
 	// Init Scene
 	//----------
 	ecs::Scene scene;
 	scene.UseComponent<RigidBodyComponent>();
 	scene.UseSystem<TwerkSystem>();
-	scene.UseSystem<DireBonjour>();
 	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();	
 
 	std::vector<float> fpsMesure;
@@ -189,6 +164,7 @@ int main(int argc, char* argv[]) {
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
+		Input::Update();
 		if (Input::isKeyDown(GLFW_KEY_A)) {
 			INFO("PRESSED KEY A");
 		}
@@ -222,66 +198,13 @@ int main(int argc, char* argv[]) {
 			ImGui::End();
 		}
 
-		{
-			ImGui::Begin("Hierarchy");
+		views::GameHiearchy::SetScene(scene);
+		views::GameHiearchy::SetSelected(&selected);
+		views::GameHiearchy::Show();
 
-			std::string ButtonTitle = "Add Entity (" + std::to_string(transforms->ToEntity.size()) + ")";
-			if (ImGui::Button(ButtonTitle.c_str())) {
-				scene.CreateEntity();
-			}
-
-			//u32 nb = transforms->ToEntity.size();
-			for (u32 i = 0; i < transforms->ToEntity.size(); i++) {
-				if (transforms->parent[i] == ecs::id::invalid_id) {
-					ShowChild(transforms->ToEntity[i], transforms, scene);
-				}
-			}
-			ImGui::End();
-		}
-
-		{
-			ImGui::Begin("Inspector");
-
-			if (selected != ecs::id::invalid_id) {
-				//FILL
-				/*ecs::component_id component = transforms->getIndex(selected);
-				position[0] = transforms->position[component].x;
-				position[1] = transforms->position[component].y;
-				position[2] = transforms->position[component].z;
-
-				ImGui::DragFloat3("position", position, 0.1f);
-				ImGui::DragFloat3("rotation", rotation, 0.1f);
-				ImGui::DragFloat3("scale", scale, 0.1f);
-
-				transforms->position[component].x = position[0];
-				transforms->position[component].y = position[1];
-				transforms->position[component].z = position[2];*/
-
-				ecs::component_id iSelected = (ecs::component_id)ecs::id::Index(selected);
-
-				ImGui::Text("> Components");
-				for (auto const& [key, val] : scene.components) {
-					if (val->ToData[iSelected] != ecs::id::invalid_id) {
-						std::string name = "Remove " + val->getName();
-						if (ImGui::Button(name.c_str())) {
-							scene.EntityRemoveComponent(selected, key);
-						}
-					}
-					else {
-						std::string name = "Add " + val->getName();
-						if (ImGui::Button(name.c_str())) {
-							scene.EntityAddComponent(selected, key);
-						}
-					}
-				}
-				ImGui::Text("> Systems");
-				for (auto const& [key, val] : scene.systems) {
-					if (val->ToData[iSelected] != ecs::id::invalid_id) ImGui::Text(val->getName().c_str());
-				}
-			}
-
-			ImGui::End();
-		}
+		views::GameInspector::SetScene(scene);
+		views::GameInspector::SetSelected(selected);
+		views::GameInspector::Show();
 
 		//Render
 		ImGui::Render();
@@ -298,7 +221,6 @@ int main(int argc, char* argv[]) {
 		fpsMesure.push_back(1.0 / ( duration_cast<microseconds>(stop - start).count() / 1000000.0 ));
 		if (fpsMesure.size() > 100) fpsMesure.erase(fpsMesure.begin());
 		
-		Input::Update();
 		glfwSwapBuffers(Window::glfwWindow);
 	}
 	Window::Destroy();
@@ -308,34 +230,4 @@ int main(int argc, char* argv[]) {
 	ImGui_ImplGlfw_Shutdown();
 
 	ImGui::DestroyContext();
-
-	/*
-	ecs::Scene scene1; // E C S
-	scene1.UseSystem<TwerkSystem>();
-
-
-	f64 average = 0.0;
-	f64 timeIteration = 50;
-
-	ecs::entity_id id;
-	ecs::entity_id firstId;
-	for (u32 i = 0; i < 1000; i++) {
-		id = scene1.CreateEntity();
-	}
-
-	INTERNAL_INFO("INIT END")
-
-	for (int test = 0; test < timeIteration; test++) {
-		auto start = high_resolution_clock::now();
-
-		scene1.Update();
-		//scene1.DestroyEntity(firstId);
-
-		auto stop = high_resolution_clock::now();
-		average += duration_cast<microseconds>(stop - start).count() ;
-		std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
-	}
-
-	std::cout << "AVERAGE : " << 1.0 / ((average / 1000000.0) / timeIteration) << " FPS" << std::endl;
-	*/
 }

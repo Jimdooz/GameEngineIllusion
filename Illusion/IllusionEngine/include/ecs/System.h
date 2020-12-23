@@ -60,6 +60,7 @@ namespace illusion::ecs {
 		util::Array<component_id> ToData;		// Liste non compacte de pointeurs vers les entités ciblés par le System ( id::invalid si non )
 		util::Array<Component*> componentsDeps;	// Liste des Components dont dépend le System
 
+		// Permet de récupérer l'id de l'entité actuellement dans la boucle
 		inline entity_id id() {
 			return ToEntity[currIndex];
 		}
