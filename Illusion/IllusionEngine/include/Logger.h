@@ -29,17 +29,16 @@
 
 #if (defined(ILSENGINE_DEBUG) || defined(ILSENGINE_INTERNAL_DEBUG))
 namespace illusion {
-
-	template<typename Arg1, typename ...Args>
-	void log(Arg1&& _arg1, Args&& ..._args)
-	{
-		std::cout << _arg1;
-		log(_args...);
-	}
 	template <typename Arg1>
 	void log(Arg1&& _arg1)
 	{
 		std::cout << _arg1;
+	}
+	template<typename Arg1,typename ...Args>
+	void log(Arg1&& _arg1, Args&& ..._args)
+	{
+		std::cout << _arg1;
+		log(_args...);
 	}
 };
 #endif

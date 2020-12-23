@@ -11,10 +11,10 @@ namespace illusion::ecs::id {
     using id_type = u32;
 
     //define invalid IDs ( -1 )
-    constexpr u8 u8_invalid_id{ 0xffui8 };
-    constexpr u16 u16_invalid_id{ 0xffffui16 };
-    constexpr u32 u32_invalid_id{ 0xffff'ffffui32 };
-    constexpr u64 u64_invalid_id{ 0xffff'ffff'ffff'ffffui64 };
+    // constexpr u8 u8_invalid_id{ UINT8_MAX };
+    // constexpr u16 u16_invalid_id{ UINT16_MAX };
+    // constexpr u32 u32_invalid_id{ 0xffff'ffffui32 };
+    // constexpr u64 u64_invalid_id{ 0xffff'ffff'ffff'ffffui64 };
 
     //id and generation size
     constexpr u32 generation_bits { 10 };
@@ -37,18 +37,18 @@ namespace illusion::ecs::id {
     static_assert (sizeof (generation_type) * 8 >= generation_bits, "Invalid generation type size");
     static_assert (sizeof (id_type) - sizeof (generation_type) > 0, "generation_type size must fit into id_type size");
 
-    // Permet de savoir si une génération est en vie
+    // Permet de savoir si une gÃ©nÃ©ration est en vie
     inline bool IsGenerationAlive(generation_type generation) {
         return generation >> generation_bits;
     }
 
-    // Change la valeur de vie de génération 
+    // Change la valeur de vie de gÃ©nÃ©ration 
     inline generation_type SetGenerationAlive(generation_type generation, bool alive) {
         generation_type aliveValue = (alive ? 1 : 0) << (generation_bits);
         return (generation & generation_mask) + aliveValue;
     }
 
-    // Permet de récupérer la valeur de génération de génération
+    // Permet de rÃ©cupÃ©rer la valeur de gÃ©nÃ©ration de gÃ©nÃ©ration
     // La Generation Type sans la valeur de sa vie
     inline generation_type GetGenerationValue(generation_type generation) {
         return generation & generation_mask;
@@ -59,25 +59,25 @@ namespace illusion::ecs::id {
         return id != invalid_id;
     }
 
-    // Récupère l'index d'un id
+    // RÃ©cupÃ¨re l'index d'un id
     inline id_type Index(id_type id){
         id_type index{ id & index_mask };
         assert(index != index_mask);
         return id & index_mask;
     }
 
-    // Récupère la génération d'un id
+    // RÃ©cupÃ¨re la gÃ©nÃ©ration d'un id
     inline id_type Generation(id_type id){
         return (id >> index_bit) & generation_mask;
     }
 
-    // Change la génération d'un id
+    // Change la gÃ©nÃ©ration d'un id
     inline id_type SetGeneration(id_type id, id_type generation){
         if (generation >= generation_mask) generation = 0;
         return Index(id) | (generation << index_bit);
     }
 
-    // Incrémente la génération d'un id
+    // IncrÃ©mente la gÃ©nÃ©ration d'un id
     inline id_type NewGeneration(id_type id){
         id_type generation{ id::Generation(id) + 1 };
         return SetGeneration(id, generation);
@@ -97,7 +97,7 @@ namespace illusion::ecs::id {
     }
 
 /**
- * Macro permettant de différencier les différents type selon les contextes
+ * Macro permettant de diffÃ©rencier les diffÃ©rents type selon les contextes
  * Cette distinction ne se fera qu'en mode Debug pour des questions de performances
  */
 #define DEFINE_TYPED_ID(name)                                       \

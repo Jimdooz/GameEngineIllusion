@@ -17,18 +17,18 @@ namespace illusion::ecs {
 		const entity_id getId{ id::Index(id) };
 		component_id index{ ToData[getId] };
 
-		// On supprime toutes les données liées à l'id
+		// On supprime toutes les donnÃ©es liÃ©es Ã  l'id
 		RemoveComponentDatas(index, id);
 
-		// On récupère le nouvel index qui a pû être modifié lors de la fonction précédente
-		// Ainsi que le dernier index de ToEntity pour l'échange
+		// On rÃ©cupÃ¨re le nouvel index qui a pÃ» Ãªtre modifiÃ© lors de la fonction prÃ©cÃ©dente
+		// Ainsi que le dernier index de ToEntity pour l'Ã©change
 		component_id index_post{ ToData[getId] };
 		entity_id lastId{ id::Index(ToEntity.back()) };
 
 		// On supprime la position vers ToEntity
 		RemoveComponentData(ToEntity, index);
 
-		// On procède à l'échange
+		// On procÃ¨de Ã  l'Ã©change
 		ToData[lastId] = component_id{ index_post };
 		ToData[getId] = component_id{ id::invalid_id };
 	}

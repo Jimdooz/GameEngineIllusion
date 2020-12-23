@@ -60,15 +60,15 @@ namespace illusion::util {
 #endif
 
 /**
- * Fonctions permettant de manipuler de manière plus précises les différentes structures
+ * Fonctions permettant de manipuler de maniÃ¨re plus prÃ©cises les diffÃ©rentes structures
  */
 
 namespace illusion::util {
 	/**
-	 * Fonction permettant de supprimer une valeur de manière efficace pour avoir un tableau sans trous
-	 * Le but étant d'échanger la valeur à supprimer avec le dernier element et de "supprimer" le nouveau dernier element
-	 * @param v le vecteur à modifier
-	 * @param index l'index de la valeur à supprimer
+	 * Fonction permettant de supprimer une valeur de maniÃ¨re efficace pour avoir un tableau sans trous
+	 * Le but Ã©tant d'Ã©changer la valeur Ã  supprimer avec le dernier element et de "supprimer" le nouveau dernier element
+	 * @param v le vecteur Ã  modifier
+	 * @param index l'index de la valeur Ã  supprimer
 	 */
 	template<typename T> void EraseUnordered(Array<T>& v, size_t index) {
 		if (v.size() > 1) {

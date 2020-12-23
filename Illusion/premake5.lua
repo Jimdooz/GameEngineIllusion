@@ -43,11 +43,18 @@ project "IllusionEngine"
 		"%{IncludeDir.Glad}"
 	}
 
-	links 
-	{
-		"Glad"
-	}
-
+	filter "system:linux"
+		systemversion "latest"
+		defines
+		{
+			"ILS_PLATFORM_LINUX"
+		}
+		files
+		{
+			"%{wks.location}/libs/Glad/include/glad/glad.h",
+			"%{wks.location}/libs/Glad/include/KHR/khrplatform.h",
+			"%{wks.location}/libs/Glad/src/glad.c"
+		}
 	filter "system:windows"
 		systemversion "latest"
 
@@ -56,14 +63,15 @@ project "IllusionEngine"
 			"ILS_PLATFORM_WINDOWS"
 		}
 
+		links
+		{
+			"Glad",
+			"libs/glfw/lib-vc2019/glfw3.lib"
+		}
+
 		postbuildcommands
 		{
 			("{COPY} %{cfg.buildtarget.relpath} \"../build/" .. outputdir .. "/IllusionEditor/\"")
-		}
-
-		links
-		{
-			"libs/glfw/lib-vc2019/glfw3.lib"
 		}
 
 	filter "configurations:Debug"
@@ -104,11 +112,27 @@ project "IllusionEditor"
 		"%{IncludeDir.IllusionEngine}"
 	}
 
-	links
-	{
-		"IllusionEngine"
-	}
+	filter "system:linux"
+		systemversion "latest"
 
+		defines
+		{
+			"ILS_PLATFORM_LINUX"
+		}
+		libdirs { "%{wks.location}/libs/glfw/liblinux/" }
+		links
+		{
+			"glfw3",
+			"Xrandr",
+			"Xi",
+			"GLU",
+			"GL",
+			"X11",
+			"dl",
+			"pthread",
+			"stdc++fs",
+			"IllusionEngine"
+		}
 	filter "system:windows"
 		systemversion "latest"
 
@@ -116,7 +140,10 @@ project "IllusionEditor"
 		{
 			"ILS_PLATFORM_WINDOWS"
 		}
-
+		links
+		{
+			"IllusionEngine"
+		}
 	filter "configurations:Debug"
 		defines {
 			"ILSENGINE_DEBUG",
@@ -138,22 +165,20 @@ project "Glad"
 	
 	targetdir ("build/" .. outputdir .. "/%{prj.name}")
 	objdir ("obj/" .. outputdir .. "/%{prj.name}")
-
-	files
-	{
-		"%{prj.location}/include/glad/glad.h",
-		"%{prj.location}/include/KHR/khrplatform.h",
-		"%{prj.location}/src/glad.c"
-	}
-
-	includedirs
-	{
-		"%{prj.location}/include"
-	}
 	
 	filter "system:windows"
 		systemversion "latest"
+		files
+		{
+			"%{prj.location}/include/glad/glad.h",
+			"%{prj.location}/include/KHR/khrplatform.h",
+			"%{prj.location}/src/glad.c"
+		}
 
+		includedirs
+		{
+			"%{prj.location}/include"
+		}
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "on"
@@ -162,4 +187,3 @@ project "Glad"
 	filter "configurations:Release"
 		runtime "Release"
 		optimize "on"
-	

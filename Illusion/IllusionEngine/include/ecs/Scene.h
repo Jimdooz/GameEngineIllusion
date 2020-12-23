@@ -8,15 +8,15 @@
 
 namespace illusion::ecs {
 
-	// On déclare System sans inclure ses headers par question de double dépendances
+	// On dÃ©clare System sans inclure ses headers par question de double dÃ©pendances
 	struct System;
 
 	/**
 	 * Scene
 	 *
-	 * Une scène regroupe tout ce qu'il faut pour la création d'un niveau dans le jeux
-	 * Elle possède le System ECS ( Entité, Component, System ) pour pouvoir donner des comportements aux jeux
-	 * Ainsi que des fonctions permettant de rafraichir l'état du jeux
+	 * Une scÃ¨ne regroupe tout ce qu'il faut pour la crÃ©ation d'un niveau dans le jeux
+	 * Elle possÃ¨de le System ECS ( EntitÃ©, Component, System ) pour pouvoir donner des comportements aux jeux
+	 * Ainsi que des fonctions permettant de rafraichir l'Ã©tat du jeux
 	 * 
 	 * +----------------+
 	 * | ECS			|
@@ -31,9 +31,9 @@ namespace illusion::ecs {
 		// ECS System
 		Entities entities;
 
-		// @Ask : peut être utiliser u32 ou u12 à la place de size_t qui est un long long pour plus de perfs ?
-		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs 
-		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
+		// @Ask : peut Ãªtre utiliser u32 ou u12 Ã  la place de size_t qui est un long long pour plus de perfs ?
+		// @Ask : peut Ãªtre directement stoquer des Components ou System Ã  la place de pointeurs 
+		//		  puisque une mÃªme instance de Component ne peut apartenir qu'Ã  une scÃ¨ne
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
 
@@ -42,13 +42,13 @@ namespace illusion::ecs {
 		 */
 
 		/**
-		 * Permet de créer une entité
-		 * @return	l'id de l'entité généré
+		 * Permet de crÃ©er une entitÃ©
+		 * @return	l'id de l'entitÃ© gÃ©nÃ©rÃ©
 		 */
 		entity_id CreateEntity();
 
 		/**
-		 * Permet de supprimer une entité
+		 * Permet de supprimer une entitÃ©
 		 */
 		void DestroyEntity(entity_id id);
 
@@ -56,10 +56,10 @@ namespace illusion::ecs {
 		 * >>> Component Part
 		 */
 
-		// @Ask : peut être assert si le type C hérite bien de Component en Debug ?
+		// @Ask : peut Ãªtre assert si le type C hÃ©rite bien de Component en Debug ?
 		// car rien n'oblige avec le C++ il me semble
 		/**
-		 * Fonction signalant à la scène qu'il doit utiliser un type de Component donné
+		 * Fonction signalant Ã  la scÃ¨ne qu'il doit utiliser un type de Component donnÃ©
 		 */
 		template<typename C> void UseComponent() {
 			if (ComponentExist<C>()) return;
@@ -67,45 +67,45 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Permet de savoir si la scène inclus déjà un Component donné
+		 * Permet de savoir si la scÃ¨ne inclus dÃ©jÃ  un Component donnÃ©
 		 */
 		template<typename C> bool ComponentExist() {
 			return components.find(typeid(C).hash_code()) != components.end();
 		}
 
 		/**
-		 * Permet de récupérer un Component
+		 * Permet de rÃ©cupÃ©rer un Component
 		 */
 		template<typename C> Component* GetComponentSystem() {
 			return components[typeid(C).hash_code()];
 		}
 
 		/**
-		 * Permet de récupérer un Component typé
+		 * Permet de rÃ©cupÃ©rer un Component typÃ©
 		 */
 		template<typename C> C* GetComponent() {
 			return static_cast<C*>(GetComponentSystem<C>());
 		}
 
 		/**
-		 * Permet de signaler qu'une Entité va utiliser un Component donné
-		 * @param	id l'id de l'entité
+		 * Permet de signaler qu'une EntitÃ© va utiliser un Component donnÃ©
+		 * @param	id l'id de l'entitÃ©
 		 */
 		template<typename C> void EntityAddComponent(entity_id id) {
 			GetComponentSystem<C>()->UseComponent(id);
 			for (auto const& [key, val] : systems) {
-				val->OnComponentAdd<C>(id);
+				val->template OnComponentAdd<C>(id);
 			}
 		}
 
 		/**
-		 * Permet de signaler qu'une Entité ne va plus utiliser un Component donné
-		 * @param	id l'id de l'entité
+		 * Permet de signaler qu'une EntitÃ© ne va plus utiliser un Component donnÃ©
+		 * @param	id l'id de l'entitÃ©
 		 */
 		template<typename C> void EntityRemoveComponent(entity_id id) {
 			GetComponentSystem<C>()->RemoveComponent(id);
 			for (auto const& [key, val] : systems) {
-				val->OnComponentRemove<C>(id);
+				val->template OnComponentRemove<C>(id);
 			}
 		}
 
@@ -114,7 +114,7 @@ namespace illusion::ecs {
 		 */
 
 		/**
-		 * Fonction signalant à la scène qu'il doit utiliser un type de System donné
+		 * Fonction signalant Ã  la scÃ¨ne qu'il doit utiliser un type de System donnÃ©
 		 */
 		template<typename C> void UseSystem() {
 			systems[typeid(C).hash_code()] = new C();
@@ -122,7 +122,7 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Fonction permettant de récupérer un System typé
+		 * Fonction permettant de rÃ©cupÃ©rer un System typÃ©
 		 */
 		template<typename C> C& GetSystem() {
 			return static_cast<C&>(*systems[typeid(C).hash_code()]);

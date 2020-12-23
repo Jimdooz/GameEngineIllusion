@@ -8,13 +8,13 @@
 #include <iostream>
 #include <cmath>
 #include <string>
-#include <stdint.h>
-
+#include <cstdint>
+#include <algorithm>
 //glfw include
 #include "GLFW/glfw3.h"
 
 //glad include
-#include "Glad/glad.h"
+#include "glad/glad.h"
 
 //glm includes
 #include "glm/glm.hpp"

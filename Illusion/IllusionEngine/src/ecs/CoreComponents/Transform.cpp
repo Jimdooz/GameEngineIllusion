@@ -13,7 +13,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexParentId)) return;
 
-		// 1. On signale à l'ancien parent si il existe de supprimer l'id de ses enfants
+		// 1. On signale Ã  l'ancien parent si il existe de supprimer l'id de ses enfants
 		illusion::ecs::entity_id currentParentId = parent[indexId];
 		if (parentId != currentParentId
 			&& illusion::ecs::id::IsValid(currentParentId)
@@ -36,7 +36,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexChildId)) return;
 
-		// Si childId n'a pas déjà le parent en id
+		// Si childId n'a pas dÃ©jÃ  le parent en id
 		util::Array<ecs::entity_id>& childsId = childs[indexId];
 		if(parent[indexChildId] != id){
 			childsId.push_back(childId);
@@ -72,16 +72,16 @@ namespace illusion::ecs::core {
 	}
 
 	void Transform::RemoveComponentDatas(ecs::component_id index, ecs::entity_id id) {
-		// On signale au parent que l'id a été supprimé
+		// On signale au parent que l'id a Ã©tÃ© supprimÃ©
 		RemoveChild(id, parent[index]);
 
 		// On Supprime les enfants
 		u32 nbChilds = childs[index].size();
 		for (u32 i = 0; i < nbChilds; i++) {
-			index = getIndex(id); // On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+			index = getIndex(id); // On rÃ©cupÃ¨re l'index au cas oÃ¹ l'index aurait Ã©tÃ© modifiÃ© lors de la suppression d'un enfant
 			scene->DestroyEntity(childs[index][i]);
 		}
-		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
+		// On rÃ©cupÃ¨re l'index au cas oÃ¹ l'index aurait Ã©tÃ© modifiÃ© lors de la suppression d'un enfant
 		index = getIndex(id);
 
 		RemoveComponentData(position, index);

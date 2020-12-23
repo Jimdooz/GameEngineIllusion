@@ -15,23 +15,23 @@ namespace illusion::ecs::core {
 		util::Array<util::Array<ecs::entity_id>> childs;
 
 		/**
-		 * Permet de définir le parent d'une entité
-		 * @param	id l'id de l'entité 
+		 * Permet de dÃ©finir le parent d'une entitÃ©
+		 * @param	id l'id de l'entitÃ© 
 		 * @param	parentId l'id du parent
 		 */
 		void SetParent(ecs::entity_id id, ecs::entity_id parentId);
 
 		/**
-		 * Permet d'ajouter un enfant à la liste d'un id
-		 * @param	id l'id de l'entité
-		 * @param	childId l'id de l'enfant à ajouter
+		 * Permet d'ajouter un enfant Ã  la liste d'un id
+		 * @param	id l'id de l'entitÃ©
+		 * @param	childId l'id de l'enfant Ã  ajouter
 		 */
 		void SetChild(ecs::entity_id id, ecs::entity_id childId);
 
 		/**
-		 * Permet de supprimer un enfant à la liste d'un id
-		 * @param	id l'id de l'entité
-		 * @param	childId l'id de l'enfant à supprimer
+		 * Permet de supprimer un enfant Ã  la liste d'un id
+		 * @param	id l'id de l'entitÃ©
+		 * @param	childId l'id de l'enfant Ã  supprimer
 		 */
 		void RemoveChild(ecs::entity_id id, ecs::entity_id childId);
 

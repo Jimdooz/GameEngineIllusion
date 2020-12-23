@@ -9,6 +9,12 @@
 #include <bitset>
 #include <chrono>
 #include <map>
+
+// #include "glad/glad.h"
+// #define GLFW_INCLUDE_NONE 1
+// #include "GLFW/glfw3.h"
+
+
 //auto start = high_resolution_clock::now();
 //auto stop = high_resolution_clock::now();
 //std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
@@ -16,32 +22,54 @@
 using namespace std::chrono;
 using namespace illusion;
 
-///--> SYSTEMS
-struct TwerkSystem : public ecs::System {
+// ///--> SYSTEMS
+// struct TwerkSystem : public ecs::System {
 
-	ecs::core::Transform* transform;
+// 	ecs::core::Transform* transform;
 
-	/* la fonction Update */
-	SYSTEM_UPDATE_LOOP(
-		position().x += 5;
-		rotation().x++;
-		rotation().y++;
-		scale().x++;
-	)
+// 	/* la fonction Update */
+// 	SYSTEM_UPDATE_LOOP(
+// 		position().x += 5;
+// 		rotation().x++;
+// 		rotation().y++;
+// 		scale().x++;
+// 	)
 
-	/* D?finition des variables utiles */
-	SYSTEM_USE_DATA(position, transform, position, Vec3)
-	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
-	SYSTEM_USE_DATA(scale, transform, scale, Vec3)
+// 	/* D?finition des variables utiles */
+// 	SYSTEM_USE_DATA(position, transform, position, Vec3)
+// 	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
+// 	SYSTEM_USE_DATA(scale, transform, scale, Vec3)
 
-	/* Initialisation relative ? la sc?ne parente */
-	virtual void Initialize(ecs::Scene& scene) override {
-		transform = scene.GetComponent<ecs::core::Transform>();
-		SetDependencies(transform);
-	}
-};
+// 	/* Initialisation relative ? la sc?ne parente */
+// 	virtual void Initialize(ecs::Scene& scene) override {
+// 		transform = scene.GetComponent<ecs::core::Transform>();
+// 		SetDependencies(transform);
+// 	}
+// };
 
 int main(int argc, char* argv[]) {
+	// if(!glfwInit()){
+	// 	std::cout << "glfw error init" << std::endl;
+	// }
+
+	// GLFWwindow * glfwWindow = glfwCreateWindow(1280, 720, "test", NULL, NULL);
+	// if (!glfwWindow)
+	// {
+	// 	std::cout << "Failed to Create GLFW Window" << std::endl;
+	// }
+	// glfwMakeContextCurrent(glfwWindow);
+	// if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	// {
+	// 	std::cout <<"Failed to initialize GLAD" << std::endl;
+	// }
+	// glViewport(0,0,1280,720);
+	// while (!glfwWindowShouldClose(glfwWindow)) {
+
+	// }
+	// glfwDestroyWindow(glfwWindow);
+	// glfwTerminate();
+
+
 	Window::Create(1280,720,"MyGame");
 	while (!Window::shouldClose) {
 		if (Input::isKeyDown(GLFW_KEY_A)) {

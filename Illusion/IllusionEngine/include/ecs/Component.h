@@ -3,20 +3,20 @@
 #include "ecs/Entity.h"
 
 namespace illusion::ecs {
-	// On déclare Scene sans inclure ses headers par question de double dépendances
+	// On d×™clare Scene sans inclure ses headers par question de double d×™pendances
 	struct Scene;
 
-	// Permet de différencier l'id d'un component d'un autre id ( Voir Documentation Macro )
+	// Permet de diff×™rencier l'id d'un component d'un autre id ( Voir Documentation Macro )
 	DEFINE_TYPED_ID(component_id);
 
 	/**
 	 * Component
 	 *
-	 * Un Component est une structure qui possèdes des données qu'une entity peut posséder
-	 * L'entité ne possède pas les données, mais sémantiquement les "utilises"
+	 * Un Component est une structure qui poss×˜des des donn×™es qu'une entity peut poss×™der
+	 * L'entit×™ ne poss×˜de pas les donn×™es, mais s×™mantiquement les "utilises"
 	 *	
 	 *	+---------------------------+
-	 *  | Données  					|
+	 *  | Donn×™es  					|
 	 *	| ( type util::Array )		|
 	 *	|							|
 	 *	+--------------------[CUSTOM]
@@ -33,21 +33,21 @@ namespace illusion::ecs {
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
 		util::Array<entity_id> ToEntity;
 
-		// Tableau avec pour index l'id des entités, et pour valeur la position des données
-		// Elle permet de pointer vers la liste des données qui est compactée
+		// Tableau avec pour index l'id des entit×™s, et pour valeur la position des donn×™es
+		// Elle permet de pointer vers la liste des donn×™es qui est compact×™e
 		util::Array<component_id> ToData;
 
 		/**
-		 * @brief	Permet d'annoncer qu'une entité va utiliser le component
+		 * @brief	Permet d'annoncer qu'une entit×™ va utiliser le component
 		 * 
-		 * @param	id l'identifiant de l'entité
+		 * @param	id l'identifiant de l'entit×™
 		 */
 		void UseComponent(entity_id id);
 
 		/**
-		 * @brief Permet d'annoncer qu'une entité n'utilise plus le component
+		 * @brief Permet d'annoncer qu'une entit×™ n'utilise plus le component
 		 * 
-		 * @param	id l'identifiant de l'entité
+		 * @param	id l'identifiant de l'entit×™
 		 */
 		void RemoveComponent(entity_id id);
 
@@ -55,19 +55,19 @@ namespace illusion::ecs {
 		 * Evenements
 		 */
 
-		//Fonction appelé lorsqu'une entité de la scène a été créé
-		//Elle a pour but d'augmenter la taille du tableau des entités (ToData) possible
+		//Fonction appel×™ lorsqu'une entit×™ de la sc×˜ne a ×™t×™ cr×™×™
+		//Elle a pour but d'augmenter la taille du tableau des entit×™s (ToData) possible
 		void OnEntityCreate(entity_id id);
 
-		//Fonction appelé lorsqu'une entité de la scène a été détruite
-		//Elle a pour but de supprimer les données si elles existent de l'entité et de créer un espace vide
+		//Fonction appel×™ lorsqu'une entit×™ de la sc×˜ne a ×™t×™ d×™truite
+		//Elle a pour but de supprimer les donn×™es si elles existent de l'entit×™ et de cr×™er un espace vide
 		void OnEntityDestroy(entity_id id);
 
 		/**
-		 * @brief	Permet de récupérer l'index d'une entité dans le component
+		 * @brief	Permet de r×™cup×™rer l'index d'une entit×™ dans le component
 		 * 
-		 * @param	id l'identifiant de l'entité
-		 * @return	l'index des datas de l'entité dans le component
+		 * @param	id l'identifiant de l'entit×™
+		 * @return	l'index des datas de l'entit×™ dans le component
 		 */
 		inline component_id getIndex(entity_id id) {
 			return ToData[id::Index(id)];
@@ -75,30 +75,30 @@ namespace illusion::ecs {
 
 	protected:
 		/**
-		 * @brief	Fonction appelé lors de l'ajout du component à une entité via UseComponent()
-		 *			[!] Doit étendre les données rajoutées lors de l'héritage
-		 * @param	id l'identifiant de l'entité
+		 * @brief	Fonction appel×™ lors de l'ajout du component × une entit×™ via UseComponent()
+		 *			[!] Doit ×™tendre les donn×™es rajout×™es lors de l'h×™ritage
+		 * @param	id l'identifiant de l'entit×™
 		 */
 		virtual void AddComponentDatas(entity_id id){}
 
 		/**
-		 * @brief	Fonction appelé lors de la suppression du component à une entité.
-		 *			-> En général appelé lors de la destruction d'une entité
+		 * @brief	Fonction appel×™ lors de la suppression du component × une entit×™.
+		 *			-> En g×™n×™ral appel×™ lors de la destruction d'une entit×™
 		 *			-> Ou lors de la suppression manuelle du component via RemoveComponent()
-		 *			[!] Doit supprimer les données rajoutées lors de l'héritage
-		 * @param	id l'identifiant de l'entité
+		 *			[!] Doit supprimer les donn×™es rajout×™es lors de l'h×™ritage
+		 * @param	id l'identifiant de l'entit×™
 		 */
 		virtual void RemoveComponentDatas(component_id index, entity_id id){}
 
 		/**
-		 * Wrapper pour ajouter une donnée à un tableau de données ( rajout du component à une entité )
+		 * Wrapper pour ajouter une donn×™e × un tableau de donn×™es ( rajout du component × une entit×™ )
 		 */
 		template<typename T> inline void AddComponentData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 
 		/**
-		 * Wrapper pour supprimer une donnée à un tableau de données depuis un index ( ducoup une entité )
+		 * Wrapper pour supprimer une donn×™e × un tableau de donn×™es depuis un index ( ducoup une entit×™ )
 		 */
 		template<typename T> inline void RemoveComponentData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
