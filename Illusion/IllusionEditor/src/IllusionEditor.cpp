@@ -127,9 +127,7 @@ json GenerateSaveDataComponent(const illusion::ecs::PublicComponentDatas& data, 
 
 void LoadSaveDataComponent(ecs::entity_id id, ecs::Component * component, const illusion::ecs::PublicComponentDatas& data, json datas) {
 	ecs::component_id componentId = component->getIndex(id);
-	if (component->getIndex(id) == ecs::id::invalid_id) return;
-
-	std::cout << datas << std::endl;
+	if (componentId == ecs::id::invalid_id) return;
 
 	if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
 		illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
@@ -216,21 +214,11 @@ int main(int argc, char* argv[]) {
 			std::stringstream sstream(componentHashS);
 			size_t componentHash; sstream >> componentHash;
 
-			/*
-			* std::cout << el.key() << " : " << el.value() << "\n";
-			0 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
-			1 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
-			2 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
-			0 : {"velocity": [0.0, 0.0, 0.0] }
-			*/
-
 			json componentElements = jsonLoaded["Entity"]["Components"][componentHashS];
 			ecs::Component *comp = scene.GetComponentSystem(componentHash);
 			for (auto& el : componentElements.items()) {
 				ecs::entity_id id = ecs::entity_id(std::stoi(el.key()));
-				if(componentHash != typeid(ecs::core::Transform).hash_code())
-					scene.EntityAddComponent(id, componentHash);
-				//std::cout << el.key() << " : " << el.value() << "\n";
+				if(componentHash != typeid(ecs::core::Transform).hash_code()) scene.EntityAddComponent(id, componentHash);
 				for (u32 j = 0; j < comp->publicDatas.size(); j++) {
 					LoadSaveDataComponent(id, comp, comp->publicDatas[j], componentElements[el.key()][comp->publicDatas[j].name]);
 				}
@@ -292,6 +280,34 @@ int main(int argc, char* argv[]) {
 		ImGui::NewFrame();
 
 		{
+			if (ImGui::BeginMainMenuBar())
+			{
+				if (ImGui::BeginMenu("File"))
+				{
+					if (ImGui::MenuItem("Save", "CTRL+S")) {
+						std::ofstream myfile;
+						myfile.open("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+						myfile << jsonScene.dump(4);
+						myfile.close();
+					}
+					if (ImGui::MenuItem("Save As", "CTRL+Shift+S")) {}
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Edit"))
+				{
+					if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+					if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+					ImGui::Separator();
+					if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+					if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+					if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMainMenuBar();
+			}
+		}
+
+		{
 			ImGui::Begin("Speed Test");
 
 			float fps[100];
@@ -310,21 +326,8 @@ int main(int argc, char* argv[]) {
 		{
 			ImGui::Begin("Json Test");
 
-			if (ImGui::Button("Save")) {
-				std::ofstream myfile;
-				myfile.open("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
-				myfile << jsonScene.dump(4);
-				myfile.close();
-			}
-
 			ImGui::Text(jsonScene.dump(4).c_str());
 
-			ImGui::End();
-		}
-
-		{
-			ImGui::Begin("Json Read");
-			ImGui::Text(jsonLoaded.dump(4).c_str());
 			ImGui::End();
 		}
 

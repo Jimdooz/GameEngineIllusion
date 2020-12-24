@@ -34,7 +34,7 @@ namespace illusion::ecs {
 		// Check if id already exist
 		if (index < nbEntities && IsAliveAtIndex(entity_id(index))) return GetId(index);
 
-		if (m_freeIds.size() > 0) {
+		if (m_freeIds.size() > 0 && nbEntities > index) {
 			for (u32 i = 0; i < m_freeIds.size(); i++) {
 				if (id::Index(m_freeIds[i]) == index) {
 					id = m_freeIds[i];
