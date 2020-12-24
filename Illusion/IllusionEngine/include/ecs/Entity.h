@@ -10,7 +10,7 @@ namespace illusion::ecs {
         //Rotation
         //Scale
 	};
-	class Entities {
+	struct Entities {
 		// Tableau 
 		illusion::util::Array<id::generation_type> m_entities;
 		illusion::util::Deque<entity_id> m_freeIds;
@@ -21,14 +21,12 @@ namespace illusion::ecs {
 		//		maxId
 		u32 m_maxId = 0; //Proposition de meilleur nom ?
 
-		// TODO : Réaliser un système qui permet de check si le premier bit de la génération
-		//			1 -> en vie
-		//			0 -> mort
-		public:
-			entity_id Create(EntityInfo info); //
-			void Destroy(entity_id id); // Va mettre le premier bit à 0 de generation (entities)
-			void DestroyAtIndex(entity_id id);
-			// IsAlive ? IsValid ? Exists ? AreCurrentlyNotDead ?
-			bool IsAlive(entity_id id); // Va retourner le premier bit de generation
+		entity_id Create(EntityInfo info); //
+		entity_id GetId(u32 index);
+		void Destroy(entity_id id); // Va mettre le premier bit à 0 de generation (entities)
+		void DestroyAtIndex(entity_id id);
+		// IsAlive ? IsValid ? Exists ? AreCurrentlyNotDead ?
+		bool IsAlive(entity_id id); // Va retourner le premier bit de generation
+		bool IsAliveAtIndex(entity_id id); // Va retourner le premier bit de generation
 	};
 }

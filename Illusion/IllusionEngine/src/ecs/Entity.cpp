@@ -27,6 +27,10 @@ namespace illusion::ecs {
 		return id;
 	}
 
+	entity_id Entities::GetId(u32 index) {
+		return static_cast<entity_id>(id::SetGeneration(static_cast<id::id_type>(index), id::GetGenerationValue(m_entities[id::Index(index)])));
+	}
+
 	void Entities::Destroy(entity_id id) {
 		if (!IsAlive(id)) return;
 
@@ -35,7 +39,7 @@ namespace illusion::ecs {
 	}
 
 	void Entities::DestroyAtIndex(entity_id id) {
-		entity_id newId = static_cast<entity_id>(id::SetGeneration(static_cast<id::id_type>(id), id::GetGenerationValue(m_entities[id::Index(id)])));
+		entity_id newId = GetId(id);
 		if (!IsAlive(newId)) return;
 
 		m_freeIds.push_back(newId);
@@ -47,5 +51,10 @@ namespace illusion::ecs {
 		id::id_type index = id::Index(id);
 		if (index > m_entities.size()) return false;
 		return id::GetGenerationValue(m_entities[index]) == id::Generation(id) && id::IsGenerationAlive(m_entities[index]);
+	}
+
+	bool Entities::IsAliveAtIndex(entity_id id) {
+		entity_id newId = GetId(id);
+		return IsAlive(newId);
 	}
 }

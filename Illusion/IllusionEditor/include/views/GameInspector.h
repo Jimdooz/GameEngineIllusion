@@ -48,7 +48,8 @@ namespace illusion::views::GameInspector {
 					if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 					if (ImGui::TreeNode(title.c_str())) {
 						for (u32 i = 0; i < val->publicDatas.size(); i++) {
-							GenerateUiComponent(val->publicDatas[i], val);
+							if(val->publicDatas[i].visible)
+								GenerateUiComponent(val->publicDatas[i], val);
 						}
 						ImGui::TreePop();
 					}

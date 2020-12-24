@@ -9,6 +9,8 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(position);
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
+
+			COMPONENT_PROTECTED(parent);
 		}
 
 		COMPONENT_NAME("Transform");

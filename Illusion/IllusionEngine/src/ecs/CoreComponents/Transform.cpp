@@ -104,11 +104,10 @@ namespace illusion::ecs::core {
 
 	void Transform::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		// On signale au parent que l'id a �t� supprim�
-		RemoveChild(id, parent[index]);
+		RemoveChild(parent[index], id);
 
 		// On Supprime les enfants
-		u32 nbChilds = childs[index].size();
-		for (u32 i = 0; i < nbChilds; i++) {
+		for (u32 i = 0; i < childs[index].size();) {
 			// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
 			index = getIndex(id);
 			scene->DestroyEntity(childs[index][i]);

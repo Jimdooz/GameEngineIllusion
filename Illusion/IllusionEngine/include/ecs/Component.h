@@ -15,6 +15,9 @@
 #define COMPONENT_PUBLIC(NAME) \
 	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
 
+#define COMPONENT_PROTECTED(NAME) \
+	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME, false));
+
 namespace illusion::ecs {
 	// On dיclare Scene sans inclure ses headers par question de double dיpendances
 	struct Scene;
@@ -23,14 +26,15 @@ namespace illusion::ecs {
 	DEFINE_TYPED_ID(component_id);
 
 	struct PublicComponentDatas {
-		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name) {
-			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name };
+		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name, bool visible = true) {
+			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name, visible };
 			return newData;
 		}
 
 		void* data;
 		size_t type;
 		std::string name;
+		bool visible;
 	};
 
 	/**
