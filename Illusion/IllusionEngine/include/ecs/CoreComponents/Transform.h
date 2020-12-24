@@ -14,6 +14,7 @@ namespace illusion::ecs::core {
 		}
 
 		COMPONENT_NAME("Transform");
+		COMPONENT_REGISTER(Transform);
 
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);

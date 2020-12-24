@@ -5,11 +5,6 @@
 namespace illusion::ecs {
 	DEFINE_TYPED_ID(entity_id);
 
-	struct EntityInfo {
-        //Position
-        //Rotation
-        //Scale
-	};
 	struct Entities {
 		// Tableau 
 		illusion::util::Array<id::generation_type> m_entities;
@@ -21,7 +16,7 @@ namespace illusion::ecs {
 		//		maxId
 		u32 m_maxId = 0; //Proposition de meilleur nom ?
 
-		entity_id Create(EntityInfo info); //
+		entity_id Create();
 		entity_id GetId(u32 index);
 		void Destroy(entity_id id); // Va mettre le premier bit à 0 de generation (entities)
 		void DestroyAtIndex(entity_id id);

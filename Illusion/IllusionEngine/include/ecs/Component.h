@@ -8,9 +8,12 @@
 #define COMPONENT_DATA(TYPE, NAME) \
 	util::Array<TYPE> NAME
 
+#define COMPONENT_REGISTER(CLASS) \
+	virtual Component* generate(illusion::ecs::Scene* scene) override { return new CLASS(scene); }
+
 #define COMPONENT_NAME(NAME)\
 	inline static const std::string CNAME = ##NAME;\
-	virtual std::string getName() { return CNAME; }
+	virtual std::string getName() { return CNAME; } \
 
 #define COMPONENT_PUBLIC(NAME) \
 	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
@@ -58,6 +61,7 @@ namespace illusion::ecs {
 		Scene *scene;
 
 		COMPONENT_NAME("DEFAULT COMPONENT");
+		virtual Component* generate(Scene* scene) { return new Component(scene); }
 
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
 		util::Array<entity_id> ToEntity;
@@ -141,6 +145,17 @@ namespace illusion::ecs {
 		 */
 		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
+		}
+
+	public:
+		
+		static util::Map<size_t, Component*> AllComponents;
+
+		static void AppendCoreComponents();
+
+		template<typename T>static void AppendComponents() {
+			Scene fakeScene;
+			Component::AllComponents[typeid(T).hash_code()] = new T(&fakeScene);
 		}
 	};
 

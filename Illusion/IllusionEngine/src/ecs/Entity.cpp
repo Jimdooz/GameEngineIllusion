@@ -4,7 +4,7 @@
 
 namespace illusion::ecs {
 
-	entity_id Entities::Create(EntityInfo info){
+	entity_id Entities::Create(){
 		u32 nbEntities = m_entities.size();
 		entity_id id;
 

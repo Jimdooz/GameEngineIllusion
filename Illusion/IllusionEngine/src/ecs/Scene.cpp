@@ -48,4 +48,8 @@ namespace illusion::ecs {
 		}
 	}
 
+	void Scene::UseSystem(size_t systemHash) {
+		systems[systemHash] = System::AllSystems[systemHash]->generate();
+		systems[systemHash]->Initialize(*this);
+	}
 }

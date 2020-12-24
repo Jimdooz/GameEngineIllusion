@@ -2,6 +2,8 @@
 #include "ecs/Scene.h"
 
 namespace illusion::ecs {
+	util::Map<size_t, System*> System::AllSystems;
+
 	void System::Update() {}
 	void System::LateUpdate() {}
 	void System::FixedUpdate() {}
@@ -32,4 +34,7 @@ namespace illusion::ecs {
 
 	// /!\ to override
 	void System::Initialize(Scene& scene) {}
+
+	void System::AppendCoreSystems() {
+	}
 }

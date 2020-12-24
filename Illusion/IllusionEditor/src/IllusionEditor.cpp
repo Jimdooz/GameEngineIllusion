@@ -9,6 +9,8 @@
 #include "views/GameHiearchy.h"
 
 #include <fstream>
+#include <streambuf>
+#include <sstream>
 #include <resources/system/Json.h>
 using json = illusion::json;
 
@@ -32,6 +34,7 @@ using namespace illusion;
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
 	COMPONENT_NAME("Rigidbody");
+	COMPONENT_REGISTER(RigidBodyComponent);
 
 	// Declare constructor
 	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {
@@ -55,6 +58,7 @@ struct RigidBodyComponent : public ecs::Component {
 
 struct TwerkSystem : public ecs::System {
 	SYSTEM_NAME("TWERK");
+	SYSTEM_REGISTER(TwerkSystem);
 
 	ecs::core::Transform* transform;
 	RigidBodyComponent* rigidbody;
@@ -127,11 +131,45 @@ int main(int argc, char* argv[]) {
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 	illusion::views::theme::InitTheme();
 
+	// Init ECS
+	//----------
+	illusion::ecs::Component::AppendCoreComponents();
+	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
+	illusion::ecs::System::AppendSystems<TwerkSystem>();
+
 	// Init Scene
 	//----------
 	ecs::Scene scene;
-	scene.UseComponent<RigidBodyComponent>();
-	scene.UseSystem<TwerkSystem>();
+
+	json jsonLoaded;
+	{
+		std::ifstream t("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+		std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+		jsonLoaded = json::parse(str);
+	}
+
+	if (jsonLoaded.is_null()) {
+		scene.UseComponent<RigidBodyComponent>();
+		scene.UseSystem<TwerkSystem>();
+	}
+	else {
+		for (u32 i = 0; i < jsonLoaded["Components"].size(); i++) {
+			std::stringstream sstream((std::string)jsonLoaded["Components"][i]);
+			size_t result; sstream >> result;
+			scene.UseComponent(result);
+		}
+		for (u32 i = 0; i < jsonLoaded["Systems"].size(); i++) {
+			std::stringstream sstream((std::string)jsonLoaded["Systems"][i]);
+			size_t result; sstream >> result;
+			scene.UseSystem(result);
+		}
+		for (u32 i = 0; i < jsonLoaded["Systems"].size(); i++) {
+			std::stringstream sstream((std::string)jsonLoaded["Systems"][i]);
+			size_t result; sstream >> result;
+			scene.UseSystem(result);
+		}
+	}
+
 	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();
 
 	std::vector<float> fpsMesure;
@@ -213,6 +251,12 @@ int main(int argc, char* argv[]) {
 
 			ImGui::Text(jsonScene.dump(4).c_str());
 
+			ImGui::End();
+		}
+
+		{
+			ImGui::Begin("Json Read");
+			ImGui::Text(jsonLoaded.dump(4).c_str());
 			ImGui::End();
 		}
 
