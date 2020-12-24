@@ -11,6 +11,7 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(scale);
 
 			COMPONENT_PROTECTED(parent);
+			COMPONENT_PROTECTED(childs);
 		}
 
 		COMPONENT_NAME("Transform");

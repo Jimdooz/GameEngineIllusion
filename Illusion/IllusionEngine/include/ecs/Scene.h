@@ -46,6 +46,7 @@ namespace illusion::ecs {
 		 * @return	l'id de l'entité généré
 		 */
 		entity_id CreateEntity();
+		entity_id CreateEntity(u32 index);
 
 		/**
 		 * Permet de supprimer une entité
@@ -87,6 +88,10 @@ namespace illusion::ecs {
 		 */
 		template<typename C> Component* GetComponentSystem() {
 			return components[typeid(C).hash_code()];
+		}
+
+		Component* GetComponentSystem(size_t hash) {
+			return components[hash];
 		}
 
 		/**

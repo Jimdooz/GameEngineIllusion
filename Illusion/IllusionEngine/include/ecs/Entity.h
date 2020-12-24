@@ -16,7 +16,8 @@ namespace illusion::ecs {
 		//		maxId
 		u32 m_maxId = 0; //Proposition de meilleur nom ?
 
-		entity_id Create();
+		entity_id Create();				//Generate new id
+		entity_id Create(u32 index);	//Create id if doesn't exist a index given
 		entity_id GetId(u32 index);
 		void Destroy(entity_id id); // Va mettre le premier bit à 0 de generation (entities)
 		void DestroyAtIndex(entity_id id);

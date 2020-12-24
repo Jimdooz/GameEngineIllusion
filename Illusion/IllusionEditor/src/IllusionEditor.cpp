@@ -112,8 +112,52 @@ json GenerateSaveDataComponent(const illusion::ecs::PublicComponentDatas& data, 
 		json id = ecs::id::Index(ids[componentId]);
 		return id;
 	}
+	else if (data.type == typeid(illusion::util::Array<illusion::util::Array<ecs::entity_id>>).hash_code()) {
+		illusion::util::Array<illusion::util::Array<ecs::entity_id>>& ids = *(illusion::util::Array<illusion::util::Array<ecs::entity_id>>*)data.data;
+		json idJson = json::array();
+		for (u32 i = 0; i < ids[componentId].size(); i++) {
+			if (!ecs::id::IsValid(ids[componentId][i])) idJson.push_back(nullptr);
+			else idJson.push_back(ecs::id::Index(ids[componentId][i]));
+		}
+		return idJson;
+	}
 
 	return nullptr;
+}
+
+void LoadSaveDataComponent(ecs::entity_id id, ecs::Component * component, const illusion::ecs::PublicComponentDatas& data, json datas) {
+	ecs::component_id componentId = component->getIndex(id);
+	if (component->getIndex(id) == ecs::id::invalid_id) return;
+
+	std::cout << datas << std::endl;
+
+	if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
+		illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
+		vec3[componentId].x = datas[0];
+		vec3[componentId].y = datas[1];
+		vec3[componentId].z = datas[2];
+	}
+	else if (data.type == typeid(illusion::util::Array<Quaternion>).hash_code()) {
+		illusion::util::Array<Quaternion>& vec4 = *(illusion::util::Array<Quaternion>*)data.data;
+		vec4[componentId].w = datas[0];
+		vec4[componentId].x = datas[1];
+		vec4[componentId].y = datas[2];
+		vec4[componentId].z = datas[3];
+	}
+	else if (data.type == typeid(illusion::util::Array<ecs::entity_id>).hash_code()) {
+		illusion::util::Array<ecs::entity_id>& ids = *(illusion::util::Array<ecs::entity_id>*)data.data;
+		if (datas.is_null()) ids[componentId] = (ecs::entity_id)ecs::id::invalid_id;
+		else ids[componentId] = ecs::entity_id(datas);
+	}
+	else if (data.type == typeid(illusion::util::Array<illusion::util::Array<ecs::entity_id>>).hash_code()) {
+		illusion::util::Array<illusion::util::Array<ecs::entity_id>>& ids = *(illusion::util::Array<illusion::util::Array<ecs::entity_id>>*)data.data;
+		ids[componentId].clear();
+
+		for (u32 i = 0; i < datas.size(); i++) {
+			if (datas[i].is_null()) ids[componentId].push_back((ecs::entity_id)ecs::id::invalid_id);
+			else ids[componentId].push_back(ecs::entity_id(datas[i]));
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -163,10 +207,34 @@ int main(int argc, char* argv[]) {
 			size_t result; sstream >> result;
 			scene.UseSystem(result);
 		}
-		for (u32 i = 0; i < jsonLoaded["Systems"].size(); i++) {
-			std::stringstream sstream((std::string)jsonLoaded["Systems"][i]);
-			size_t result; sstream >> result;
-			scene.UseSystem(result);
+		for (u32 i = 0; i < jsonLoaded["Entity"]["id"].size(); i++) {
+			scene.CreateEntity(jsonLoaded["Entity"]["id"][i]);
+		}
+		//Load Components Datas
+		for (u32 i = 0; i < jsonLoaded["Components"].size(); i++) {
+			std::string componentHashS = jsonLoaded["Components"][i];
+			std::stringstream sstream(componentHashS);
+			size_t componentHash; sstream >> componentHash;
+
+			/*
+			* std::cout << el.key() << " : " << el.value() << "\n";
+			0 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
+			1 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
+			2 : {"childs": [] , "parent" : null, "position" : [0.0, 0.0, 0.0] , "rotation" : [0.0, 0.0, 0.0, 1.0] , "scale" : [1.0, 1.0, 1.0] }
+			0 : {"velocity": [0.0, 0.0, 0.0] }
+			*/
+
+			json componentElements = jsonLoaded["Entity"]["Components"][componentHashS];
+			ecs::Component *comp = scene.GetComponentSystem(componentHash);
+			for (auto& el : componentElements.items()) {
+				ecs::entity_id id = ecs::entity_id(std::stoi(el.key()));
+				if(componentHash != typeid(ecs::core::Transform).hash_code())
+					scene.EntityAddComponent(id, componentHash);
+				//std::cout << el.key() << " : " << el.value() << "\n";
+				for (u32 j = 0; j < comp->publicDatas.size(); j++) {
+					LoadSaveDataComponent(id, comp, comp->publicDatas[j], componentElements[el.key()][comp->publicDatas[j].name]);
+				}
+			}
 		}
 	}
 
