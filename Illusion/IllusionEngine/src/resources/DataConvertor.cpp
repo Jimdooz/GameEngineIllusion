@@ -1,0 +1,94 @@
+#include "resources/DataConvertor.h"
+
+#include "ecs/Ecs.h"
+#include "ecs/Entity.h"
+
+#define TYPE_ID(T) typeid(T).hash_code()
+
+namespace illusion::resources{
+
+	#define JSON_EXPORT [](void* data)->json
+	#define JSON_IMPORT [](json &data, void* to)
+	#define JSON_VECTOR_CONVERTOR(TYPE) [](void* data, u32 i)-> void* { return &((*((illusion::util::Array< TYPE >*)data))[i]); }
+
+	illusion::util::Array<JsonConvertor> JsonConvertor::Convertor;
+
+	template<typename T> size_t hashOf() { return typeid(T).hash_code(); }
+
+	void JsonConvertor::Initialize() {
+		//Vector3
+		JsonConvertor::Create<Vec3>(
+			JSON_EXPORT {
+				Vec3 &rdata = *((Vec3*)data);
+				json array = json::array();
+				array.push_back(rdata.x);
+				array.push_back(rdata.y);
+				array.push_back(rdata.z);
+				return array;
+			},
+			JSON_IMPORT{
+				Vec3* rto = (Vec3*)to;
+				rto->x = data[0];
+				rto->y = data[1];
+				rto->z = data[2];
+			},
+			JSON_VECTOR_CONVERTOR(Vec3)
+		);
+		//Quaternion
+		JsonConvertor::Create<Quaternion>(
+			JSON_EXPORT{
+				Quaternion& rdata = *((Quaternion*)data);
+				json array = json::array();
+				array.push_back(rdata.w);
+				array.push_back(rdata.x);
+				array.push_back(rdata.y);
+				array.push_back(rdata.z);
+				return array;
+			},
+			JSON_IMPORT{
+				Quaternion* rto = (Quaternion*)to;
+				rto->w = data[0];
+				rto->x = data[1];
+				rto->y = data[2];
+				rto->z = data[3];
+			},
+			JSON_VECTOR_CONVERTOR(Quaternion)
+		);
+		//Entity_id
+		JsonConvertor::Create<illusion::ecs::entity_id>(
+			JSON_EXPORT{
+				illusion::ecs::entity_id& rdata = *((illusion::ecs::entity_id*)data);
+				if (!ecs::id::IsValid(rdata)) return nullptr;
+				json id = ecs::id::Index(rdata);
+				return id;
+			},
+			JSON_IMPORT{
+				illusion::ecs::entity_id* rto = (illusion::ecs::entity_id*)to;
+				if (data.is_null()) *rto = (ecs::entity_id)ecs::id::invalid_id;
+				else *rto = ecs::entity_id(data);
+			},
+			JSON_VECTOR_CONVERTOR(illusion::ecs::entity_id)
+		);
+		//List<Entity_id>
+		JsonConvertor::Create<illusion::util::Array<illusion::ecs::entity_id>>(
+			JSON_EXPORT{
+				illusion::util::Array<illusion::ecs::entity_id>& rdata = *((illusion::util::Array<illusion::ecs::entity_id>*)data);
+				json idJson = json::array();
+				for (u32 i = 0; i < rdata.size(); i++) {
+					idJson.push_back(JsonConvertor::ExportToJSON(&rdata[i], TYPE_ID(illusion::ecs::entity_id)) );
+				}
+				return idJson;
+			},
+			JSON_IMPORT{
+				illusion::util::Array<illusion::ecs::entity_id>* rto = (illusion::util::Array<illusion::ecs::entity_id>*)to;
+				rto->clear();
+				for (u32 i = 0; i < data.size(); i++) {
+					rto->push_back(illusion::ecs::entity_id{0});
+					JsonConvertor::ImportFromJSON(data[i], &((*rto)[i]), TYPE_ID(illusion::ecs::entity_id));
+				}
+			},
+			JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
+		);
+	}
+
+}

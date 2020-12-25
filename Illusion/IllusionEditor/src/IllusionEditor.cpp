@@ -8,6 +8,9 @@
 #include "views/GameInspector.h"
 #include "views/GameHiearchy.h"
 
+#include "resources/DataConvertor.h"
+#include "resources/assets/Scenes.h"
+
 #include <fstream>
 #include <streambuf>
 #include <sstream>
@@ -84,80 +87,6 @@ struct TwerkSystem : public ecs::System {
 	}
 };
 
-json GenerateSaveDataComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component* component, ecs::entity_id id) {
-	ecs::component_id componentId = component->getIndex(id);
-	if (component->getIndex(id) == ecs::id::invalid_id) return nullptr;
-
-	if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
-		illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
-		json array = json::array();
-		array.push_back(vec3[componentId].x);
-		array.push_back(vec3[componentId].y);
-		array.push_back(vec3[componentId].z);
-		return array;
-	}
-	else if (data.type == typeid(illusion::util::Array<Quaternion>).hash_code()) {
-		illusion::util::Array<Quaternion>& vec4 = *(illusion::util::Array<Quaternion>*)data.data;
-		float vec4a[4] = { vec4[componentId].w, vec4[componentId].x, vec4[componentId].y, vec4[componentId].z };
-		json array = json::array();
-		array.push_back(vec4[componentId].w);
-		array.push_back(vec4[componentId].x);
-		array.push_back(vec4[componentId].y);
-		array.push_back(vec4[componentId].z);
-		return array;
-	}
-	else if (data.type == typeid(illusion::util::Array<ecs::entity_id>).hash_code()) {
-		illusion::util::Array<ecs::entity_id>& ids = *(illusion::util::Array<ecs::entity_id>*)data.data;
-		if (!ecs::id::IsValid(ids[componentId])) return nullptr;
-		json id = ecs::id::Index(ids[componentId]);
-		return id;
-	}
-	else if (data.type == typeid(illusion::util::Array<illusion::util::Array<ecs::entity_id>>).hash_code()) {
-		illusion::util::Array<illusion::util::Array<ecs::entity_id>>& ids = *(illusion::util::Array<illusion::util::Array<ecs::entity_id>>*)data.data;
-		json idJson = json::array();
-		for (u32 i = 0; i < ids[componentId].size(); i++) {
-			if (!ecs::id::IsValid(ids[componentId][i])) idJson.push_back(nullptr);
-			else idJson.push_back(ecs::id::Index(ids[componentId][i]));
-		}
-		return idJson;
-	}
-
-	return nullptr;
-}
-
-void LoadSaveDataComponent(ecs::entity_id id, ecs::Component * component, const illusion::ecs::PublicComponentDatas& data, json datas) {
-	ecs::component_id componentId = component->getIndex(id);
-	if (componentId == ecs::id::invalid_id) return;
-
-	if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
-		illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
-		vec3[componentId].x = datas[0];
-		vec3[componentId].y = datas[1];
-		vec3[componentId].z = datas[2];
-	}
-	else if (data.type == typeid(illusion::util::Array<Quaternion>).hash_code()) {
-		illusion::util::Array<Quaternion>& vec4 = *(illusion::util::Array<Quaternion>*)data.data;
-		vec4[componentId].w = datas[0];
-		vec4[componentId].x = datas[1];
-		vec4[componentId].y = datas[2];
-		vec4[componentId].z = datas[3];
-	}
-	else if (data.type == typeid(illusion::util::Array<ecs::entity_id>).hash_code()) {
-		illusion::util::Array<ecs::entity_id>& ids = *(illusion::util::Array<ecs::entity_id>*)data.data;
-		if (datas.is_null()) ids[componentId] = (ecs::entity_id)ecs::id::invalid_id;
-		else ids[componentId] = ecs::entity_id(datas);
-	}
-	else if (data.type == typeid(illusion::util::Array<illusion::util::Array<ecs::entity_id>>).hash_code()) {
-		illusion::util::Array<illusion::util::Array<ecs::entity_id>>& ids = *(illusion::util::Array<illusion::util::Array<ecs::entity_id>>*)data.data;
-		ids[componentId].clear();
-
-		for (u32 i = 0; i < datas.size(); i++) {
-			if (datas[i].is_null()) ids[componentId].push_back((ecs::entity_id)ecs::id::invalid_id);
-			else ids[componentId].push_back(ecs::entity_id(datas[i]));
-		}
-	}
-}
-
 int main(int argc, char* argv[]) {
 	// Create Window
 	//--------
@@ -172,6 +101,10 @@ int main(int argc, char* argv[]) {
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 	illusion::views::theme::InitTheme();
+
+	// Init Engine
+	//----------
+	illusion::resources::JsonConvertor::Initialize();
 
 	// Init ECS
 	//----------
@@ -195,52 +128,12 @@ int main(int argc, char* argv[]) {
 		scene.UseSystem<TwerkSystem>();
 	}
 	else {
-		for (u32 i = 0; i < jsonLoaded["Components"].size(); i++) {
-			std::stringstream sstream((std::string)jsonLoaded["Components"][i]);
-			size_t result; sstream >> result;
-			scene.UseComponent(result);
-		}
-		for (u32 i = 0; i < jsonLoaded["Systems"].size(); i++) {
-			std::stringstream sstream((std::string)jsonLoaded["Systems"][i]);
-			size_t result; sstream >> result;
-			scene.UseSystem(result);
-		}
-		for (u32 i = 0; i < jsonLoaded["Entity"]["id"].size(); i++) {
-			scene.CreateEntity(jsonLoaded["Entity"]["id"][i]);
-		}
-		//Load Components Datas
-		for (u32 i = 0; i < jsonLoaded["Components"].size(); i++) {
-			std::string componentHashS = jsonLoaded["Components"][i];
-			std::stringstream sstream(componentHashS);
-			size_t componentHash; sstream >> componentHash;
-
-			json componentElements = jsonLoaded["Entity"]["Components"][componentHashS];
-			ecs::Component *comp = scene.GetComponentSystem(componentHash);
-			for (auto& el : componentElements.items()) {
-				ecs::entity_id id = ecs::entity_id(std::stoi(el.key()));
-				if(componentHash != typeid(ecs::core::Transform).hash_code()) scene.EntityAddComponent(id, componentHash);
-				for (u32 j = 0; j < comp->publicDatas.size(); j++) {
-					LoadSaveDataComponent(id, comp, comp->publicDatas[j], componentElements[el.key()][comp->publicDatas[j].name]);
-				}
-			}
-		}
+		resources::assets::LoadScene(scene, jsonLoaded);
 	}
 
 	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();
 
 	std::vector<float> fpsMesure;
-
-	json jsonScene = {};
-	jsonScene["Components"] = json::array();
-	jsonScene["Systems"] = json::array();
-	jsonScene["Entity"] = {};
-
-	for (auto const& [key, val] : scene.components) {
-		jsonScene["Components"].push_back(std::to_string(key));
-	}
-	for (auto const& [key, val] : scene.systems) {
-		jsonScene["Systems"].push_back(std::to_string(key));
-	}
 
 	// Main Loop
 	//---------
@@ -258,22 +151,6 @@ int main(int argc, char* argv[]) {
 			Window::Close();
 		}
 
-		jsonScene["Entity"] = json::object();
-		jsonScene["Entity"]["Components"] = json::object();
-		jsonScene["Entity"]["id"] = json::array();
-		for (auto const& [key, val] : scene.components) {
-			jsonScene["Entity"]["Components"][std::to_string(key)] = json::object();
-			for (u32 i = 0; i < val->ToEntity.size(); i++) {
-				jsonScene["Entity"]["Components"][std::to_string(key)][std::to_string(ecs::id::Index(val->ToEntity[i]))] = json::object();
-				for (u32 j = 0; j < val->publicDatas.size(); j++) {
-					jsonScene["Entity"]["Components"][std::to_string(key)][std::to_string(ecs::id::Index(val->ToEntity[i]))][val->publicDatas[j].name] = GenerateSaveDataComponent(val->publicDatas[j], val, scene.entities.GetId(ecs::id::Index(val->ToEntity[i])));
-				}
-			}
-		}
-		for (u32 i = 0; i < scene.entities.m_entities.size(); i++) {
-			if(scene.entities.IsAliveAtIndex(ecs::entity_id(i))) jsonScene["Entity"]["id"].push_back(i);
-		}
-
 		//New Frame
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -287,7 +164,7 @@ int main(int argc, char* argv[]) {
 					if (ImGui::MenuItem("Save", "CTRL+S")) {
 						std::ofstream myfile;
 						myfile.open("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
-						myfile << jsonScene.dump(4);
+						myfile << resources::assets::ExportScene(scene).dump(4);
 						myfile.close();
 					}
 					if (ImGui::MenuItem("Save As", "CTRL+Shift+S")) {}
@@ -326,7 +203,7 @@ int main(int argc, char* argv[]) {
 		{
 			ImGui::Begin("Json Test");
 
-			ImGui::Text(jsonScene.dump(4).c_str());
+			ImGui::Text(resources::assets::ExportScene(scene).dump(4).c_str());
 
 			ImGui::End();
 		}
