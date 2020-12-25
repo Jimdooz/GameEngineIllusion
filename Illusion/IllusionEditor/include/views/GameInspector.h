@@ -6,7 +6,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-namespace illusion::views::GameInspector {
+namespace illusioneditor::views::GameInspector {
+
+	using namespace illusion;
 
 	namespace {
 		illusion::ecs::Scene* currentScene = nullptr;
@@ -48,7 +50,8 @@ namespace illusion::views::GameInspector {
 					if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 					if (ImGui::TreeNode(title.c_str())) {
 						for (u32 i = 0; i < val->publicDatas.size(); i++) {
-							GenerateUiComponent(val->publicDatas[i], val);
+							if(val->publicDatas[i].visible)
+								GenerateUiComponent(val->publicDatas[i], val);
 						}
 						ImGui::TreePop();
 					}

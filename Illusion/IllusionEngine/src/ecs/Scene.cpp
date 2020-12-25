@@ -3,7 +3,22 @@
 
 namespace illusion::ecs {
 	entity_id Scene::CreateEntity() {
-		entity_id id = entities.Create({});
+		entity_id id = entities.Create();
+
+		for (auto const& [key, val] : components) {
+			val->OnEntityCreate(id);
+		}
+		for (auto const& [key, val] : systems) {
+			val->OnEntityCreate(id);
+		}
+
+		// Add Default Core Components
+		EntityAddComponent<core::Transform>(id);
+
+		return id;
+	}
+	entity_id Scene::CreateEntity(u32 index) {
+		entity_id id = entities.Create(index);
 
 		for (auto const& [key, val] : components) {
 			val->OnEntityCreate(id);
@@ -48,4 +63,8 @@ namespace illusion::ecs {
 		}
 	}
 
+	void Scene::UseSystem(size_t systemHash) {
+		systems[systemHash] = System::AllSystems[systemHash]->generate();
+		systems[systemHash]->Initialize(*this);
+	}
 }

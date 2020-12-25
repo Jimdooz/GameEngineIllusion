@@ -1,4 +1,4 @@
-#include "ecs/Entity.h"
+﻿#include "ecs/Entity.h"
 #include "ecs/Component.h"
 #include "ecs/System.h"
 #include "ecs/Scene.h"
@@ -7,6 +7,19 @@
 #include "views/UiTheme.h"
 #include "views/GameInspector.h"
 #include "views/GameHiearchy.h"
+
+#include "resources/DataConvertor.h"
+#include "resources/assets/Scenes.h"
+
+#include <streambuf>
+#include <sstream>
+#include <resources/system/Json.h>
+using json = illusion::json;
+
+#include <fstream>
+#include <iostream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <iostream>
 #include <vector>
@@ -24,10 +37,12 @@
 
 using namespace std::chrono;
 using namespace illusion;
+using namespace illusioneditor;
 
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
 	COMPONENT_NAME("Rigidbody");
+	COMPONENT_REGISTER(RigidBodyComponent);
 
 	// Declare constructor
 	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {
@@ -51,6 +66,7 @@ struct RigidBodyComponent : public ecs::Component {
 
 struct TwerkSystem : public ecs::System {
 	SYSTEM_NAME("TWERK");
+	SYSTEM_REGISTER(TwerkSystem);
 
 	ecs::core::Transform* transform;
 	RigidBodyComponent* rigidbody;
@@ -81,6 +97,15 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1280,720,"MyGame");
 
+	for (auto& p : fs::directory_iterator("D:/")) {
+		std::cout << p.path() << '\n';
+		if (p.is_directory()) {
+			for (auto& p2 : fs::directory_iterator(p.path())) {
+				//std::cout<< "\t" << p2.path() << '\n';
+			}
+		}
+	}
+
 	// Setup IMGUI
 	//--------
 	IMGUI_CHECKVERSION();
@@ -89,13 +114,37 @@ int main(int argc, char* argv[]) {
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
-	illusion::views::theme::InitTheme();
+	views::theme::InitTheme();
+
+	// Init Engine
+	//----------
+	illusion::resources::JsonConvertor::Initialize();
+
+	// Init ECS
+	//----------
+	illusion::ecs::Component::AppendCoreComponents();
+	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
+	illusion::ecs::System::AppendSystems<TwerkSystem>();
 
 	// Init Scene
 	//----------
 	ecs::Scene scene;
-	scene.UseComponent<RigidBodyComponent>();
-	scene.UseSystem<TwerkSystem>();
+
+	json jsonLoaded;
+	{
+		std::ifstream t("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+		std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+		jsonLoaded = json::parse(str);
+	}
+
+	if (jsonLoaded.is_null()) {
+		scene.UseComponent<RigidBodyComponent>();
+		scene.UseSystem<TwerkSystem>();
+	}
+	else {
+		resources::assets::LoadScene(scene, jsonLoaded);
+	}
+
 	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();
 
 	std::vector<float> fpsMesure;
@@ -122,17 +171,52 @@ int main(int argc, char* argv[]) {
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Speed Test");
+			if (ImGui::BeginMainMenuBar())
+			{
+				if (ImGui::BeginMenu("File"))
+				{
+					if (ImGui::MenuItem("Save", "CTRL+S")) {
+						std::ofstream myfile;
+						myfile.open("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+						myfile << resources::assets::ExportScene(scene).dump(4);
+						myfile.close();
+					}
+					if (ImGui::MenuItem("Save As", "CTRL+Shift+S")) {}
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Edit"))
+				{
+					if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+					if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+					ImGui::Separator();
+					if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+					if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+					if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMainMenuBar();
+			}
+		}
+
+		{
+			ImGui::Begin("Game Engine Stats");
 
 			float fps[100];
 			float average = 0.0;
 			for (u32 i = 0; i < fpsMesure.size() && i < 100; i++) {
-				fps[i] = fpsMesure[i];
-				average += fps[i];
+				fps[i] = 1.0 / std::max(fpsMesure[i] / 1000000.0, 0.000001);
+				average += fpsMesure[i];
 			}
-			std::string plotLineTitle = std::to_string((u32)round(average / 100.0)) + " fps";
+			int fpsGet = (int)round(1.0 / ((average / 100.0) / 1000000.0));
+			std::string plotLineTitle = fpsGet > 100000 ? ":) lot of fps" : (std::to_string(fpsGet) + " fps");
+			std::string elapsedTime = std::to_string((average / 100.0) / 1000000.0) + " s";
 			ImGui::Text(plotLineTitle.c_str());
-			ImGui::PlotLines("###fpsPlotLines", fps, 100);
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::ImColor(100, 100, 100));
+			ImGui::Text(elapsedTime.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PlotLines("Update speed###fpsPlotLines", fps, 100);
+
 
 			ImGui::End();
 		}
@@ -156,7 +240,8 @@ int main(int argc, char* argv[]) {
 		auto start = high_resolution_clock::now();
 		scene.Update();
 		auto stop = high_resolution_clock::now();
-		fpsMesure.push_back(1.0 / ( duration_cast<microseconds>(stop - start).count() / 1000000.0 ));
+		auto duration = duration_cast<microseconds>(stop - start).count();
+		fpsMesure.push_back(duration > 0 ? duration : 1);
 		if (fpsMesure.size() > 100) fpsMesure.erase(fpsMesure.begin());
 
 		glfwSwapBuffers(Window::glfwWindow);

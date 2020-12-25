@@ -8,12 +8,18 @@
 #define COMPONENT_DATA(TYPE, NAME) \
 	util::Array<TYPE> NAME
 
+#define COMPONENT_REGISTER(CLASS) \
+	virtual Component* generate(illusion::ecs::Scene* scene) override { return new CLASS(scene); }
+
 #define COMPONENT_NAME(NAME)\
 	inline static const std::string CNAME = NAME;\
 	virtual std::string getName() { return CNAME; }
 
 #define COMPONENT_PUBLIC(NAME) \
 	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
+
+#define COMPONENT_PROTECTED(NAME) \
+	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME, false));
 
 namespace illusion::ecs {
 	// On dיclare Scene sans inclure ses headers par question de double dיpendances
@@ -23,14 +29,15 @@ namespace illusion::ecs {
 	DEFINE_TYPED_ID(component_id);
 
 	struct PublicComponentDatas {
-		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name) {
-			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name };
+		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name, bool visible = true) {
+			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name, visible };
 			return newData;
 		}
 
 		void* data;
 		size_t type;
 		std::string name;
+		bool visible;
 	};
 
 	/**
@@ -38,7 +45,7 @@ namespace illusion::ecs {
 	 *
 	 * Un Component est une structure qui possטdes des donnיes qu'une entity peut possיder
 	 * L'entitי ne possטde pas les donnיes, mais sיmantiquement les "utilises"
-	 *	
+	 *
 	 *	+---------------------------+
 	 *  | Donnיes  					|
 	 *	| ( type util::Array )		|
@@ -54,6 +61,7 @@ namespace illusion::ecs {
 		Scene *scene;
 
 		COMPONENT_NAME("DEFAULT COMPONENT");
+		virtual Component* generate(Scene* scene) { return new Component(scene); }
 
 		// Tableau avec pour index l'id des components, et pour valeur les entity id
 		util::Array<entity_id> ToEntity;
@@ -67,14 +75,14 @@ namespace illusion::ecs {
 
 		/**
 		 * @brief	Permet d'annoncer qu'une entitי va utiliser le component
-		 * 
+		 *
 		 * @param	id l'identifiant de l'entitי
 		 */
 		void UseComponent(entity_id id);
 
 		/**
 		 * @brief Permet d'annoncer qu'une entitי n'utilise plus le component
-		 * 
+		 *
 		 * @param	id l'identifiant de l'entitי
 		 */
 		void RemoveComponent(entity_id id);
@@ -100,7 +108,7 @@ namespace illusion::ecs {
 
 		/**
 		 * @brief	Permet de rיcupיrer l'index d'une entitי dans le component
-		 * 
+		 *
 		 * @param	id l'identifiant de l'entitי
 		 * @return	l'index des datas de l'entitי dans le component
 		 */
@@ -137,6 +145,17 @@ namespace illusion::ecs {
 		 */
 		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
+		}
+
+	public:
+
+		static util::Map<size_t, Component*> AllComponents;
+
+		static void AppendCoreComponents();
+
+		template<typename T>static void AppendComponents() {
+			Scene fakeScene;
+			Component::AllComponents[typeid(T).hash_code()] = new T(&fakeScene);
 		}
 	};
 

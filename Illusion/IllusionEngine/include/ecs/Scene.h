@@ -46,6 +46,7 @@ namespace illusion::ecs {
 		 * @return	l'id de l'entité généré
 		 */
 		entity_id CreateEntity();
+		entity_id CreateEntity(u32 index);
 
 		/**
 		 * Permet de supprimer une entité
@@ -66,11 +67,20 @@ namespace illusion::ecs {
 			components[typeid(C).hash_code()] = new C(this);
 		}
 
+		void UseComponent(size_t componentHash) {
+			if (ComponentExist(componentHash)) return;
+			components[componentHash] = Component::AllComponents[componentHash]->generate(this);
+		}
+
 		/**
 		 * Permet de savoir si la scène inclus déjà un Component donné
 		 */
 		template<typename C> bool ComponentExist() {
-			return components.find(typeid(C).hash_code()) != components.end();
+			return ComponentExist(typeid(C).hash_code());
+		}
+
+		bool ComponentExist(size_t hash) {
+			return components.find(hash) != components.end();
 		}
 
 		/**
@@ -78,6 +88,10 @@ namespace illusion::ecs {
 		 */
 		template<typename C> Component* GetComponentSystem() {
 			return components[typeid(C).hash_code()];
+		}
+
+		Component* GetComponentSystem(size_t hash) {
+			return components[hash];
 		}
 
 		/**
@@ -128,6 +142,8 @@ namespace illusion::ecs {
 			systems[typeid(C).hash_code()] = new C();
 			systems[typeid(C).hash_code()]->Initialize(*this);
 		}
+
+		void UseSystem(size_t systemHash);
 
 		/**
 		 * Fonction permettant de récupérer un System typé

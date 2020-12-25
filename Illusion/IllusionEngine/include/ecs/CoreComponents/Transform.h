@@ -9,9 +9,13 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(position);
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
+
+			COMPONENT_PROTECTED(parent);
+			COMPONENT_PROTECTED(childs);
 		}
 
 		COMPONENT_NAME("Transform");
+		COMPONENT_REGISTER(Transform);
 
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);
