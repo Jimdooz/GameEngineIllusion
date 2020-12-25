@@ -20,7 +20,7 @@ namespace illusion::ecs {
 
 		if (index == id::invalid_id) return;
 
-		// On supprime toutes les donn�es li�es � l'id
+		// On supprime toutes les données liées � l'id
 		RemoveDatas(index, id);
 
 		//// Inversion pour tableau compact

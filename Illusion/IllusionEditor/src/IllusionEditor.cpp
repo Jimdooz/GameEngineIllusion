@@ -1,4 +1,4 @@
-#include "ecs/Entity.h"
+﻿#include "ecs/Entity.h"
 #include "ecs/Component.h"
 #include "ecs/System.h"
 #include "ecs/Scene.h"
@@ -11,11 +11,15 @@
 #include "resources/DataConvertor.h"
 #include "resources/assets/Scenes.h"
 
-#include <fstream>
 #include <streambuf>
 #include <sstream>
 #include <resources/system/Json.h>
 using json = illusion::json;
+
+#include <fstream>
+#include <iostream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <iostream>
 #include <vector>
@@ -33,6 +37,7 @@ using json = illusion::json;
 
 using namespace std::chrono;
 using namespace illusion;
+using namespace illusioneditor;
 
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
@@ -92,6 +97,15 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1280,720,"MyGame");
 
+	for (auto& p : fs::directory_iterator("D:/")) {
+		std::cout << p.path() << '\n';
+		if (p.is_directory()) {
+			for (auto& p2 : fs::directory_iterator(p.path())) {
+				//std::cout<< "\t" << p2.path() << '\n';
+			}
+		}
+	}
+
 	// Setup IMGUI
 	//--------
 	IMGUI_CHECKVERSION();
@@ -100,7 +114,7 @@ int main(int argc, char* argv[]) {
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
-	illusion::views::theme::InitTheme();
+	views::theme::InitTheme();
 
 	// Init Engine
 	//----------
@@ -185,25 +199,24 @@ int main(int argc, char* argv[]) {
 		}
 
 		{
-			ImGui::Begin("Speed Test");
+			ImGui::Begin("Game Engine Stats");
 
 			float fps[100];
 			float average = 0.0;
 			for (u32 i = 0; i < fpsMesure.size() && i < 100; i++) {
-				fps[i] = fpsMesure[i];
-				average += fps[i];
+				fps[i] = 1.0 / std::max(fpsMesure[i] / 1000000.0, 0.000001);
+				average += fpsMesure[i];
 			}
-			std::string plotLineTitle = std::to_string((u32)round(average / 100.0)) + " fps";
+			int fpsGet = (int)round(1.0 / ((average / 100.0) / 1000000.0));
+			std::string plotLineTitle = fpsGet > 100000 ? ":) lot of fps" : (std::to_string(fpsGet) + " fps");
+			std::string elapsedTime = std::to_string((average / 100.0) / 1000000.0) + " s";
 			ImGui::Text(plotLineTitle.c_str());
-			ImGui::PlotLines("###fpsPlotLines", fps, 100);
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::ImColor(100, 100, 100));
+			ImGui::Text(elapsedTime.c_str());
+			ImGui::PopStyleColor(1);
+			ImGui::PlotLines("Update speed###fpsPlotLines", fps, 100);
 
-			ImGui::End();
-		}
-
-		{
-			ImGui::Begin("Json Test");
-
-			ImGui::Text(resources::assets::ExportScene(scene).dump(4).c_str());
 
 			ImGui::End();
 		}
@@ -227,7 +240,8 @@ int main(int argc, char* argv[]) {
 		auto start = high_resolution_clock::now();
 		scene.Update();
 		auto stop = high_resolution_clock::now();
-		fpsMesure.push_back(1.0 / ( duration_cast<microseconds>(stop - start).count() / 1000000.0 ));
+		auto duration = duration_cast<microseconds>(stop - start).count();
+		fpsMesure.push_back(duration > 0 ? duration : 1);
 		if (fpsMesure.size() > 100) fpsMesure.erase(fpsMesure.begin());
 
 		glfwSwapBuffers(Window::glfwWindow);
