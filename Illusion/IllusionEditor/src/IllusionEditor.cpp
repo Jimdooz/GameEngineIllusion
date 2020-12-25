@@ -97,15 +97,6 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1280,720,"MyGame");
 
-	for (auto& p : fs::directory_iterator("D:/")) {
-		std::cout << p.path() << '\n';
-		if (p.is_directory()) {
-			for (auto& p2 : fs::directory_iterator(p.path())) {
-				//std::cout<< "\t" << p2.path() << '\n';
-			}
-		}
-	}
-
 	// Setup IMGUI
 	//--------
 	IMGUI_CHECKVERSION();
