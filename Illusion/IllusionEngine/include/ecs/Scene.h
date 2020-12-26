@@ -38,6 +38,11 @@ namespace illusion::ecs {
 		util::Map<size_t, System*> systems;
 
 		/**
+		 * Permet de réinitialiser une scène
+		 */
+		void Reset();
+
+		/**
 		 * >>> Entity Part
 		 */
 

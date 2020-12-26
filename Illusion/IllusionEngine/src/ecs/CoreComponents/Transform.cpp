@@ -108,9 +108,9 @@ namespace illusion::ecs::core {
 
 		// On Supprime les enfants
 		for (u32 i = 0; i < childs[index].size();) {
-			// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
-			index = getIndex(id);
+			// On récupère l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
 			scene->DestroyEntity(childs[index][i]);
+			index = getIndex(id);
 		}
 
 		// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
@@ -124,7 +124,7 @@ namespace illusion::ecs::core {
 	}
 
 	void Transform::AfterRemoveComponent(entity_id id) {
-		INTERNAL_INFO("DELETE ELEMENT !")
+		INTERNAL_INFO("DELETE ELEMENT ! ", id)
 		scene->DestroyEntity(id);
 	}
 }

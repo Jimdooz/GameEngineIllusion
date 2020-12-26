@@ -21,6 +21,8 @@ using json = illusion::json;
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#include "project/ProjectManager.h"
+
 #include <iostream>
 #include <vector>
 #include <bitset>
@@ -123,7 +125,7 @@ int main(int argc, char* argv[]) {
 
 	json jsonLoaded;
 	{
-		std::ifstream t("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+		std::ifstream t("D:/GitHub/GameEngineIllusion/GameProjects/Optimulus/Assets/Scenes/scene.json");
 		std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 		jsonLoaded = json::parse(str);
 	}
@@ -136,24 +138,22 @@ int main(int argc, char* argv[]) {
 		resources::assets::LoadScene(scene, jsonLoaded);
 	}
 
-	ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();
-
 	std::vector<float> fpsMesure;
+
+	std::filesystem::directory_entry currentPath("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus");
+	std::string pathName = currentPath.path().string();
+	std::string projectName = "";
 
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
 		Input::Update();
-		if (Input::isKeyDown(GLFW_KEY_A)) {
-			INFO("PRESSED KEY A");
-		}
-		if (Input::getMouseWheelDelta() != 0)
-		{
-			INFO("MOUSE WHEEL : ", Input::getMouseWheelDelta());
-		}
-		if (Input::isKeyDown(GLFW_KEY_ESCAPE)) {
-			INFO("PRESSED KEY ESCAPE");
-			Window::Close();
+
+		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_S)) {
+			std::ofstream myfile;
+			myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+			myfile << resources::assets::ExportScene(scene).dump(4);
+			myfile.close();
 		}
 
 		//New Frame
@@ -168,7 +168,7 @@ int main(int argc, char* argv[]) {
 				{
 					if (ImGui::MenuItem("Save", "CTRL+S")) {
 						std::ofstream myfile;
-						myfile.open("D:/GitHub/GameEngineIllusion/GameProjects/project1/scene2.json");
+						myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
 						myfile << resources::assets::ExportScene(scene).dump(4);
 						myfile.close();
 					}
@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
 				}
 				if (ImGui::BeginMenu("Edit"))
 				{
-					if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+					if (ImGui::MenuItem("Undo", "CTRL+Z")) {} 
 					if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
 					ImGui::Separator();
 					if (ImGui::MenuItem("Cut", "CTRL+X")) {}
@@ -208,6 +208,115 @@ int main(int argc, char* argv[]) {
 			ImGui::PopStyleColor(1);
 			ImGui::PlotLines("Update speed###fpsPlotLines", fps, 100);
 
+
+			ImGui::End();
+		}
+
+		if (illusioneditor::project::config::projectOpen) {
+
+			{
+				ImGui::Begin("Project");
+
+				ImGui::BeginChild("##ProjectRegion");
+				ImGui::Columns(2);
+
+				for (u32 i = 0; i < 10; i++) {
+					ImGui::Text("Coucou");
+				}
+				ImGui::EndChild();
+
+				ImGui::End();
+			}
+
+		}
+
+		{
+			ImGui::Begin("File Explorer");
+
+			ImGui::Button("..");
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+				currentPath = std::filesystem::directory_entry(currentPath.path().parent_path());
+				pathName = currentPath.path().string();
+			}
+			ImGui::SameLine();
+			int n = pathName.length() + 64;
+			char *buf1 = new char[n];
+			strcpy(buf1, pathName.c_str());
+			ImGui::InputText("###goto", buf1, n);
+
+			pathName = std::string(buf1);
+			delete buf1;
+
+			ImGui::SameLine();
+			if (ImGui::Button("Go")) {
+				currentPath = std::filesystem::directory_entry(pathName);
+			}
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::BeginChild("##ScrollingRegion", ImVec2(0, ImGui::GetWindowHeight() * 1.0f - ImGui::GetFontSize() * 10.0f));
+			ImGui::Columns(2);
+
+			try {
+				for (auto& p : fs::directory_iterator(currentPath)) {
+					std::string path = p.path().filename().string();
+					if (p.is_directory() && path.find('.') == std::string::npos) {
+						ImGui::Button(path.c_str());
+						if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+							std::cout << p.path() << std::endl;
+							currentPath = std::filesystem::directory_entry(p.path());
+							pathName = currentPath.path().string();
+						}
+					}
+					else {
+						ImGui::TextColored((ImVec4)ImColor::ImColor(100, 100, 100), path.c_str());
+					}
+					ImGui::NextColumn();
+				}
+			}
+			catch (const std::exception&) {
+				try {
+					currentPath = std::filesystem::directory_entry(currentPath.path().parent_path());
+				}
+				catch (const std::exception&) {
+					currentPath = std::filesystem::directory_entry("D:\\");
+				}
+				pathName = currentPath.path().string();
+			}
+			
+			ImGui::EndChild();
+
+			ImGui::BeginChild("##BottomRegion");
+
+			n = projectName.length() + 64;
+			char* buf2 = new char[n];
+			strcpy(buf2, projectName.c_str());
+			ImGui::InputText("Project Name###createProject", buf2, n);
+
+			projectName = std::string(buf2);
+			delete buf2;
+
+			if (ImGui::Button("Create Project")) {
+				illusioneditor::project::tools::CreateProject(pathName, projectName);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Load Project")) {
+				std::string error;
+				bool success = illusioneditor::project::tools::LoadProject(pathName, &error);
+
+				json jsonLoaded;
+				{
+					std::ifstream t(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+					std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+					jsonLoaded = json::parse(str);
+				}
+				scene.Reset();
+				resources::assets::LoadScene(scene, jsonLoaded);
+
+				INTERNAL_INFO("SUCCESS ", success, " -> ", error);
+			}
+			ImGui::EndChild();
 
 			ImGui::End();
 		}

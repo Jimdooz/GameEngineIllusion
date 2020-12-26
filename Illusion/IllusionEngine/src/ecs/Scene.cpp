@@ -2,6 +2,20 @@
 #include "ecs/System.h"
 
 namespace illusion::ecs {
+
+	void Scene::Reset() {
+		for (u32 i = 0; i < entities.m_entities.size(); i++) {
+			if (entities.IsAlive(entities.GetId(i))) {
+				DestroyEntity(entities.GetId(i));
+			}
+		}
+		entities.m_entities.clear();
+		entities.m_freeIds.clear();
+
+		components.clear();
+		systems.clear();
+	}
+
 	entity_id Scene::CreateEntity() {
 		entity_id id = entities.Create();
 
