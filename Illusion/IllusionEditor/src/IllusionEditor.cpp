@@ -70,6 +70,55 @@ struct RigidBodyComponent : public ecs::Component {
 	}
 };
 
+struct PlanetComponent : public ecs::Component {
+	// Declare component name
+	COMPONENT_NAME("Planet");
+	COMPONENT_REGISTER(PlanetComponent);
+
+	// Declare constructor
+	PlanetComponent(ecs::Scene* scene) : Component(scene) {
+		// Display on inspector
+		COMPONENT_PUBLIC(speed);
+	}
+
+	// Declare datas
+	COMPONENT_DATA(f32, speed);
+
+	// On Data added
+	virtual void AddDatas(ecs::entity_id id) override {
+		AddData(speed, f32(0));
+	}
+
+	// On Data removed
+	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+		RemoveData(speed, index);
+	}
+};
+
+struct PlanetSystem : public ecs::System {
+	SYSTEM_NAME("Planet");
+	SYSTEM_REGISTER(PlanetSystem);
+
+	ecs::core::Transform* transform;
+	PlanetComponent* planet;
+
+	/* la fonction Update */
+	SYSTEM_UPDATE_LOOP(
+		rotation() = Quaternion(Vec3(40.0, 40.0, 40.0));
+	)
+
+	/* Definition des variables utiles */
+	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
+	SYSTEM_USE_DATA(speed, planet, speed, f32)
+
+	/* Initialisation relative a la scene parente */
+	virtual void Initialize(ecs::Scene& scene) override {
+		transform = scene.GetComponent<ecs::core::Transform>();
+		planet = scene.GetComponent<PlanetComponent>();
+		SetDependencies(transform, planet);
+	}
+};
+
 struct TwerkSystem : public ecs::System {
 	SYSTEM_NAME("TWERK");
 	SYSTEM_REGISTER(TwerkSystem);
@@ -121,11 +170,17 @@ int main(int argc, char* argv[]) {
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
+	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::System::AppendSystems<TwerkSystem>();
+	illusion::ecs::System::AppendSystems<PlanetSystem>();
 
 	// Init Scene
 	//----------
 	ecs::Scene scene;
+	scene.UseComponent<RigidBodyComponent>();
+	scene.UseComponent<PlanetComponent>();
+	scene.UseSystem<TwerkSystem>();
+	scene.UseSystem<PlanetSystem>();
 
 	std::vector<float> fpsMesure;
 
@@ -198,6 +253,10 @@ int main(int argc, char* argv[]) {
 	Shader ourShader("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
 					"D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
 	ourShader.use();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	u8 loopTick = 0;
+
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
@@ -393,16 +452,16 @@ int main(int argc, char* argv[]) {
 			// render boxes
 			glBindVertexArray(VAO);
 			ecs::core::Transform &transform = *scene.GetComponent<ecs::core::Transform>();
+			loopTick++;
+
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
-				glm::mat4 model = glm::mat4(1.0f);
-				model = glm::translate(model, transform.position[i]);
-				model = model * glm::toMat4(transform.rotation[i]);
-				model = glm::scale(model, transform.scale[i]);
+				Mat4x4 model = transform.ComputeModel(ecs::component_id{ i }, loopTick);
 				ourShader.setMat4("model", model);
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
+
 		}
 
 		//DRAW IMGUI

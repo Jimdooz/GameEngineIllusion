@@ -20,6 +20,8 @@ namespace illusion::ecs::core {
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);
 		COMPONENT_DATA(Vec3, scale);
+		COMPONENT_DATA(Mat4x4, computedModel);		//Matrice de transformation du model
+		COMPONENT_DATA(u8, currentTick);			//Optimisation pour ne pas recalculer la matrice du model
 
 		COMPONENT_DATA(ecs::entity_id, parent);
 		COMPONENT_DATA(util::Array<ecs::entity_id>, childs);
@@ -59,6 +61,8 @@ namespace illusion::ecs::core {
 		 * @return	vrai si le parent existe, faux sinon
 		 */
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
+
+		Mat4x4 ComputeModel(ecs::component_id component, u8 tick = -1);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 

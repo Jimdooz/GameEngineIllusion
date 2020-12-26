@@ -4,9 +4,9 @@
 #include "ecs/Component.h"
 
 /**
- * Macro permettant de d�corer la fonction Update � override
- * Il permet d'automatiser la boucle sur toutes les entit�s cibl� par le System
- * Il est conseill� d'utiliser la macro SYSTEM_USE_DATA pour automatiser la r�cup�ration de datas des components
+ * Macro permettant de décorer la fonction Update à override
+ * Il permet d'automatiser la boucle sur toutes les entités ciblé par le System
+ * Il est conseillé d'utiliser la macro SYSTEM_USE_DATA pour automatiser la récupération de datas des components
  */
 #define SYSTEM_UPDATE_LOOP(BEHAVIOUR) \
 	virtual void Update() override { \

@@ -89,6 +89,34 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
 		);
+
+		//f32
+		JsonConvertor::Create<f32>(
+			JSON_EXPORT{
+				f32& rdata = *((f32*)data);
+				json idJson = rdata;
+				return idJson;
+			},
+			JSON_IMPORT{
+				f32* rto = (f32*)to;
+				*rto = data;
+			},
+			JSON_VECTOR_CONVERTOR(f32)
+		);
+
+		//f16
+		JsonConvertor::Create<f64>(
+			JSON_EXPORT{
+				f64& rdata = *((f64*)data);
+				json idJson = rdata;
+				return idJson;
+			},
+			JSON_IMPORT{
+				f64* rto = (f64*)to;
+				*rto = data;
+			},
+			JSON_VECTOR_CONVERTOR(f64)
+		);
 	}
 
 }
