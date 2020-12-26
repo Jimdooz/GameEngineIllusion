@@ -5,6 +5,8 @@
 #include "ecs/System.h"
 #include "ecs/Scene.h"
 
+#include "project/ProjectManager.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -27,7 +29,7 @@ namespace illusioneditor::views::GameHiearchy {
 			std::string name = std::to_string(ecs::id::Index(parentId)) + " [" + std::to_string(ecs::id::Generation(parentId)) + "]";
 
 			bool open = ImGui::TreeNodeEx(name.c_str(),
-				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0),
+				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow,
 				"Entity %s", name.c_str());
 			if (ImGui::IsItemClicked()) {
 				itemAlreadyDropped = false;
@@ -84,7 +86,7 @@ namespace illusioneditor::views::GameHiearchy {
 	}
 
 	void Show() {
-		ImGui::Begin("Hierarchy [DEV]");
+		ImGui::Begin(std::string("Hierarchy ["+ illusioneditor::project::config::currentScenePath +"]###Hierarchy").c_str());
 		ecs::core::Transform* transforms = scene->GetComponent<ecs::core::Transform>();
 
 		std::string ButtonTitle = "Add Entity (" + std::to_string(transforms->ToEntity.size()) + ")";

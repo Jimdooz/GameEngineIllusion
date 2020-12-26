@@ -6,7 +6,8 @@
 
 #include "views/UiTheme.h"
 #include "views/GameInspector.h"
-#include "views/GameHiearchy.h"
+#include "views/GameHierarchy.h"
+#include "views/GameProject.h"
 
 #include "resources/DataConvertor.h"
 #include "resources/assets/Scenes.h"
@@ -123,21 +124,6 @@ int main(int argc, char* argv[]) {
 	//----------
 	ecs::Scene scene;
 
-	json jsonLoaded;
-	{
-		std::ifstream t("D:/GitHub/GameEngineIllusion/GameProjects/Optimulus/Assets/Scenes/scene.json");
-		std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-		jsonLoaded = json::parse(str);
-	}
-
-	if (jsonLoaded.is_null()) {
-		scene.UseComponent<RigidBodyComponent>();
-		scene.UseSystem<TwerkSystem>();
-	}
-	else {
-		resources::assets::LoadScene(scene, jsonLoaded);
-	}
-
 	std::vector<float> fpsMesure;
 
 	std::filesystem::directory_entry currentPath("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus");
@@ -210,24 +196,6 @@ int main(int argc, char* argv[]) {
 
 
 			ImGui::End();
-		}
-
-		if (illusioneditor::project::config::projectOpen) {
-
-			{
-				ImGui::Begin("Project");
-
-				ImGui::BeginChild("##ProjectRegion");
-				ImGui::Columns(2);
-
-				for (u32 i = 0; i < 10; i++) {
-					ImGui::Text("Coucou");
-				}
-				ImGui::EndChild();
-
-				ImGui::End();
-			}
-
 		}
 
 		{
@@ -305,14 +273,14 @@ int main(int argc, char* argv[]) {
 				std::string error;
 				bool success = illusioneditor::project::tools::LoadProject(pathName, &error);
 
-				json jsonLoaded;
+				/*json jsonLoaded;
 				{
 					std::ifstream t(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
 					std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 					jsonLoaded = json::parse(str);
 				}
 				scene.Reset();
-				resources::assets::LoadScene(scene, jsonLoaded);
+				resources::assets::LoadScene(scene, jsonLoaded);*/
 
 				INTERNAL_INFO("SUCCESS ", success, " -> ", error);
 			}
@@ -327,6 +295,9 @@ int main(int argc, char* argv[]) {
 		views::GameInspector::SetScene(scene);
 		views::GameInspector::SetSelected(views::GameHiearchy::selected);
 		views::GameInspector::Show();
+
+		views::GameProject::SetScene(scene);
+		views::GameProject::Show();
 
 		//Render
 		ImGui::Render();

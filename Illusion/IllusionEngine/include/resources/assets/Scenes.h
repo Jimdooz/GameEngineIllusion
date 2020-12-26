@@ -10,6 +10,7 @@ using json = illusion::json;
 namespace illusion::resources::assets {
 
 	void LoadScene(illusion::ecs::Scene& scene, json& jsonDatas) {
+		scene.Reset();
 		for (u32 i = 0; i < jsonDatas["Components"].size(); i++) {
 			std::stringstream sstream((std::string)jsonDatas["Components"][i]);
 			size_t result; sstream >> result;

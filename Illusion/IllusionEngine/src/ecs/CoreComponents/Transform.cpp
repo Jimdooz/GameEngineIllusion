@@ -124,7 +124,6 @@ namespace illusion::ecs::core {
 	}
 
 	void Transform::AfterRemoveComponent(entity_id id) {
-		INTERNAL_INFO("DELETE ELEMENT ! ", id)
 		scene->DestroyEntity(id);
 	}
 }

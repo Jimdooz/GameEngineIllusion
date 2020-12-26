@@ -6,10 +6,8 @@
         "Components": {
             "11628426327275775331": {
                 "0": {
-                    "childs": [
-                        3
-                    ],
-                    "parent": 2,
+                    "childs": [],
+                    "parent": null,
                     "position": [
                         0.0,
                         0.0,
@@ -29,29 +27,6 @@
                 },
                 "1": {
                     "childs": [],
-                    "parent": 2,
-                    "position": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "rotation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "scale": [
-                        1.0,
-                        1.0,
-                        1.0
-                    ]
-                },
-                "2": {
-                    "childs": [
-                        1,
-                        0
-                    ],
                     "parent": null,
                     "position": [
                         0.0,
@@ -70,9 +45,9 @@
                         1.0
                     ]
                 },
-                "3": {
+                "2": {
                     "childs": [],
-                    "parent": 0,
+                    "parent": null,
                     "position": [
                         0.0,
                         0.0,
@@ -95,8 +70,7 @@
         "id": [
             0,
             1,
-            2,
-            3
+            2
         ]
     },
     "Systems": []

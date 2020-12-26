@@ -42,7 +42,7 @@ namespace illusion::ecs {
 	/**
 	 * System
 	 *
-	 * Un Syst�me est une structure qui poss�des les mechaniques et comportements
+	 * Un Système est une structure qui poss�des les mechaniques et comportements
 	 * L'entit� en soit ne fait rien, c'est les Syst�mes qui auront pour but de modifier les donn�es des components
 	 * des entit�s cibl�s
 	 *

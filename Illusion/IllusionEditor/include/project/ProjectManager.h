@@ -27,22 +27,22 @@ namespace illusioneditor::project {
 	namespace tools {
 		void CreateProject(std::string projectPath, std::string projectName) {
 			if (projectName.size() <= 0 || projectPath.size() <= 0) return;
-			std::string realProjectPath = projectPath + "/" + projectName;
+			std::string realProjectPath = projectPath + "\\" + projectName;
 			std::filesystem::create_directories(realProjectPath);
-			std::filesystem::create_directories(realProjectPath + "/Assets/Scenes");
+			std::filesystem::create_directories(realProjectPath + "\\Assets\\Scenes");
 
 			json projectConfig;
 			projectConfig["projectName"] = projectName;
-			projectConfig["currentScenePath"] = "/Assets/Scenes/scene.json";
+			projectConfig["currentScenePath"] = "\\Assets\\Scenes\\default.scene";
 
 			std::ofstream configFile;
-			configFile.open(std::string(realProjectPath + "/config.json"));
+			configFile.open(std::string(realProjectPath + "\\config.json"));
 			configFile << projectConfig.dump(4);
 			configFile.close();
 
 			illusion::ecs::Scene scene;
 			std::ofstream mySceneFile;
-			mySceneFile.open(realProjectPath + "/Assets/Scenes/scene.json");
+			mySceneFile.open(realProjectPath + "\\Assets\\Scenes\\default.scene");
 			mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);
 			mySceneFile.close();
 		}
@@ -52,7 +52,7 @@ namespace illusioneditor::project {
 			std::string readedFile;
 
 			try {
-				std::ifstream t(projectPath + "/config.json");
+				std::ifstream t(projectPath + "\\config.json");
 				readedFile = std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 				if (readedFile == "") throw "Invalid file";
 			} catch (const char* msg) {
