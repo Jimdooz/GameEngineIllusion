@@ -422,6 +422,21 @@ int main(int argc, char* argv[]) {
 			ImGui::End();
 		}
 
+		{
+			ImGui::Begin("Scene Options###SceneOptions");
+			if (scene.pause) {
+				if (ImGui::Button("Play")) scene.pause = false;
+			} else {
+				if (ImGui::Button("Pause")) scene.pause = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Reload")) {
+				illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+				scene.pause = true;
+			}
+			ImGui::End();
+		}
+
 		views::GameHiearchy::SetScene(scene);
 		views::GameHiearchy::Show();
 

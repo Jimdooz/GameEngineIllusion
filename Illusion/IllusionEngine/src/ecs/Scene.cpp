@@ -57,6 +57,7 @@ namespace illusion::ecs {
 	}
 
 	void Scene::Update() {
+		if (pause) return;
 		for (auto const& [key, val] : systems) {
 			val->Update();
 		}

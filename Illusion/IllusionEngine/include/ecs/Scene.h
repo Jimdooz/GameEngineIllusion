@@ -36,6 +36,7 @@ namespace illusion::ecs {
 		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
+		bool pause = false;
 
 		/**
 		 * Permet de réinitialiser une scène
