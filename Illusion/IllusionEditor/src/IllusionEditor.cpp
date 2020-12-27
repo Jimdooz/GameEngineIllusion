@@ -5,6 +5,7 @@
 #include "IllusionEngine.h"
 
 #include "views/UiTheme.h"
+#include "views/GameStats.h"
 #include "views/GameInspector.h"
 #include "views/GameHierarchy.h"
 #include "views/GameProject.h"
@@ -266,6 +267,8 @@ int main(int argc, char* argv[]) {
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
+		views::GameStats::StartChronoData("Game");
+
 		Input::Update();
 
 		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_S)) {
@@ -306,29 +309,6 @@ int main(int argc, char* argv[]) {
 				}
 				ImGui::EndMainMenuBar();
 			}
-		}
-
-		{
-			ImGui::Begin("Game Engine Stats");
-
-			float fps[100];
-			float average = 0.0;
-			for (u32 i = 0; i < fpsMesure.size() && i < 100; i++) {
-				fps[i] = 1.0 / std::max(fpsMesure[i] / 1000000.0, 0.000001);
-				average += fpsMesure[i];
-			}
-			int fpsGet = (int)round(1.0 / ((average / 100.0) / 1000000.0));
-			std::string plotLineTitle = fpsGet > 100000 ? ":) lot of fps" : (std::to_string(fpsGet) + " fps");
-			std::string elapsedTime = std::to_string((average / 100.0) / 1000000.0) + " s";
-			ImGui::Text(plotLineTitle.c_str());
-			ImGui::SameLine();
-			ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::ImColor(100, 100, 100));
-			ImGui::Text(elapsedTime.c_str());
-			ImGui::PopStyleColor(1);
-			ImGui::PlotLines("Update speed###fpsPlotLines", fps, 100);
-
-
-			ImGui::End();
 		}
 
 		{
@@ -447,6 +427,8 @@ int main(int argc, char* argv[]) {
 		views::GameProject::SetScene(scene);
 		views::GameProject::Show();
 
+		views::GameStats::Show();
+
 		//RENDER
 		//--------
 		ImGui::Render();
@@ -456,14 +438,35 @@ int main(int argc, char* argv[]) {
 		glClearColor(0.25f, 0.25f, 0.5f, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+
+		//UPDATE
+		views::GameStats::StartChronoData("Update Loop", "Game");
+		scene.Update();
+		views::GameStats::EndChronoData("Update Loop", "Game");
+
+		//COMPUTE MODELS POSITION
+		views::GameStats::StartChronoData("Compute Models", "Game");
+		{
+			loopTick++;
+			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
+				// calculate the model matrix for each object and pass it to shader before drawing
+				transform.ComputeModel(ecs::component_id{ i }, loopTick);
+			}
+
+		}
+		views::GameStats::EndChronoData("Compute Models", "Game");
+
 		//DRAW RENDERING
+		views::GameStats::StartChronoData("Rendering", "Game");
 		{
 			// activate shader
 			ourShader.use();
 
-			// create transformations
 			glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 			glm::mat4 projection = glm::mat4(1.0f);
+
+			// create transformations
 			projection = glm::perspective(glm::radians(45.0f), (float)Window::width / (float)Window::height, 0.1f, 100.0f);
 			view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 			// pass transformation matrices to the shader
@@ -472,32 +475,23 @@ int main(int argc, char* argv[]) {
 
 			// render boxes
 			glBindVertexArray(VAO);
-			ecs::core::Transform &transform = *scene.GetComponent<ecs::core::Transform>();
-			loopTick++;
 
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
-				Mat4x4 model = transform.ComputeModel(ecs::component_id{ i }, loopTick);
-				ourShader.setMat4("model", model);
-
+				ourShader.setMat4("model", transform.computedModel[i]);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 
 		}
+		views::GameStats::EndChronoData("Rendering", "Game");
 
 		//DRAW IMGUI
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		//UPDATE
-		auto start = high_resolution_clock::now();
-		scene.Update();
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start).count();
-		fpsMesure.push_back(duration > 0 ? duration : 1);
-		if (fpsMesure.size() > 100) fpsMesure.erase(fpsMesure.begin());
-
 		//SWAP BUFFER
 		glfwSwapBuffers(Window::glfwWindow);
+
+		views::GameStats::EndChronoData("Game");
 	}
 
 	//Shutdown
