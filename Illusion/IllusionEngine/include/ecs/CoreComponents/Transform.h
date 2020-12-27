@@ -62,7 +62,7 @@ namespace illusion::ecs::core {
 		 */
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
 
-		Mat4x4 ComputeModel(ecs::component_id component, u8 tick = -1);
+		Mat4x4 ComputeModel(ecs::component_id component);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 

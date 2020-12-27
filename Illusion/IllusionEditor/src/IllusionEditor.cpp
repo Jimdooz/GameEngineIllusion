@@ -23,6 +23,8 @@ using json = illusion::json;
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#include "core/Time.h"
+
 #include "project/ProjectManager.h"
 
 #include <iostream>
@@ -109,7 +111,7 @@ struct PlanetSystem : public ecs::System {
 	/* la fonction Update */
 	SYSTEM_UPDATE_LOOP(
 		rotation() = glm::rotate(rotation(), Vec3(0, evolution(), 0));
-		evolution() += speed();
+		evolution() += speed() * Time::deltaTime;
 	)
 
 	/* Definition des variables utiles */
@@ -172,6 +174,7 @@ int main(int argc, char* argv[]) {
 	// Init Engine
 	//----------
 	illusion::resources::JsonConvertor::Initialize();
+	illusion::Time::Init();
 
 	// Init ECS
 	//----------
@@ -262,12 +265,13 @@ int main(int argc, char* argv[]) {
 	ourShader.use();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	u8 loopTick = 0;
-
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
 		views::GameStats::StartChronoData("Game");
+
+		//Update time
+		illusion::Time::UpdateTime(glfwGetTime());
 
 		Input::Update();
 
@@ -448,10 +452,9 @@ int main(int argc, char* argv[]) {
 		//COMPUTE MODELS POSITION
 		views::GameStats::StartChronoData("Compute Models", "Game");
 		{
-			loopTick++;
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
-				transform.ComputeModel(ecs::component_id{ i }, loopTick);
+				transform.ComputeModel(ecs::component_id{ i });
 			}
 
 		}

@@ -94,9 +94,9 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
-	Mat4x4 Transform::ComputeModel(ecs::component_id component, u8 tick) {
-		if (tick != -1 && currentTick[component] == tick) return computedModel[component];
-		currentTick[component] = tick;
+	Mat4x4 Transform::ComputeModel(ecs::component_id component) {
+		if (Time::tick != -1 && currentTick[component] == Time::tick) return computedModel[component];
+		currentTick[component] = Time::tick;
 
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, position[component]);
@@ -104,7 +104,7 @@ namespace illusion::ecs::core {
 		model = glm::scale(model, scale[component]);
 
 		if (id::IsValid(parent[component])) {
-			model = ComputeModel(getIndex(parent[component]), tick) * model;
+			model = ComputeModel(getIndex(parent[component])) * model;
 		}
 
 		computedModel[component] = model;
