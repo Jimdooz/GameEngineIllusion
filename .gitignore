@@ -9,3 +9,5 @@ obj/
 **.vcxproj.user
 # Makefiles
 **Makefile
+#Visual Studio Code files
+.vscode/
