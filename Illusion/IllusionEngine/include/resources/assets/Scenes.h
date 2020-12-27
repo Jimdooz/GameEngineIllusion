@@ -11,7 +11,7 @@ namespace illusion::resources::assets {
 
 	void LoadScene(illusion::ecs::Scene& scene, json& jsonDatas) {
 		scene.Reset();
-		for (u32 i = 0; i < jsonDatas["Components"].size(); i++) {
+		/*for (u32 i = 0; i < jsonDatas["Components"].size(); i++) {
 			std::stringstream sstream((std::string)jsonDatas["Components"][i]);
 			size_t result; sstream >> result;
 			scene.UseComponent(result);
@@ -20,7 +20,14 @@ namespace illusion::resources::assets {
 			std::stringstream sstream((std::string)jsonDatas["Systems"][i]);
 			size_t result; sstream >> result;
 			scene.UseSystem(result);
+		}*/
+		for (auto const& [key, val] : ecs::Component::AllComponents) {
+			scene.UseComponent(key);
 		}
+		for (auto const& [key, val] : ecs::System::AllSystems) {
+			scene.UseSystem(key);
+		}
+
 		for (u32 i = 0; i < jsonDatas["Entity"]["id"].size(); i++) {
 			scene.CreateEntity(jsonDatas["Entity"]["id"][i]);
 		}

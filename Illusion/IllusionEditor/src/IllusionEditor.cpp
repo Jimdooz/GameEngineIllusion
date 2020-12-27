@@ -83,15 +83,18 @@ struct PlanetComponent : public ecs::Component {
 
 	// Declare datas
 	COMPONENT_DATA(f32, speed);
+	COMPONENT_DATA(f32, evolution);
 
 	// On Data added
 	virtual void AddDatas(ecs::entity_id id) override {
 		AddData(speed, f32(0));
+		AddData(evolution, f32(0));
 	}
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		RemoveData(speed, index);
+		RemoveData(evolution, index);
 	}
 };
 
@@ -104,12 +107,15 @@ struct PlanetSystem : public ecs::System {
 
 	/* la fonction Update */
 	SYSTEM_UPDATE_LOOP(
-		rotation() = Quaternion(Vec3(40.0, 40.0, 40.0));
+		rotation() = glm::rotate(rotation(), Vec3(0, evolution(), 0));
+		evolution() += speed();
 	)
 
 	/* Definition des variables utiles */
-	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
-	SYSTEM_USE_DATA(speed, planet, speed, f32)
+	SYSTEM_USE_DATA(position, transform, position, Vec3);
+	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion);
+	SYSTEM_USE_DATA(speed, planet, speed, f32);
+	SYSTEM_USE_DATA(evolution, planet, evolution, f32);
 
 	/* Initialisation relative a la scene parente */
 	virtual void Initialize(ecs::Scene& scene) override {

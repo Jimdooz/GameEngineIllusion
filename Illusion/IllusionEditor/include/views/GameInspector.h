@@ -49,6 +49,12 @@ namespace illusioneditor::views::GameInspector {
 
 			ecs::component_id iSelected = (ecs::component_id)ecs::id::Index(currentSelected);
 
+			if (iSelected >= currentScene->entities.m_entities.size()
+				|| !currentScene->entities.IsAliveAtIndex(ecs::entity_id{ iSelected })) {
+				ImGui::End();
+				return;
+			}
+
 			if (ImGui::TreeNodeEx("Components###COMPONENT", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding)) {
 				for (auto const& [key, val] : currentScene->components) {
 					std::string title = val->getName() + "###" + std::to_string(key);
