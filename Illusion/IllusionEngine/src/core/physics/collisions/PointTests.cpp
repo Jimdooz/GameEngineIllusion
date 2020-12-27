@@ -49,7 +49,7 @@ namespace illusion::core::physics::collisions {
 	bool PointInOBB(const Point& point, const OBB& obb) {
 		Vec3 dir = point - obb.position;
 		for (i32 i = 0; i < 3; i++) {
-			Vec3 axis(obb.orientation[i * 3], obb.orientation[i * 3 + 1], obb.orientation[i * 3 + 2]);
+			Vec3 axis(obb.orientation[i][0], obb.orientation[i][1], obb.orientation[i][2]);
 			f32 distance = glm::dot(dir, axis);
 			if (distance > obb.size[i]) {
 				return false;
@@ -65,7 +65,7 @@ namespace illusion::core::physics::collisions {
 		Point result = obb.position;
 		Vec3 dir = point - obb.position;
 		for (i32 i = 0; i < 3; i++) {
-			Vec3 axis(obb.orientation[i * 3], obb.orientation[i * 3 + 1], obb.orientation[i * 3 + 2]);
+			Vec3 axis(obb.orientation[i][0], obb.orientation[i][1], obb.orientation[i][2]);
 			f32 distance = glm::dot(dir, axis);
 			if (distance > obb.size[i]) {
 				distance = obb.size[i];

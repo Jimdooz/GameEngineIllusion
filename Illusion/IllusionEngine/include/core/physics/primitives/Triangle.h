@@ -4,7 +4,7 @@
 #include "./Point.h"
 
 namespace illusion::core::physics::primitives {
-	typedef struct Triangle {
+	struct Triangle {
 		union {
 			struct {
 				Point a;

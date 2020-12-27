@@ -5,7 +5,7 @@
 
 namespace illusion::core::physics::primitives {
 
-	typedef struct Plane {
+	struct Plane {
 		Vec3 normal;
 		float distance;
 		inline Plane() : normal(1, 0, 0) {}
