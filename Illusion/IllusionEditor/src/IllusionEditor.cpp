@@ -30,7 +30,6 @@ namespace fs = std::filesystem;
 #include <iostream>
 #include <vector>
 #include <bitset>
-#include <chrono>
 #include <map>
 #include <string>
 //auto start = high_resolution_clock::now();
@@ -191,6 +190,17 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<PlanetComponent>();
 	scene.UseSystem<TwerkSystem>();
 	scene.UseSystem<PlanetSystem>();
+
+	for (u32 i = 0; i < 100; i++) {
+		ecs::entity_id entity = scene.CreateEntity();
+		if (i > 0) {
+			scene.GetComponent<ecs::core::Transform>()->SetParent(ecs::entity_id{ i }, ecs::entity_id{ i - 1 });
+			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(1, 0, 0);
+		}
+		scene.EntityAddComponent<PlanetComponent>(ecs::entity_id{ i });
+		scene.GetComponent<PlanetComponent>()->speed[i] = 1.0f;
+		scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(0.5, 0.5, 0.5);
+	}
 
 	std::vector<float> fpsMesure;
 
@@ -445,13 +455,13 @@ int main(int argc, char* argv[]) {
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
 
 		//UPDATE
-		views::GameStats::StartChronoData("Update Loop", "Game");
-		scene.Update();
+		if(views::GameStats::StartChronoData("Update Loop", "Game")) {
+			scene.Update();
+		}
 		views::GameStats::EndChronoData("Update Loop", "Game");
 
 		//COMPUTE MODELS POSITION
-		views::GameStats::StartChronoData("Compute Models", "Game");
-		{
+		if(views::GameStats::StartChronoData("Compute Models", "Game")) {
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
 				transform.ComputeModel(ecs::component_id{ i });
@@ -461,8 +471,7 @@ int main(int argc, char* argv[]) {
 		views::GameStats::EndChronoData("Compute Models", "Game");
 
 		//DRAW RENDERING
-		views::GameStats::StartChronoData("Rendering", "Game");
-		{
+		if(views::GameStats::StartChronoData("Rendering", "Game")) {
 			// activate shader
 			ourShader.use();
 

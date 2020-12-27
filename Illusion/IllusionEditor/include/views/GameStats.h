@@ -17,7 +17,7 @@ namespace illusioneditor::views::GameStats {
 
 	struct StatElement {
 		util::Array<f32> datas;
-		bool open = false;
+		bool open = true;
 
 		std::string parent;
 		util::Array<std::string> childs;
@@ -64,7 +64,8 @@ namespace illusioneditor::views::GameStats {
 					}
 					total2 /= 1000000;
 					total2 = total2 / val2.datas.size();
-					ImGui::Text(std::string(val.childs[i] + "\t").c_str());
+					ImGui::SetNextItemWidth(1);
+					ImGui::Checkbox(std::string(val.childs[i]).c_str(), &val2.open);
 					ImGui::NextColumn();
 					ImGui::TextColored((ImVec4)ImColor::ImColor(100, 100, 100), std::string(std::to_string(total2) + "s").c_str());
 					ImGui::NextColumn();
@@ -97,9 +98,10 @@ namespace illusioneditor::views::GameStats {
 		if (stats[name].datas.size() >= maxStatDatas) stats[name].datas.erase(stats[name].datas.begin());
 	}
 
-	void StartChronoData(std::string name, std::string parent = "") {
+	bool StartChronoData(std::string name, std::string parent = "") {
 		CreateStatElement(name, parent);
 		stats[name].chronoStart = std::chrono::high_resolution_clock::now();
+		return stats[name].open;
 	}
 
 	void EndChronoData(std::string name, std::string parent = "") {

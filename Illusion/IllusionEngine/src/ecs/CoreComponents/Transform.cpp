@@ -94,13 +94,13 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
-	Mat4x4 Transform::ComputeModel(ecs::component_id component) {
-		if (Time::tick != -1 && currentTick[component] == Time::tick) return computedModel[component];
+	Mat4x4& Transform::ComputeModel(ecs::component_id component) {
+		if (currentTick[component] == Time::tick) return computedModel[component];
 		currentTick[component] = Time::tick;
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, position[component]);
-		model = model * glm::toMat4(rotation[component]);
+		glm::mat4 &model = computedModel[component];
+		model = glm::translate(glm::mat4(), position[component]);
+		model *= glm::toMat4(rotation[component]);
 		model = glm::scale(model, scale[component]);
 
 		if (id::IsValid(parent[component])) {
