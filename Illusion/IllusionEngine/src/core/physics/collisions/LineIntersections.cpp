@@ -93,4 +93,33 @@ namespace illusion::core::physics::collisions {
 		return -1;
 	}
 
+	bool Linetest(const Sphere& sphere, const Line& line) {
+		Point closest = ClosestPoint(line, sphere.position);
+		float distSq = glm::length2(sphere.position - closest);
+		return distSq <= (sphere.radius * sphere.radius);
+	}
+
+	bool Linetest(const AABB& aabb, const Line& line) {
+		Ray ray;
+		ray.origin = line.start;
+		ray.direction = glm::normalize(line.end - line.start);
+		f32 t = Raycast(aabb, ray);
+		return t >= 0 && (t * t) <= Line::LengthSq(line);
+	}
+
+	bool Linetest(const OBB& obb, const Line& line) {
+		Ray ray;
+		ray.origin = line.start;
+		ray.direction = glm::normalize(line.end - line.start);
+		float t = Raycast(obb, ray);
+		return t >= 0 && t * t <= Line::LengthSq(line);
+	}
+
+	bool Linetest(const Plane& plane, const Line& line) {
+		Vec3 ab = line.end - line.start;
+		float nA = glm::dot(plane.normal, line.start);
+		float nAB = glm::dot(plane.normal, ab);
+		float t = (plane.distance - nA) / nAB;
+		return t >= 0.0f && t <= 1.0f;
+	}
 }
