@@ -3,9 +3,10 @@
 #include "../primitives/Primitives.h"		// Get primitives
 #include "./PointTests.h"					// Get point tests
 
-using namespace illusion::core::physics::primitives;
 
 namespace illusion::core::physics::collisions {
+
+	using namespace illusion::core::physics::primitives;
 
 	/**
 	 *		Tests dones : 
@@ -45,10 +46,10 @@ namespace illusion::core::physics::collisions {
 	bool PlanePlane(const Plane& plane1, const Plane& plane2);
 
 	// Mirror Call
-	constexpr bool AABBSphere(const AABB& aabb, const Sphere& sphere) { return SphereAABB(sphere, aabb); }
-	constexpr bool OBBSphere(const OBB& obb, const Sphere& sphere) { return SphereOBB(sphere, obb); }
-	constexpr bool PlaneSphere(const Plane& plane, const Sphere& sphere) { return SpherePlane(sphere, plane); }
-	constexpr bool OBBAABB(const OBB& obb, const AABB& aabb){ return AABBOBB(aabb, obb); }
-	constexpr bool PlaneAABB(const Plane& plane, const AABB& aabb) { return AABBPlane(aabb, plane); }
-	constexpr bool PlaneOBB(const Plane& plane, const OBB& obb) { return OBBPlane(obb, plane); }
+	inline bool AABBSphere(const AABB& aabb, const Sphere& sphere) { return SphereAABB(sphere, aabb); }
+	inline bool OBBSphere(const OBB& obb, const Sphere& sphere) { return SphereOBB(sphere, obb); }
+	inline bool PlaneSphere(const Plane& plane, const Sphere& sphere) { return SpherePlane(sphere, plane); }
+	inline bool OBBAABB(const OBB& obb, const AABB& aabb){ return AABBOBB(aabb, obb); }
+	inline bool PlaneAABB(const Plane& plane, const AABB& aabb) { return AABBPlane(aabb, plane); }
+	inline bool PlaneOBB(const Plane& plane, const OBB& obb) { return OBBPlane(obb, plane); }
 }

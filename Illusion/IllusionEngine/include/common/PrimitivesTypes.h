@@ -23,6 +23,7 @@ using f64 = double;
 //Vectors
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
+using Vec4 = glm::vec4;
 using Quaternion = glm::quat;
 
 //Matrices
@@ -34,6 +35,6 @@ static constexpr f32 const& PI = 3.14159265358979323846;
 static constexpr f32 const& EPSILON = FLT_EPSILON;
 
 constexpr bool NEAR_EPSILON(f32 v) { return v < EPSILON || v > -EPSILON; }
-constexpr bool CMP(f32 x, f32 y) {
+inline bool CMP(f32 x, f32 y) {
 	return (fabsf((x)-(y)) <= EPSILON * fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
 }

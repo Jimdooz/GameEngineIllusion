@@ -2,9 +2,10 @@
 
 #include "../primitives/Primitives.h"
 
-using namespace illusion::core::physics::primitives;
 
 namespace illusion::core::physics::collisions {
+
+	using namespace illusion::core::physics::primitives;
 
 	//Sphere
 	bool PointInSphere(const Point& point, const Sphere& sphere);

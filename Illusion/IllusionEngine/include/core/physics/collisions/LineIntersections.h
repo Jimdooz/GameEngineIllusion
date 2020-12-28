@@ -3,9 +3,10 @@
 #include "../primitives/Primitives.h"		// Get primitives
 #include "./PointTests.h"					// Get point tests
 
-using namespace illusion::core::physics::primitives;
 
 namespace illusion::core::physics::collisions {
+
+	using namespace illusion::core::physics::primitives;
 
 	/**
 	 *		Tests dones :

@@ -24,7 +24,7 @@ using json = illusion::json;
 namespace fs = std::filesystem;
 
 #include "core/Time.h"
-
+#include "core/physics/collisions/Collisions.h"
 #include "project/ProjectManager.h"
 
 #include <iostream>
@@ -155,6 +155,7 @@ struct TwerkSystem : public ecs::System {
 	}
 };
 
+
 int main(int argc, char* argv[]) {
 	// Create Window
 	//--------
@@ -191,7 +192,7 @@ int main(int argc, char* argv[]) {
 	scene.UseSystem<TwerkSystem>();
 	scene.UseSystem<PlanetSystem>();
 
-	for (u32 i = 0; i < 100; i++) {
+	/*for (u32 i = 0; i < 100; i++) {
 		ecs::entity_id entity = scene.CreateEntity();
 		if (i > 0) {
 			scene.GetComponent<ecs::core::Transform>()->SetParent(ecs::entity_id{ i }, ecs::entity_id{ i - 1 });
@@ -200,7 +201,7 @@ int main(int argc, char* argv[]) {
 		scene.EntityAddComponent<PlanetComponent>(ecs::entity_id{ i });
 		scene.GetComponent<PlanetComponent>()->speed[i] = 1.0f;
 		scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(0.5, 0.5, 0.5);
-	}
+	}*/
 
 	std::vector<float> fpsMesure;
 
@@ -284,6 +285,15 @@ int main(int argc, char* argv[]) {
 		illusion::Time::UpdateTime(glfwGetTime());
 
 		Input::Update();
+
+		double xpos, ypos;
+		glfwGetCursorPos(Window::glfwWindow, &xpos, &ypos);
+
+		float x = (2.0f * xpos) / Window::width - 1.0f;
+		float y = 1.0f - (2.0f * ypos) / Window::height;
+		float z = 1.0f;
+		Vec3 ray_nds = Vec3(x, y, z);
+		Vec4 ray_clip = Vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
 
 		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_S)) {
 			std::ofstream myfile;
@@ -480,17 +490,32 @@ int main(int argc, char* argv[]) {
 
 			// create transformations
 			projection = glm::perspective(glm::radians(45.0f), (float)Window::width / (float)Window::height, 0.1f, 100.0f);
-			view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+			view = glm::translate(view, Vec3(0.0f, 0.0f, -3.0f));
 			// pass transformation matrices to the shader
 			ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 			ourShader.setMat4("view", view);
+			ourShader.setMat4("model", glm::mat4(1.0f));
+
+			Vec4 ray_eye = glm::inverse(projection) * ray_clip;
+			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+			Vec3 ray_wor = (glm::inverse(view) * ray_eye);
+			ray_wor = glm::normalize(ray_wor);
 
 			// render boxes
 			glBindVertexArray(VAO);
 
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
+				ourShader.setBool("collision", false);
 				ourShader.setMat4("model", transform.computedModel[i]);
+
+				Vec4 worldPosition = transform.computedModel[i] * Vec4(0, 0, 0, 1);
+
+				core::physics::primitives::AABB aabb(transform.computedModel[i] * Vec4(0,0,0,1), Vec3(0.5 * transform.scale[i].x,0.5 * transform.scale[i].y,0.5 * transform.scale[i].z));
+				core::physics::primitives::Ray ray(Vec3(0.0f, 0.0f, 3.0f), ray_wor);
+
+				if (core::physics::collisions::Raycast(aabb, ray) >= 0) ourShader.setBool("collision", true);
+
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 
