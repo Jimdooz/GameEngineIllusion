@@ -11,7 +11,7 @@ namespace illusion::core::physics::collisions {
 	 *		Tests dones :
 	 *
 	 *					Sphere	AABB	OBB		Plane
-	 *		Raycast		x		x		-		-
+	 *		Raycast		x		x		x		x
 	 *		Linetest	-		-		-		-
 	 *
 	 */
@@ -22,6 +22,8 @@ namespace illusion::core::physics::collisions {
 	 */
 	float Raycast(const Sphere& sphere, const Ray& ray);
 	float Raycast(const AABB& aabb, const Ray& ray);
+	float Raycast(const OBB& obb, const Ray& ray);
+	float Raycast(const Plane& plane, const Ray& ray);
 
 	// Mirror Call
 

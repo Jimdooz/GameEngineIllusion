@@ -31,6 +31,9 @@ using Mat3x3 = glm::mat3x3;
 using Mat4x4 = glm::mat4x4;
 
 static constexpr f32 const& PI = 3.14159265358979323846;
-static constexpr f32 const& EPSILON = std::numeric_limits<double>::epsilon();
+static constexpr f32 const& EPSILON = FLT_EPSILON;
 
 constexpr bool NEAR_EPSILON(f32 v) { return v < EPSILON || v > -EPSILON; }
+constexpr bool CMP(f32 x, f32 y) {
+	return (fabsf((x)-(y)) <= EPSILON * fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))));
+}

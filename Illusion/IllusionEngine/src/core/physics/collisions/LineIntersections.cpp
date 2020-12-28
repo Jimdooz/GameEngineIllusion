@@ -46,4 +46,51 @@ namespace illusion::core::physics::collisions {
 		return tmin;
 	}
 
+	float Raycast(const OBB& obb, const Ray& ray) {
+		// X, Y and Z axis of OBB
+		const Vec3 &size = obb.size;
+		Vec3 X = obb.orientation[0];
+		Vec3 Y = obb.orientation[1];
+		Vec3 Z = obb.orientation[2];
+		Vec3 p = obb.position - ray.origin;
+		Vec3 f(
+			glm::dot(X, ray.direction),
+			glm::dot(Y, ray.direction),
+			glm::dot(Z, ray.direction)
+		);
+
+		Vec3 e(
+			glm::dot(X, p),
+			glm::dot(Y, p),
+			glm::dot(Z, p)
+		);
+		f32 t[6] = { 0, 0, 0, 0, 0, 0 };
+		for (int i = 0; i < 3; ++i) {
+			if (CMP(f[i], 0)) {
+				if (-e[i] - size[i] > 0 || -e[i] + size[i] < 0) {
+					return -1;
+				}
+				f[i] = 0.00001f; // Avoid div by 0!
+			}
+			t[i * 2 + 0] = (e[i] + size[i]) / f[i]; // min
+			t[i * 2 + 1] = (e[i] - size[i]) / f[i]; // max
+		}
+
+		f32 tmin = fmaxf(fmaxf(fminf(t[0], t[1]),fminf(t[2], t[3])),fminf(t[4], t[5]));
+		f32 tmax = fminf(fminf(fmaxf(t[0], t[1]),fmaxf(t[2], t[3])),fmaxf(t[4], t[5]));
+
+		if (tmax < 0 || tmin>tmax) return -1;
+		if (tmin < 0.0f) return tmax;
+		return tmin;
+	}
+
+	float Raycast(const Plane& plane, const Ray& ray) {
+		f32 nd = glm::dot(ray.direction, plane.normal);
+		f32 pn = glm::dot(ray.origin, plane.normal);
+		if (nd >= 0.0f) return -1;
+		f32 t = (plane.distance - pn) / nd;
+		if (t >= 0.0f) return t;
+		return -1;
+	}
+
 }
