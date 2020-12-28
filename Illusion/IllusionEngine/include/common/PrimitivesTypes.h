@@ -4,6 +4,11 @@
 	/!\ DO NOT INCLUDE THIS FILE, INCLUDE "CommonHeader.h" INSTEAD
 */
 
+constexpr f32 PI = 3.14159265358979323846;
+constexpr f32 EPSILON = std::numeric_limits<double>::epsilon();
+
+constexpr bool NEAR_EPSILON(f32 v) { return v < EPSILON || v > -EPSILON; }
+
 //unsigned integers
 using u8 = uint8_t;
 using u16 = uint16_t;

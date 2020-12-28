@@ -77,4 +77,47 @@ namespace illusion::core::physics::collisions {
 		}
 		return result;
 	}
+
+	//Plane
+	bool PointOnPlane(const Point& point, const Plane& plane) {
+		float dot = glm::dot(point, plane.normal);
+		return NEAR_EPSILON(dot - plane.distance);
+	}
+
+	Point ClosestPoint(const Plane& plane, const Point& point) {
+		float dot = glm::dot(plane.normal, point);
+		float distance = dot - plane.distance;
+		return point - plane.normal * distance;
+	}
+
+	//Line
+	bool PointOnLine(const Point& point, const Line& line) {
+		Point closest = ClosestPoint(line, point);
+		float distanceSq = glm::length2(closest - point);
+		return NEAR_EPSILON(distanceSq);
+	}
+
+	Point ClosestPoint(const Line& line, const Point& point) {
+		Vec3 lVec = line.end - line.start; // Line Vector
+		float t = glm::dot(point - line.start, lVec) / glm::dot(lVec, lVec);
+		t = fmaxf(t, 0.0f); // Clamp to 0
+		t = fminf(t, 1.0f); // Clamp to 1
+		return line.start + lVec * t;
+	}
+
+	//Ray
+	bool PointOnRay(const Point& point, const Ray& ray) {
+		if (point == ray.origin) return true;
+		Vec3 norm = point - ray.origin;
+		glm::normalize(norm);
+		float diff = glm::dot(norm, ray.direction);
+		return NEAR_EPSILON(diff + 1.0f);
+	}
+
+	Point ClosestPoint(const Ray& ray, const Point& point) {
+		float t = glm::dot(point - ray.origin, ray.direction);
+		t = fmaxf(t, 0.0f);
+		return Point(ray.origin + ray.direction * t);
+	}
+
 }
