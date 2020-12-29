@@ -511,19 +511,32 @@ int main(int argc, char* argv[]) {
 			// activate shader
 			ourShader.use();
 
+			//CAMERA MOVEMENT
+			{
+				camera.UpdateVectors(camera.ToEntity[0]);
+				if (Input::isMouse(1)) {
+					camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
+				}
+				else if (Input::isMouse(2)) {
+					glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+					transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
+															+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
+				}
+				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+			}
+
+
 			glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 			glm::mat4 projection = glm::mat4(1.0f);
 
 			float aspect = (float)Window::width / (float)Window::height;
 
 			// create transformations
-			if (!camera.orthoMode[0]) {
-				projection = glm::perspective(camera.fov[0], aspect, camera.near[0], camera.far[0]);
-			}
-			else {
-				projection = glm::ortho(- Window::width / 2 * 0.02f, Window::width / 2 * 0.02f, - Window::height / 2 * 0.02f, Window::height / 2 * 0.02f, camera.near[0], camera.far[0]);
-			}
-			view = glm::translate(view, transform.position[camera.ToEntity[0]]);
+			projection = glm::perspective(camera.fov[0], aspect, camera.near[0], camera.far[0]);
+
+			view = glm::lookAt(transform.position[camera.ToEntity[0]], transform.position[camera.ToEntity[0]] + camera.front[0], camera.up[0]);
+
+
 			// pass transformation matrices to the shader
 			ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 			ourShader.setMat4("view", view);
