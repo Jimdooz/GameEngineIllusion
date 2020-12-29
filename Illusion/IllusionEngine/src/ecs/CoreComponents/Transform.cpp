@@ -95,29 +95,45 @@ namespace illusion::ecs::core {
 	}
 
 	Mat4x4& Transform::ComputeModel(ecs::component_id component) {
-		if (currentTick[component] == Time::tick) return computedModel[component];
-		currentTick[component] = Time::tick;
+		if (currentTick[component] == Time::tick) return modelTransform[component];
 
-		glm::mat4 &model = computedModel[component];
-		model = glm::translate(glm::mat4(), position[component]);
-		model *= glm::toMat4(rotation[component]);
-		model = glm::scale(model, scale[component]);
+		glm::mat4 &model = modelTransform[component];
 
-		if (id::IsValid(parent[component])) {
-			model = ComputeModel(getIndex(parent[component])) * model;
+		if (currentTick[component] == -1 || s_position[component] != position[component] || s_rotation[component] != rotation[component] || s_scale[component] != scale[component]) {
+			elementTransform[component] = glm::translate(glm::mat4(), position[component]) * glm::toMat4(rotation[component]) * glm::scale(scale[component]);
+			model = elementTransform[component];
+
+			s_position[component] = position[component];
+			s_rotation[component] = rotation[component];
+			s_scale[component] = scale[component];
 		}
 
-		computedModel[component] = model;
+		if (id::IsValid(parent[component])) {
+			ecs::component_id parentId = getIndex(parent[component]);
+			ComputeModel(parentId);
+
+			model = modelTransform[parentId] * elementTransform[component];
+		}
+
+		currentTick[component] = Time::tick;
 
 		return model;
 	}
 
 	void Transform::AddDatas(ecs::entity_id id) {
+		AddData(currentTick, u8(-1));
+		AddData(name, "Entity " + std::to_string(ecs::id::Index(id)) + " [" + std::to_string(ecs::id::Generation(id)) + "]");
+
 		AddData(position, Vec3(0, 0, 0));
 		AddData(rotation, Quaternion(1,0,0,0));
 		AddData(scale, Vec3(1, 1, 1));
-		AddData(currentTick, u8(0));
-		AddData(computedModel, Mat4x4(1.0f));
+
+		AddData(s_position, Vec3(0, 0, 0));
+		AddData(s_rotation, Quaternion(1, 0, 0, 0));
+		AddData(s_scale, Vec3(1, 1, 1));
+
+		AddData(elementTransform, Mat4x4(1.0));
+		AddData(modelTransform, Mat4x4(1.0));
 
 		AddData(parent, entity_id{ ecs::id::invalid_id });
 		AddData(childs, util::Array<ecs::entity_id>());
@@ -137,11 +153,19 @@ namespace illusion::ecs::core {
 		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
 		index = getIndex(id);
 
+		RemoveData(currentTick, index);
+		RemoveData(name, index);
+
 		RemoveData(position, index);
 		RemoveData(rotation, index);
 		RemoveData(scale, index);
-		RemoveData(currentTick, index);
-		RemoveData(computedModel, index);
+
+		RemoveData(s_position, index);
+		RemoveData(s_rotation, index);
+		RemoveData(s_scale, index);
+
+		RemoveData(elementTransform, index);
+		RemoveData(modelTransform, index);
 
 		RemoveData(parent, index);
 		RemoveData(childs, index);

@@ -3,6 +3,8 @@
 #include "ecs/Ecs.h"
 #include "ecs/Entity.h"
 
+#include <string>
+
 #define TYPE_ID(T) typeid(T).hash_code()
 
 namespace illusion::resources{
@@ -16,6 +18,19 @@ namespace illusion::resources{
 	template<typename T> size_t hashOf() { return typeid(T).hash_code(); }
 
 	void JsonConvertor::Initialize() {
+		//String
+		JsonConvertor::Create<std::string>(
+			JSON_EXPORT{
+				std::string& rdata = *((std::string*)data);
+				json array = rdata;
+				return array;
+			},
+			JSON_IMPORT{
+				std::string* rto = (std::string*)to;
+				*rto = data;
+			},
+			JSON_VECTOR_CONVERTOR(std::string)
+			);
 		//Vector3
 		JsonConvertor::Create<Vec3>(
 			JSON_EXPORT {

@@ -6,6 +6,8 @@ namespace illusion::ecs::core {
 
 	struct Transform : public Component {
 		Transform(Scene* scene) : Component(scene) {
+			COMPONENT_PUBLIC(name);
+
 			COMPONENT_PUBLIC(position);
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
@@ -17,11 +19,20 @@ namespace illusion::ecs::core {
 		COMPONENT_NAME("Transform");
 		COMPONENT_REGISTER(Transform);
 
+		COMPONENT_DATA(u8, currentTick);			//Optimisation pour ne pas recalculer la matrice du model
+		COMPONENT_DATA(std::string, name);
+
 		COMPONENT_DATA(Vec3, position);
 		COMPONENT_DATA(Quaternion, rotation);
 		COMPONENT_DATA(Vec3, scale);
-		COMPONENT_DATA(Mat4x4, computedModel);		//Matrice de transformation du model
-		COMPONENT_DATA(u8, currentTick);			//Optimisation pour ne pas recalculer la matrice du model
+
+		//Copy Datas for optimisation
+		COMPONENT_DATA(Vec3, s_position);
+		COMPONENT_DATA(Quaternion, s_rotation);
+		COMPONENT_DATA(Vec3, s_scale);
+
+		COMPONENT_DATA(Mat4x4, modelTransform);		//Matrice de transformation total du model
+		COMPONENT_DATA(Mat4x4, elementTransform);	//Matrice de transformation de l'objet
 
 		COMPONENT_DATA(ecs::entity_id, parent);
 		COMPONENT_DATA(util::Array<ecs::entity_id>, childs);
@@ -66,7 +77,7 @@ namespace illusion::ecs::core {
 
 		virtual void AddDatas(ecs::entity_id id) override;
 
-		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id);
+		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;
 
 		virtual void AfterRemoveComponent(entity_id id);
 	};

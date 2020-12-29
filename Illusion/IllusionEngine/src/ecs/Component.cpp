@@ -1,6 +1,8 @@
 #include "ecs/Component.h"
 #include "ecs/Scene.h"
 
+#include "ecs/CoreComponents/Camera.h"
+
 namespace illusion::ecs {
 	util::Map<size_t, Component*> Component::AllComponents;
 
@@ -56,5 +58,6 @@ namespace illusion::ecs {
 
 	void Component::AppendCoreComponents() {
 		Component::AppendComponents<core::Transform>();
+		Component::AppendComponents<core::Camera>();
 	}
 }

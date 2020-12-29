@@ -13,6 +13,8 @@
 #include "resources/DataConvertor.h"
 #include "resources/assets/Scenes.h"
 
+#include "ecs/CoreComponents/Camera.h"
+
 #include <streambuf>
 #include <sstream>
 #include <resources/system/Json.h>
@@ -36,6 +38,8 @@ namespace fs = std::filesystem;
 //auto stop = high_resolution_clock::now();
 //std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -46,6 +50,14 @@ namespace fs = std::filesystem;
 using namespace std::chrono;
 using namespace illusion;
 using namespace illusioneditor;
+
+struct CubeRenderer : public ecs::Component {
+	// Declare component name
+	COMPONENT_NAME("Cube Renderer");
+	COMPONENT_REGISTER(CubeRenderer);
+	// Declare constructor
+	CubeRenderer(ecs::Scene* scene) : Component(scene) {}
+};
 
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
@@ -181,18 +193,23 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendCoreComponents();
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
+	illusion::ecs::Component::AppendComponents<CubeRenderer>();
 	illusion::ecs::System::AppendSystems<TwerkSystem>();
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 
 	// Init Scene
 	//----------
 	ecs::Scene scene;
+
+	scene.UseComponent<ecs::core::Camera>();
+
 	scene.UseComponent<RigidBodyComponent>();
 	scene.UseComponent<PlanetComponent>();
+	scene.UseComponent<CubeRenderer>();
 	scene.UseSystem<TwerkSystem>();
 	scene.UseSystem<PlanetSystem>();
 
-	/*for (u32 i = 0; i < 100; i++) {
+	/*for (u32 i = 0; i < 100000; i++) {
 		ecs::entity_id entity = scene.CreateEntity();
 		if (i > 0) {
 			scene.GetComponent<ecs::core::Transform>()->SetParent(ecs::entity_id{ i }, ecs::entity_id{ i - 1 });
@@ -202,6 +219,11 @@ int main(int argc, char* argv[]) {
 		scene.GetComponent<PlanetComponent>()->speed[i] = 1.0f;
 		scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(0.5, 0.5, 0.5);
 	}*/
+
+	//Create Camera
+	ecs::entity_id entity = scene.CreateEntity();
+	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
+	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
 	std::vector<float> fpsMesure;
 
@@ -275,6 +297,8 @@ int main(int argc, char* argv[]) {
 					"D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
 	ourShader.use();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glEnable(GL_DEPTH_TEST);
 
 	// Main Loop
 	//---------
@@ -460,9 +484,11 @@ int main(int argc, char* argv[]) {
 		glfwGetFramebufferSize(Window::glfwWindow, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(0.25f, 0.25f, 0.5f, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
+		CubeRenderer& renderer = *scene.GetComponent<CubeRenderer>();
 
 		//UPDATE
 		if(views::GameStats::StartChronoData("Update Loop", "Game")) {
@@ -481,16 +507,23 @@ int main(int argc, char* argv[]) {
 		views::GameStats::EndChronoData("Compute Models", "Game");
 
 		//DRAW RENDERING
-		if(views::GameStats::StartChronoData("Rendering", "Game")) {
+		if(views::GameStats::StartChronoData("Rendering", "Game") && camera.ToEntity.size() > 0) {
 			// activate shader
 			ourShader.use();
 
 			glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 			glm::mat4 projection = glm::mat4(1.0f);
 
+			float aspect = (float)Window::width / (float)Window::height;
+
 			// create transformations
-			projection = glm::perspective(glm::radians(45.0f), (float)Window::width / (float)Window::height, 0.1f, 100.0f);
-			view = glm::translate(view, Vec3(0.0f, 0.0f, -3.0f));
+			if (!camera.orthoMode[0]) {
+				projection = glm::perspective(camera.fov[0], aspect, camera.near[0], camera.far[0]);
+			}
+			else {
+				projection = glm::ortho(- Window::width / 2 * 0.02f, Window::width / 2 * 0.02f, - Window::height / 2 * 0.02f, Window::height / 2 * 0.02f, camera.near[0], camera.far[0]);
+			}
+			view = glm::translate(view, transform.position[camera.ToEntity[0]]);
 			// pass transformation matrices to the shader
 			ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 			ourShader.setMat4("view", view);
@@ -504,17 +537,25 @@ int main(int argc, char* argv[]) {
 			// render boxes
 			glBindVertexArray(VAO);
 
-			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
+			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
+				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
 				// calculate the model matrix for each object and pass it to shader before drawing
 				ourShader.setBool("collision", false);
-				ourShader.setMat4("model", transform.computedModel[i]);
+				ourShader.setMat4("model", transform.modelTransform[idTransform]);
 
-				Vec4 worldPosition = transform.computedModel[i] * Vec4(0, 0, 0, 1);
+				glm::vec3 scale;
+				glm::quat rotation;
+				glm::vec3 translation;
+				glm::vec3 skew;
+				glm::vec4 perspective;
+				glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
 
-				core::physics::primitives::AABB aabb(transform.computedModel[i] * Vec4(0,0,0,1), Vec3(0.5 * transform.scale[i].x,0.5 * transform.scale[i].y,0.5 * transform.scale[i].z));
+				Vec3 size = Vec3(0.5, 0.5, 0.5);
+
+				core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, Mat4x4(rotation));
 				core::physics::primitives::Ray ray(Vec3(0.0f, 0.0f, 3.0f), ray_wor);
 
-				if (core::physics::collisions::Raycast(aabb, ray) >= 0) ourShader.setBool("collision", true);
+				if (core::physics::collisions::Raycast(obb, ray) >= 0) ourShader.setBool("collision", true);
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
