@@ -13,21 +13,36 @@ namespace illusion::core::physics::collisions {
 	 *
 	 *					Sphere	AABB	OBB		Plane
 	 *		Raycast		x		x		x		x
-	 *		Linetest	x		x		x		-
+	 *		Linetest	x		x		x		x
 	 *
 	 */
+
+	struct RaycastResult {
+		Vec3 point;
+		Vec3 normal;
+		f32 t;
+		bool hit;
+	};
+
+	void ResetRaycastResult(RaycastResult* outResult);
 
 	/**
 	 * Raycast intersections will return the distance along the ray that the intersection has happened.
 	 * Line segment intersections will simply return a Boolean value
 	 */
-	float Raycast(const Sphere& sphere, const Ray& ray);
-	float Raycast(const AABB& aabb, const Ray& ray);
-	float Raycast(const OBB& obb, const Ray& ray);
-	float Raycast(const Plane& plane, const Ray& ray);
+	f32 Raycast(const Sphere& sphere, const Ray& ray);
+	f32 Raycast(const AABB& aabb, const Ray& ray);
+	f32 Raycast(const OBB& obb, const Ray& ray);
+	f32 Raycast(const Plane& plane, const Ray& ray);
 
 	bool Linetest(const Sphere& sphere, const Line& line);
 	bool Linetest(const AABB& aabb, const Line& line);
 	bool Linetest(const OBB& obb, const Line& line);
 	bool Linetest(const Plane& plane, const Line& line);
+
+	//Raycast with informations
+	bool Raycast(const Sphere& sphere, const Ray& ray, RaycastResult* outResult);
+	bool Raycast(const AABB& aabb, const Ray& ray, RaycastResult* outResult);
+	bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult);
+	bool Raycast(const Plane& plane, const Ray& ray, RaycastResult* outResult);
 }
