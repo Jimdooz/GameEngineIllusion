@@ -550,6 +550,8 @@ int main(int argc, char* argv[]) {
 			// render boxes
 			glBindVertexArray(VAO);
 
+			float nearSelected = -1;
+
 			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
 				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
 				// calculate the model matrix for each object and pass it to shader before drawing
@@ -566,9 +568,20 @@ int main(int argc, char* argv[]) {
 				Vec3 size = Vec3(0.5, 0.5, 0.5);
 
 				core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, Mat4x4(rotation));
-				core::physics::primitives::Ray ray(Vec3(0.0f, 0.0f, 3.0f), ray_wor);
+				core::physics::primitives::Ray ray(Vec3(transform.position[camera.ToEntity[0]]), ray_wor);
 
-				if (core::physics::collisions::Raycast(obb, ray) >= 0) ourShader.setBool("collision", true);
+				f32 cast = core::physics::collisions::Raycast(obb, ray);
+
+				if (cast >= 0 && (cast < nearSelected || nearSelected == -1)) {
+					if (Input::isMouseDown(0)) {
+						views::GameHiearchy::selected = renderer.ToEntity[i];
+						nearSelected = cast;
+					}
+				}
+				
+				if (views::GameHiearchy::selected == renderer.ToEntity[i]) {
+					ourShader.setBool("collision", true);
+				}
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
