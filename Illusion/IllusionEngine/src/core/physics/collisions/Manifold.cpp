@@ -152,7 +152,7 @@ namespace illusion::core::physics::collisions {
 		result.reserve(edges.size());
 		Point intersection;
 
-		util::Array<Plane>& planes = GetPlanes(obb);
+		util::Array<Plane> planes = GetPlanes(obb);
 
 		for (int i = 0; i < planes.size(); ++i) {
 			for (int j = 0; j < edges.size(); ++j) {
