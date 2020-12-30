@@ -24,7 +24,7 @@ namespace illusion::core::physics {
 			COMPONENT_PUBLIC(mass);
 		}
 
-		COMPONENT_DATA(bool, fixed);
+		COMPONENT_DATA(boolean, fixed);
 
 		COMPONENT_DATA(Vec3, velocity);
 		COMPONENT_DATA(Vec3, forces);
@@ -74,7 +74,7 @@ namespace illusion::core::physics {
 
 		// On Data added
 		virtual void AddDatas(ecs::entity_id id) override {
-			AddData(fixed, false);
+			AddData<boolean>(fixed, false);
 
 			AddData(velocity, Vec3(0, 0, 0));
 			AddData(forces, Vec3(0, 0, 0));

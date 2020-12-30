@@ -19,17 +19,17 @@ namespace illusion::resources{
 
 	void JsonConvertor::Initialize() {
 		//String
-		JsonConvertor::Create<bool>(
+		JsonConvertor::Create<boolean>(
 			JSON_EXPORT{
-				bool& rdata = *((bool*)data);
+				boolean& rdata = *((boolean*)data);
 				json value = rdata;
 				return value;
 			},
 			JSON_IMPORT{
-				bool* rto = (bool*)to;
+				boolean* rto = (boolean*)to;
 				*rto = data;
 			},
-			JSON_VECTOR_CONVERTOR(bool)
+			JSON_VECTOR_CONVERTOR(boolean)
 		);
 		//String
 		JsonConvertor::Create<std::string>(

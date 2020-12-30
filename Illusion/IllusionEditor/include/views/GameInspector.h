@@ -39,8 +39,8 @@ namespace illusioneditor::views::GameInspector {
 			f32 floatValue = val[componentId];
 			ImGui::DragFloat(data.name.c_str(), &floatValue, 0.01f);
 			val[componentId] = floatValue;
-		} else if (data.type == typeid(illusion::util::Array<bool>).hash_code()) {
-			illusion::util::Array<bool>& val = *(illusion::util::Array<bool>*)data.data;
+		} else if (data.type == typeid(illusion::util::Array<boolean>).hash_code()) {
+			illusion::util::Array<boolean>& val = *(illusion::util::Array<boolean>*)data.data;
 			bool value = val[componentId];
 			ImGui::Checkbox(data.name.c_str(), &value);
 			val[componentId] = value;
