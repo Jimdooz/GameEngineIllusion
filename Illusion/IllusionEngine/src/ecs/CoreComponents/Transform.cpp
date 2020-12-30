@@ -100,7 +100,7 @@ namespace illusion::ecs::core {
 		glm::mat4 &model = modelTransform[component];
 
 		if (currentTick[component] == -1 || s_position[component] != position[component] || s_rotation[component] != rotation[component] || s_scale[component] != scale[component]) {
-			elementTransform[component] = glm::translate(glm::mat4(), position[component]) * glm::toMat4(rotation[component]) * glm::scale(scale[component]);
+			elementTransform[component] = glm::translate(position[component]) * glm::toMat4(rotation[component]) * glm::scale(scale[component]);
 			model = elementTransform[component];
 
 			s_position[component] = position[component];

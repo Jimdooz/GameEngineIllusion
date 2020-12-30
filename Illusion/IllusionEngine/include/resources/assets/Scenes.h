@@ -44,7 +44,7 @@ namespace illusion::resources::assets {
 				if (componentHash != typeid(ecs::core::Transform).hash_code()) scene.EntityAddComponent(id, componentHash);
 				for (u32 j = 0; j < comp->publicDatas.size(); j++) {
 					ecs::component_id componentId = comp->getIndex(id);
-					if (componentId == ecs::id::invalid_id) continue;
+					if (componentId == ecs::id::invalid_id || componentElements[el.key()][comp->publicDatas[j].name].is_null()) continue;
 					resources::JsonConvertor::ImportFromJSONFromArray(componentElements[el.key()][comp->publicDatas[j].name], comp->publicDatas[j].data, comp->publicDatas[j].type, componentId);
 				}
 			}

@@ -25,7 +25,7 @@ namespace illusion::ecs {
 	struct Scene {
 
 		Scene() {
-			this->UseComponent<core::Transform>();
+			for (auto const& [key, val] : Component::AllComponents) this->UseComponent(key);
 		}
 
 		// ECS System

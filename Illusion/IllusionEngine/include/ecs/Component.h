@@ -120,6 +120,35 @@ namespace illusion::ecs {
 			return ToData[id::Index(id)];
 		}
 
+		/**
+		 * @brief	Permet de récupérer l'id d'index donné
+		 *
+		 * @param	id l'identifiant de l'entité
+		 * @return	l'index des datas de l'entité dans le component
+		 */
+		inline entity_id getId(component_id index) {
+			return ToEntity[index];
+		}
+
+		/**
+		 * @brief	Permet de savoir si un id a un component associé
+		 *
+		 * @param	id l'identifiant de l'entité
+		 * @return	l'index des datas de l'entité dans le component
+		 */
+		inline bool exist(entity_id id) {
+			return id::IsValid(ToData[id::Index(id)]);
+		}
+
+		/**
+		 * @brief	Permet de connaître le nombre d'entité qui ont le component
+		 *
+		 * @return	le nombre d'éléments que compose le component
+		 */
+		inline i32 size() {
+			return ToEntity.size();
+		}
+
 	protected:
 		/**
 		 * @brief	Fonction appelé lors de l'ajout du component à une entité via UseComponent()

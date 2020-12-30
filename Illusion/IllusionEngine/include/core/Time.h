@@ -15,6 +15,9 @@ namespace illusion {
 		static f32 unscaledTime;		// Le temps écoulé depuis le début du jeux non dépendant du timeScale
 		static f32 timeScale;			// La vitesse du temps ( permet de faire des slow motion )
 
+		static f32 fixedDeltaTime;
+		static f32 unscaledFixedDeltaTime;
+
 		static u8 tick;					// Compteur permettant de réaliser des optimisations pour les calculs ( boucle de 0 à 255 exclus )
 		static f32 previousFrame;		// Valeur du temps de la dernière frame
 
@@ -27,6 +30,9 @@ namespace illusion {
 
 			unscaledTime = 0.0f;
 			unscaledDeltaTime = 0.0f;
+
+			fixedDeltaTime = 1.0 / 50.0;
+			unscaledFixedDeltaTime = 1.0 / 70.0;
 
 			timeScale = 1.0f;
 			tick = 0;
@@ -43,6 +49,8 @@ namespace illusion {
 
 			unscaledTime += unscaledDeltaTime;
 			time += deltaTime;
+
+			fixedDeltaTime = unscaledFixedDeltaTime * timeScale;
 
 			previousFrame = frame;
 			tick = (tick + 1) % 255;

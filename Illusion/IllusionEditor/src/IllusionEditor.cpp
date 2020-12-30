@@ -26,7 +26,12 @@ using json = illusion::json;
 namespace fs = std::filesystem;
 
 #include "core/Time.h"
+#include "core/physics/PhysicsManager.h"
 #include "core/physics/collisions/Collisions.h"
+#include "core/physics/components/BoxCollider.h"
+#include "core/physics/components/SphereCollider.h"
+#include "core/physics/components/RigidBody.h"
+
 #include "project/ProjectManager.h"
 
 #include <iostream>
@@ -50,6 +55,7 @@ namespace fs = std::filesystem;
 using namespace std::chrono;
 using namespace illusion;
 using namespace illusioneditor;
+using namespace illusion::core::physics;
 
 struct CubeRenderer : public ecs::Component {
 	// Declare component name
@@ -61,26 +67,98 @@ struct CubeRenderer : public ecs::Component {
 
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
-	COMPONENT_NAME("Rigidbody");
+	COMPONENT_NAME("ParticleRigidbody");
 	COMPONENT_REGISTER(RigidBodyComponent);
 
 	// Declare constructor
 	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {
 		// Display on inspector
-		COMPONENT_PUBLIC(velocity);
 	}
 
 	// Declare datas
-	COMPONENT_DATA(Vec3, velocity);
+	COMPONENT_DATA(Vec3, oldPosition);
+
+	COMPONENT_DATA(Vec3, forces);
+	COMPONENT_DATA(f32, mass);
+	COMPONENT_DATA(f32, bounce);
+
+	COMPONENT_DATA(f32, friction);
+	COMPONENT_DATA(Vec3, gravity);
+
+	void ApplyForces(ecs::entity_id id) {
+		ecs::component_id index = getIndex(id);
+
+		forces[index] = gravity[index];
+	}
+
+	void Update(ecs::entity_id id) {
+		//Get Index
+		ecs::component_id index = getIndex(id);
+		//Get Position
+		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
+		Vec3& position = transform->position[transform->getIndex(id)];
+
+		//Compute Physics
+		Vec3 velocity = position - oldPosition[index];
+		oldPosition[index] = position;
+
+		f32 deltaSquare = Time::fixedDeltaTime * Time::fixedDeltaTime;
+		position = position + (velocity * friction[index] + forces[index] * deltaSquare);
+	}
+
+	void SolveConstraints(ecs::entity_id id, const util::Array<primitives::OBB>& constraints) {
+		//Get Index
+		ecs::component_id index = getIndex(id);
+		//Get Position
+		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
+		Vec3& position = transform->position[transform->getIndex(id)];
+
+		int size = constraints.size();
+		for (int i = 0; i < size; ++i) {
+			primitives::Line traveled(oldPosition[index], position);
+			if (collisions::Linetest(constraints[i], traveled)) {
+				Vec3 velocity = position - oldPosition[index];
+				Vec3 direction = glm::normalize(velocity);
+				primitives::Ray ray(oldPosition[index], direction);
+				collisions::RaycastResult result;
+				if (Raycast(constraints[i], ray, &result)) {
+					position = result.point + result.normal * 0.003f;
+					Vec3 vn = result.normal * glm::dot(result.normal, velocity);
+					Vec3 vt = velocity - vn;
+					oldPosition[index] = position - (vt - vn * bounce[index]);
+					break;
+				}
+			}
+		}
+	}
 
 	// On Data added
 	virtual void AddDatas(ecs::entity_id id) override {
-		AddData(velocity, Vec3(0, 0, 0));
+
+		//Get Position
+		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
+		Vec3& position = transform->position[transform->getIndex(id)];
+
+		AddData(oldPosition, position);
+		AddData(forces, Vec3(0, 0, 0));
+
+		AddData(mass, 1.0f);
+		AddData(bounce, 0.7f);
+
+		AddData(friction, 0.95f);
+		AddData(gravity, Vec3(0, -9.82f, 0));
 	}
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(velocity, index);
+		RemoveData(oldPosition, index);
+
+		RemoveData(forces, index);
+		RemoveData(mass, index);
+		RemoveData(bounce, index);
+
+		RemoveData(friction, index);
+		RemoveData(gravity, index);
 	}
 };
 
@@ -139,35 +217,6 @@ struct PlanetSystem : public ecs::System {
 	}
 };
 
-struct TwerkSystem : public ecs::System {
-	SYSTEM_NAME("TWERK");
-	SYSTEM_REGISTER(TwerkSystem);
-
-	ecs::core::Transform* transform;
-	RigidBodyComponent* rigidbody;
-
-	/* la fonction Update */
-	SYSTEM_UPDATE_LOOP(
-		/*position().x += 5;
-		rotation().x++;
-		rotation().y++;
-		scale().x++;*/
-	)
-
-	/* Definition des variables utiles */
-	SYSTEM_USE_DATA(position, transform, position, Vec3)
-	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion)
-	SYSTEM_USE_DATA(scale, transform, scale, Vec3)
-
-	/* Initialisation relative a la scene parente */
-	virtual void Initialize(ecs::Scene& scene) override {
-		transform = scene.GetComponent<ecs::core::Transform>();
-		rigidbody = scene.GetComponent<RigidBodyComponent>();
-		SetDependencies(transform, rigidbody);
-	}
-};
-
-
 int main(int argc, char* argv[]) {
 	// Create Window
 	//--------
@@ -194,19 +243,15 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<CubeRenderer>();
-	illusion::ecs::System::AppendSystems<TwerkSystem>();
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 
 	// Init Scene
 	//----------
 	ecs::Scene scene;
 
-	scene.UseComponent<ecs::core::Camera>();
-
 	scene.UseComponent<RigidBodyComponent>();
 	scene.UseComponent<PlanetComponent>();
 	scene.UseComponent<CubeRenderer>();
-	scene.UseSystem<TwerkSystem>();
 	scene.UseSystem<PlanetSystem>();
 
 	/*for (u32 i = 0; i < 100000; i++) {
@@ -299,6 +344,10 @@ int main(int argc, char* argv[]) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
+
+	f32 physicsTime = 0.0f;
+
+	bool stepMode = false;
 
 	// Main Loop
 	//---------
@@ -453,14 +502,26 @@ int main(int argc, char* argv[]) {
 		{
 			ImGui::Begin("Scene Options###SceneOptions");
 			if (scene.pause) {
-				if (ImGui::Button("Play")) scene.pause = false;
+				if (ImGui::Button("Play")) {
+					stepMode = false;
+					scene.pause = false;
+				}
 			} else {
-				if (ImGui::Button("Pause")) scene.pause = true;
+				if (ImGui::Button("Pause")) {
+					stepMode = false;
+					scene.pause = true;
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Reload")) {
 				illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
 				scene.pause = true;
+				stepMode = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Next Step")) {
+				stepMode = true;
+				scene.pause = false;
 			}
 			ImGui::End();
 		}
@@ -487,6 +548,7 @@ int main(int argc, char* argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+		RigidBodyComponent& rigibodies = *scene.GetComponent<RigidBodyComponent>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 		CubeRenderer& renderer = *scene.GetComponent<CubeRenderer>();
 
@@ -497,7 +559,7 @@ int main(int argc, char* argv[]) {
 		views::GameStats::EndChronoData("Update Loop", "Game");
 
 		//COMPUTE MODELS POSITION
-		if(views::GameStats::StartChronoData("Compute Models", "Game")) {
+		if (views::GameStats::StartChronoData("Compute Models", "Game")) {
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
 				transform.ComputeModel(ecs::component_id{ i });
@@ -505,6 +567,42 @@ int main(int argc, char* argv[]) {
 
 		}
 		views::GameStats::EndChronoData("Compute Models", "Game");
+
+		//PHYSICS
+		if (views::GameStats::StartChronoData("Physics", "Game")) {
+			physicsTime += Time::unscaledDeltaTime;
+			while (physicsTime >= Time::unscaledFixedDeltaTime) {
+				physicsTime -= Time::unscaledFixedDeltaTime;
+
+				if (scene.pause) continue;
+				
+				ComputePhysics(scene);
+				if (stepMode) scene.pause = true;
+
+				/*for (u32 i = 0; i < rigibodies.ToEntity.size(); i++) {
+
+					util::Array<primitives::OBB> constraints;
+
+					for (u32 j = 0; j < renderer.ToEntity.size(); j++) {
+						if (renderer.ToEntity[j] == rigibodies.ToEntity[i]) continue;
+						ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[j]);
+
+						glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
+						glm::vec3 skew; glm::vec4 perspective;
+						glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
+						Vec3 size = Vec3(0.5, 0.5, 0.5);
+
+						constraints.push_back(primitives::OBB(translation, scale* size, glm::inverse(glm::toMat4(rotation))));
+					}
+
+					rigibodies.ApplyForces(rigibodies.ToEntity[i]);
+					rigibodies.SolveConstraints(rigibodies.ToEntity[i], constraints);
+					rigibodies.Update(rigibodies.ToEntity[i]);
+				}*/
+
+			}
+		}
+		views::GameStats::EndChronoData("Physics", "Game");
 
 		//DRAW RENDERING
 		if(views::GameStats::StartChronoData("Rendering", "Game") && camera.ToEntity.size() > 0) {
@@ -552,6 +650,7 @@ int main(int argc, char* argv[]) {
 
 			float nearSelected = -1;
 
+
 			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
 				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
 				// calculate the model matrix for each object and pass it to shader before drawing
@@ -567,7 +666,7 @@ int main(int argc, char* argv[]) {
 
 				Vec3 size = Vec3(0.5, 0.5, 0.5);
 
-				core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, Mat4x4(rotation));
+				core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, glm::inverse(glm::toMat4(rotation)) );
 				core::physics::primitives::Ray ray(Vec3(transform.position[camera.ToEntity[0]]), ray_wor);
 
 				f32 cast = core::physics::collisions::Raycast(obb, ray);

@@ -3,6 +3,12 @@
 
 #include "ecs/CoreComponents/Camera.h"
 
+#include "core/physics/components/RigidBody.h"
+#include "core/physics/components/BoxCollider.h"
+#include "core/physics/components/SphereCollider.h"
+
+using namespace illusion::core;
+
 namespace illusion::ecs {
 	util::Map<size_t, Component*> Component::AllComponents;
 
@@ -59,5 +65,9 @@ namespace illusion::ecs {
 	void Component::AppendCoreComponents() {
 		Component::AppendComponents<core::Transform>();
 		Component::AppendComponents<core::Camera>();
+
+		Component::AppendComponents<physics::RigidBody>();
+		Component::AppendComponents<physics::BoxCollider>();
+		Component::AppendComponents<physics::SphereCollider>();
 	}
 }
