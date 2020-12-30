@@ -16,6 +16,7 @@ IncludeDir["glfw"] = "%{wks.location}/libs/glfw/include"
 IncludeDir["Glad"] = "%{wks.location}/libs/Glad/include"
 IncludeDir["glm"] = "%{wks.location}/libs/glm/"
 IncludeDir["imgui"] = "%{wks.location}/libs/imgui/"
+IncludeDir["assimp"] = "%{wks.location}/libs/assimp/include"
 IncludeDir["IllusionEngine"] = "%{wks.location}/IllusionEngine/include"
 project "IllusionEngine"
 	location "%{wks.location}/%{prj.name}"
@@ -41,6 +42,7 @@ project "IllusionEngine"
 		"%{prj.location}/include/",
 		"%{IncludeDir.glfw}",
 		"%{IncludeDir.glm}",
+		"%{IncludeDir.assimp}",
 		"%{IncludeDir.Glad}"
 	}
 
@@ -50,6 +52,7 @@ project "IllusionEngine"
 		{
 			"ILS_PLATFORM_LINUX"
 		}
+		--GLad files
 		files
 		{
 			"%{wks.location}/libs/Glad/include/glad/glad.h",
@@ -100,6 +103,7 @@ project "IllusionEditor"
 
 	files
 	{
+		--ImGui files
 		"%{wks.location}/libs/imgui/imconfig.h",
 		"%{wks.location}/libs/imgui/imgui.h",
 		"%{wks.location}/libs/imgui/imgui_internal.h",
@@ -126,6 +130,7 @@ project "IllusionEditor"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.assimp}",
 		"%{IncludeDir.IllusionEngine}"
 	}
 
@@ -136,9 +141,14 @@ project "IllusionEditor"
 		{
 			"ILS_PLATFORM_LINUX"
 		}
-		libdirs { "%{wks.location}/libs/glfw/liblinux/" }
+		libdirs 
+		{
+			"%{wks.location}/libs/glfw/liblinux/",
+			"%{wks.location}/libs/assimp/liblinux/"
+		}
 		links
 		{
+			--GLFW dependencies
 			"glfw3",
 			"Xrandr",
 			"Xi",
@@ -148,6 +158,12 @@ project "IllusionEditor"
 			"dl",
 			"pthread",
 			"stdc++fs",
+			
+			--ASSIMP Dependencies
+			"assimp",
+			"IrrXML",
+			"z",
+
 			"IllusionEngine"
 		}
 	filter "system:windows"
