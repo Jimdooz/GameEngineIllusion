@@ -32,7 +32,7 @@ namespace illusion {
 			unscaledDeltaTime = 0.0f;
 
 			fixedDeltaTime = 1.0 / 50.0;
-			unscaledFixedDeltaTime = 1.0 / 70.0;
+			unscaledFixedDeltaTime = 1.0 / 50.0;
 
 			timeScale = 1.0f;
 			tick = 0;

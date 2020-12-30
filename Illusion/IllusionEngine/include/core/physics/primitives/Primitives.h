@@ -7,4 +7,3 @@
 #include "./AABB.h"
 #include "./OBB.h"
 #include "./Plane.h"
-#include "./Triangle.h"
