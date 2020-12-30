@@ -1,0 +1,13 @@
+{
+    "Components" : [ "Transform", "Rigidbody" ],
+    "Systems" : [ "TWERK" ],
+    "Entity" : [
+        {
+            "Systems" : {
+                "Rigidbody" : {
+                    "velocity" : [0.0,0.0,0.1]
+                }
+            }
+        }
+    ]
+}

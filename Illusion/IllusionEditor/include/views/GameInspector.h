@@ -6,7 +6,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-namespace illusion::views::GameInspector {
+namespace illusioneditor::views::GameInspector {
+
+	using namespace illusion;
 
 	namespace {
 		illusion::ecs::Scene* currentScene = nullptr;
@@ -26,12 +28,33 @@ namespace illusion::views::GameInspector {
 			vec3[componentId].z = vec3a[2];
 		}else if (data.type == typeid(illusion::util::Array<Quaternion>).hash_code()) {
 			illusion::util::Array<Quaternion>& vec4 = *(illusion::util::Array<Quaternion>*)data.data;
-			float vec4a[4] = { vec4[componentId].w, vec4[componentId].x, vec4[componentId].y, vec4[componentId].z };
+			float vec4a[4] = { vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w };
 			ImGui::DragFloat4(data.name.c_str(), vec4a, 0.01f);
-			vec4[componentId].w = vec4a[0];
-			vec4[componentId].x = vec4a[1];
-			vec4[componentId].y = vec4a[2];
-			vec4[componentId].z = vec4a[3];
+			vec4[componentId].x = vec4a[0];
+			vec4[componentId].y = vec4a[1];
+			vec4[componentId].z = vec4a[2];
+			vec4[componentId].w = vec4a[3];
+		} else if (data.type == typeid(illusion::util::Array<f32>).hash_code()) {
+			illusion::util::Array<f32>& val = *(illusion::util::Array<f32>*)data.data;
+			f32 floatValue = val[componentId];
+			ImGui::DragFloat(data.name.c_str(), &floatValue, 0.01f);
+			val[componentId] = floatValue;
+		} else if (data.type == typeid(illusion::util::Array<boolean>).hash_code()) {
+			illusion::util::Array<boolean>& val = *(illusion::util::Array<boolean>*)data.data;
+			bool value = val[componentId];
+			ImGui::Checkbox(data.name.c_str(), &value);
+			val[componentId] = value;
+		} else if (data.type == typeid(illusion::util::Array<std::string>).hash_code()) {
+			illusion::util::Array<std::string>& val = *(illusion::util::Array<std::string>*)data.data;
+			std::string& value = val[componentId];
+			
+			int n = value.length() + 64;
+			char* buf1 = new char[n];
+			strcpy(buf1, value.c_str());
+			ImGui::InputText(data.name.c_str(), buf1, n);
+
+			value = std::string(buf1);
+			delete buf1;
 		}
 	}
 	
@@ -42,20 +65,27 @@ namespace illusion::views::GameInspector {
 
 			ecs::component_id iSelected = (ecs::component_id)ecs::id::Index(currentSelected);
 
-			if (ImGui::TreeNode("Components###COMPONENT")) {
+			if (iSelected >= currentScene->entities.m_entities.size()
+				|| !currentScene->entities.IsAliveAtIndex(ecs::entity_id{ iSelected })) {
+				ImGui::End();
+				return;
+			}
+
+			if (ImGui::TreeNodeEx("Components###COMPONENT", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding)) {
 				for (auto const& [key, val] : currentScene->components) {
 					std::string title = val->getName() + "###" + std::to_string(key);
 					if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 					if (ImGui::TreeNode(title.c_str())) {
 						for (u32 i = 0; i < val->publicDatas.size(); i++) {
-							GenerateUiComponent(val->publicDatas[i], val);
+							if(val->publicDatas[i].visible)
+								GenerateUiComponent(val->publicDatas[i], val);
 						}
 						ImGui::TreePop();
 					}
 				}
 				ImGui::TreePop();
 			}
-			if (ImGui::TreeNode("Systems###SYSTEM")) {
+			if (ImGui::TreeNodeEx("Systems###SYSTEM", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding)) {
 				ImVec4 saveStyle = ImGui::GetStyle().Colors[ImGuiCol_Text];
 				ImGui::GetStyle().Colors[ImGuiCol_Text] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
 				for (auto const& [key, val] : currentScene->systems) {

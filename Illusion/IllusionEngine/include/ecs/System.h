@@ -4,9 +4,9 @@
 #include "ecs/Component.h"
 
 /**
- * Macro permettant de d�corer la fonction Update � override
- * Il permet d'automatiser la boucle sur toutes les entit�s cibl� par le System
- * Il est conseill� d'utiliser la macro SYSTEM_USE_DATA pour automatiser la r�cup�ration de datas des components
+ * Macro permettant de décorer la fonction Update à override
+ * Il permet d'automatiser la boucle sur toutes les entités ciblé par le System
+ * Il est conseillé d'utiliser la macro SYSTEM_USE_DATA pour automatiser la récupération de datas des components
  */
 #define SYSTEM_UPDATE_LOOP(BEHAVIOUR) \
 	virtual void Update() override { \
@@ -31,6 +31,9 @@
 	inline static const std::string SNAME = NAME;\
 	virtual std::string getName() { return SNAME; }
 
+#define SYSTEM_REGISTER(CLASS) \
+	virtual System* generate() override { return new CLASS(); }
+
 namespace illusion::ecs {
 
 	// On d�clare Scene sans inclure ses headers par question de double d�pendances
@@ -39,7 +42,7 @@ namespace illusion::ecs {
 	/**
 	 * System
 	 *
-	 * Un Syst�me est une structure qui poss�des les mechaniques et comportements
+	 * Un Système est une structure qui poss�des les mechaniques et comportements
 	 * L'entit� en soit ne fait rien, c'est les Syst�mes qui auront pour but de modifier les donn�es des components
 	 * des entit�s cibl�s
 	 *
@@ -51,6 +54,7 @@ namespace illusion::ecs {
 	 */
 	struct System {
 		SYSTEM_NAME("DEFAULT SYSTEM")
+		virtual System* generate() { return new System(); }
 
 		virtual void Update();
 		virtual void LateUpdate();
@@ -164,6 +168,15 @@ namespace illusion::ecs {
 		template<typename Arg1, class... Args> inline void SetDependencies(Arg1 c1, Args... cNext) {
 			componentsDeps.push_back(c1);
 			SetDependencies(cNext...);
+		}
+
+	public:
+		static util::Map<size_t, System*> AllSystems;
+
+		static void AppendCoreSystems();
+
+		template<typename T>static void AppendSystems() {
+			System::AllSystems[typeid(T).hash_code()] = new T();
 		}
 	};
 }

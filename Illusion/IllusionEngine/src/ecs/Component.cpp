@@ -1,7 +1,16 @@
 #include "ecs/Component.h"
 #include "ecs/Scene.h"
 
+#include "ecs/CoreComponents/Camera.h"
+
+#include "core/physics/components/RigidBody.h"
+#include "core/physics/components/BoxCollider.h"
+#include "core/physics/components/SphereCollider.h"
+
+using namespace illusion::core;
+
 namespace illusion::ecs {
+	util::Map<size_t, Component*> Component::AllComponents;
 
 	Component::Component(Scene* scene) {
 		this->scene = scene;
@@ -19,7 +28,7 @@ namespace illusion::ecs {
 
 		if (index == id::invalid_id) return;
 
-		// On supprime toutes les donn�es li�es � l'id
+		// On supprime toutes les données liées � l'id
 		RemoveDatas(index, id);
 
 		//// Inversion pour tableau compact
@@ -51,5 +60,14 @@ namespace illusion::ecs {
 		id::id_type index = id::Index(id);
 		if (ToData[index] != component_id{ id::invalid_id }) RemoveComponent(id);
 		ToData[index] = component_id{ id::invalid_id };
+	}
+
+	void Component::AppendCoreComponents() {
+		Component::AppendComponents<core::Transform>();
+		Component::AppendComponents<core::Camera>();
+
+		Component::AppendComponents<physics::RigidBody>();
+		Component::AppendComponents<physics::BoxCollider>();
+		Component::AppendComponents<physics::SphereCollider>();
 	}
 }

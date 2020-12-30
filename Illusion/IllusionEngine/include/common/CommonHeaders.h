@@ -24,3 +24,6 @@
 #include "Logger.h"
 #include "PrimitivesTypes.h"
 #include "utilities/Utilities.h"
+
+//Add Core type
+#include "core/Time.h"

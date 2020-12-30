@@ -18,7 +18,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexParentId)) return;
 
-		// 1. On signale � l'ancien parent si il existe de supprimer l'id de ses enfants
+		// 1. On signale à l'ancien parent si il existe de supprimer l'id de ses enfants
 		illusion::ecs::entity_id currentParentId = parent[indexId];
 		if (parentId != currentParentId
 			&& illusion::ecs::id::IsValid(currentParentId)
@@ -83,7 +83,7 @@ namespace illusion::ecs::core {
 
 	bool Transform::HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId) {
 		if (parentId == id::invalid_id || id == id::invalid_id) return false;
-		if (id == parentId) return false; // Une entit� ne peut pas se contenir soit m�me
+		if (id == parentId) return false; // Une entité ne peut pas se contenir soit m�me
 		component_id index = getIndex(id);
 		while (index != id::invalid_id) {
 			id = parent[index];
@@ -94,38 +94,84 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
+	Mat4x4& Transform::ComputeModel(ecs::component_id component) {
+		if (currentTick[component] == Time::tick) return modelTransform[component];
+
+		glm::mat4 &model = modelTransform[component];
+
+		if (currentTick[component] == -1 || s_position[component] != position[component] || s_rotation[component] != rotation[component] || s_scale[component] != scale[component]) {
+			elementTransform[component] = glm::translate(position[component]) * glm::toMat4(rotation[component]) * glm::scale(scale[component]);
+			model = elementTransform[component];
+
+			s_position[component] = position[component];
+			s_rotation[component] = rotation[component];
+			s_scale[component] = scale[component];
+		}
+
+		if (id::IsValid(parent[component])) {
+			ecs::component_id parentId = getIndex(parent[component]);
+			ComputeModel(parentId);
+
+			model = modelTransform[parentId] * elementTransform[component];
+		}
+
+		currentTick[component] = Time::tick;
+
+		return model;
+	}
+
 	void Transform::AddDatas(ecs::entity_id id) {
+		AddData(currentTick, u8(-1));
+		AddData(name, "Entity " + std::to_string(ecs::id::Index(id)) + " [" + std::to_string(ecs::id::Generation(id)) + "]");
+
 		AddData(position, Vec3(0, 0, 0));
-		AddData(rotation, Quaternion(0, 0, 0, 1));
+		AddData(rotation, Quaternion(1,0,0,0));
 		AddData(scale, Vec3(1, 1, 1));
+
+		AddData(s_position, Vec3(0, 0, 0));
+		AddData(s_rotation, Quaternion(1, 0, 0, 0));
+		AddData(s_scale, Vec3(1, 1, 1));
+
+		AddData(elementTransform, Mat4x4(1.0));
+		AddData(modelTransform, Mat4x4(1.0));
+
 		AddData(parent, entity_id{ ecs::id::invalid_id });
 		AddData(childs, util::Array<ecs::entity_id>());
 	}
 
 	void Transform::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		// On signale au parent que l'id a �t� supprim�
-		RemoveChild(id, parent[index]);
+		// On signale au parent que l'id a été supprimé
+		RemoveChild(parent[index], id);
 
 		// On Supprime les enfants
-		u32 nbChilds = childs[index].size();
-		for (u32 i = 0; i < nbChilds; i++) {
-			// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
-			index = getIndex(id);
+		for (u32 i = 0; i < childs[index].size();) {
+			// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
 			scene->DestroyEntity(childs[index][i]);
+			index = getIndex(id);
 		}
 
-		// On r�cup�re l'index au cas o� l'index aurait �t� modifi� lors de la suppression d'un enfant
+		// On récupère l'index au cas où l'index aurait été modifié lors de la suppression d'un enfant
 		index = getIndex(id);
+
+		RemoveData(currentTick, index);
+		RemoveData(name, index);
 
 		RemoveData(position, index);
 		RemoveData(rotation, index);
 		RemoveData(scale, index);
+
+		RemoveData(s_position, index);
+		RemoveData(s_rotation, index);
+		RemoveData(s_scale, index);
+
+		RemoveData(elementTransform, index);
+		RemoveData(modelTransform, index);
+
 		RemoveData(parent, index);
 		RemoveData(childs, index);
 	}
 
 	void Transform::AfterRemoveComponent(entity_id id) {
-		INTERNAL_INFO("DELETE ELEMENT !")
 		scene->DestroyEntity(id);
 	}
 }
