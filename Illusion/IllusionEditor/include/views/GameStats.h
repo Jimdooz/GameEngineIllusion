@@ -67,9 +67,9 @@ namespace illusioneditor::views::GameStats {
 					ImGui::SetNextItemWidth(1);
 					ImGui::Checkbox(std::string(val.childs[i]).c_str(), &val2.open);
 					ImGui::NextColumn();
-					ImGui::TextColored((ImVec4)ImColor(100, 100, 100), std::string(std::to_string(total2) + "s").c_str());
+					ImGui::TextColored((ImVec4)ImColor(100, 100, 100),"%s", std::string(std::to_string(total2) + "s").c_str());
 					ImGui::NextColumn();
-					ImGui::TextColored((ImVec4)ImColor(100, 150, 100), std::string(std::to_string((total2 / total) * 100.0) + " %%%").c_str());
+					ImGui::TextColored((ImVec4)ImColor(100, 150, 100),"%s", std::string(std::to_string((total2 / total) * 100.0) + " %").c_str());
 					ImGui::NextColumn();
 				}
 				ImGui::EndChild();
