@@ -52,10 +52,15 @@ namespace illusion::core::physics {
 			rigidbodies->ApplyForces(rigidbodies->getId((ecs::component_id)i));
 		}
 
+		glPointSize(10);
+
 		for (int k = 0; k < ImpulseIteration; ++k) {
 			for (int i = 0; i < results.size(); ++i) {
 				int jSize = results[i].contacts.size();
 				for (int j = 0; j < jSize; ++j) {
+
+					DEBUG_POINT(results[i].contacts[j]);
+
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}
 			}
@@ -121,8 +126,7 @@ namespace illusion::core::physics {
 		// Relative velocity
 		Vec3 relativeVel = (rigidbodies->velocity[indexB] + glm::cross(rigidbodies->angVel[indexB], r2)) - (rigidbodies->velocity[indexA] + glm::cross(rigidbodies->angVel[indexA], r1));
 		// Relative collision normal
-		Vec3 relativeNorm = M.normal;
-		glm::normalize(relativeNorm);
+		Vec3 relativeNorm = glm::normalize(M.normal);
 		// Moving away from each other? Do nothing!
 		if (glm::dot(relativeVel, relativeNorm) > 0.0f) {
 			return;
@@ -134,6 +138,7 @@ namespace illusion::core::physics {
 		Vec3 d2 = glm::cross(Vec3(i1 * Vec4(glm::cross(r1, relativeNorm), 0.0)), r1);
 		Vec3 d3 = glm::cross(Vec3(i2 * Vec4(glm::cross(r2, relativeNorm), 0.0)), r2);
 		float denominator = d1 + glm::dot(relativeNorm, d2 + d3);
+		INTERNAL_INFO(e, " ", numerator, " ", d1, " ", d2, " ", d3, " ", denominator);
 
 		float j = (denominator == 0.0f) ? 0.0f : numerator / denominator;
 		if (M.contacts.size() > 0.0f && j != 0.0f) {
@@ -141,11 +146,15 @@ namespace illusion::core::physics {
 		}
 		Vec3 impulse = relativeNorm * j;
 
-		rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - impulse * invMass1;
-		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + impulse * invMass2;
+		rigidbodies->AddLinearImpulse(A, -impulse);
+		rigidbodies->AddLinearImpulse(B, impulse);
+		/*rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - impulse * invMass1;
+		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + impulse * invMass2;*/
 
-		rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, impulse), 1.0));
-		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, impulse), 1.0));
+		rigidbodies->AddRotationImpulse(A, M.contacts[c], -impulse);
+		rigidbodies->AddRotationImpulse(B, M.contacts[c], impulse);
+		/*rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, impulse), 1.0));
+		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, impulse), 1.0));*/
 
 		// Friction
 		Vec3 t = relativeVel - (relativeNorm * glm::dot(relativeVel, relativeNorm));
@@ -179,12 +188,15 @@ namespace illusion::core::physics {
 
 		Vec3 tangentImpuse = t * jt;
 
-		rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - tangentImpuse * invMass1;
-		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + tangentImpuse * invMass2;
+		rigidbodies->AddLinearImpulse(A, -tangentImpuse);
+		rigidbodies->AddLinearImpulse(B, tangentImpuse);
+		/*rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - tangentImpuse * invMass1;
+		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + tangentImpuse * invMass2;*/
 
-
-		rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, tangentImpuse), 1.0));
-		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, tangentImpuse), 1.0));
+		rigidbodies->AddRotationImpulse(A, M.contacts[c], -tangentImpuse);
+		rigidbodies->AddRotationImpulse(B, M.contacts[c], tangentImpuse);
+		/*rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, tangentImpuse), 1.0));
+		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, tangentImpuse), 1.0));*/
 	}
 
 }

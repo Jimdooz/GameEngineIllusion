@@ -79,7 +79,7 @@ namespace illusion::core::physics::collisions {
 				if (-e[i] - size[i] > 0 || -e[i] + size[i] < 0) {
 					return -1;
 				}
-				f[i] = 0.00001f; // Avoid div by 0!
+				f[i] = 0.000001f; // Avoid div by 0!
 			}
 			t[i * 2 + 0] = (e[i] + size[i]) / f[i]; // min
 			t[i * 2 + 1] = (e[i] - size[i]) / f[i]; // max

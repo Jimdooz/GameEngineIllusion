@@ -29,6 +29,9 @@ namespace illusion::core::physics {
 			COMPONENT_PUBLIC(orientation);
 			COMPONENT_PUBLIC(angVel);
 			COMPONENT_PUBLIC(torques);
+
+			COMPONENT_PUBLIC(cor);
+			COMPONENT_PUBLIC(friction);
 		}
 
 		COMPONENT_DATA(boolean, fixed);
@@ -47,6 +50,9 @@ namespace illusion::core::physics {
 		COMPONENT_DATA(Vec3, angVel);
 		COMPONENT_DATA(Vec3, torques);
 		COMPONENT_DATA(Mat4x4, invTensor);
+
+		//Calculation
+		COMPONENT_DATA(Vec3, n_velocity); // Next velocity
 
 		Mat4x4 InvTensor(ecs::entity_id id) {
 			ecs::component_id index = getIndex(id);
@@ -72,9 +78,9 @@ namespace illusion::core::physics {
 			Vec3 centerOfMass = position;
 			Vec3 torque = glm::cross(point - centerOfMass, impulse);
 
-			Vec3 angAccel = InvTensor(id) * Vec4(torque, 0.0);
-			angVel[index] = angVel[index] + angAccel;
-
+			/*Vec3 angAccel = InvTensor(id) * Vec4(torque, 0.0);
+			angVel[index] = angVel[index] + angAccel;*/
+			torques[index] += torque;
 		}
 
 		void ApplyForces(ecs::entity_id id) {
@@ -87,13 +93,13 @@ namespace illusion::core::physics {
 		void AddLinearImpulse(ecs::entity_id id, const Vec3& impulse) {
 			ecs::component_id index = getIndex(id);
 
-			velocity[index] = velocity[index] + impulse;
+			n_velocity[index] += impulse * InvMass(id);
 		}
 
 		f32 InvMass(ecs::entity_id id) {
 			ecs::component_id index = getIndex(id);
 
-			if (mass[index] == 0.0f) { return 0.0f; }
+			if (mass[index] <= 0.0f) { return 0.0f; }
 			if (fixed[index]) return 0.0f;
 			return 1.0f / mass[index];
 		}
@@ -111,17 +117,21 @@ namespace illusion::core::physics {
 
 			const f32 damping = 0.98f;
 			Vec3 acceleration = forces[index] * InvMass(id);
-			velocity[index] = velocity[index] + acceleration * Time::fixedDeltaTime;
-			velocity[index] = velocity[index] * damping;
+			velocity[index] += n_velocity[index];
+			velocity[index] += acceleration * Time::fixedDeltaTime;
+			velocity[index] *= damping;
 
-			Vec3 angAccel = InvTensor(id) * Vec4(torques[index], 1.0);
-			angVel[index] = angVel[index] + angAccel * Time::fixedDeltaTime;
-			angVel[index] = angVel[index] * damping;
+			Vec3 angAccel = InvTensor(id) * Vec4(torques[index], 0.0);
+			angVel[index] += angAccel * Time::fixedDeltaTime;
+			angVel[index] *= damping;
 
-			position = position + velocity[index] * Time::fixedDeltaTime;
+			position += velocity[index] * Time::fixedDeltaTime;
 
 			orientation[index] = orientation[index] + angVel[index] * Time::fixedDeltaTime;
 			rotation = glm::quat(orientation[index]);
+
+			torques[index] = Vec3(0, 0, 0);
+			n_velocity[index] = Vec3(0, 0, 0);
 		}
 
 		// On Data added
@@ -132,7 +142,7 @@ namespace illusion::core::physics {
 			AddData(forces, Vec3(0, 0, 0));
 
 			AddData(mass, 1.0f);
-			AddData(cor, 0.5f);
+			AddData(cor, 0.0f);
 			AddData(friction, 0.6f);
 
 			AddData(gravity, Vec3(0, -9.82f, 0));
@@ -141,6 +151,8 @@ namespace illusion::core::physics {
 			AddData(angVel, Vec3(0, 0, 0));
 			AddData(torques, Vec3(0, 0, 0));
 			AddData(invTensor, Mat4x4(0));
+
+			AddData(n_velocity, Vec3(0,0,0));
 		}
 
 		// On Data removed
@@ -160,6 +172,8 @@ namespace illusion::core::physics {
 			RemoveData(angVel, index);
 			RemoveData(torques, index);
 			RemoveData(invTensor, index);
+
+			RemoveData(n_velocity, index);
 		}
 
 	};

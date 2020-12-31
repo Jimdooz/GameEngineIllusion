@@ -515,7 +515,6 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 			if (ImGui::Button("Reload")) {
 				illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-				scene.pause = true;
 				stepMode = false;
 			}
 			ImGui::SameLine();
@@ -523,6 +522,9 @@ int main(int argc, char* argv[]) {
 				stepMode = true;
 				scene.pause = false;
 			}
+			
+			ImGui::SliderFloat("ScaleTime", &Time::timeScale, 0, 2);
+
 			ImGui::End();
 		}
 
@@ -567,6 +569,8 @@ int main(int argc, char* argv[]) {
 
 		}
 		views::GameStats::EndChronoData("Compute Models", "Game");
+
+		ourShader.setMat4("model", glm::mat4(1.0f));
 
 		//PHYSICS
 		if (views::GameStats::StartChronoData("Physics", "Game")) {

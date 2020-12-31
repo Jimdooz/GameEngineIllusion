@@ -48,13 +48,16 @@ namespace illusion::core::physics::collisions {
 	//OBB
 	bool PointInOBB(const Point& point, const OBB& obb) {
 		Vec3 dir = point - obb.position;
+
 		for (i32 i = 0; i < 3; i++) {
-			Vec3 axis(obb.orientation[i][0], obb.orientation[i][1], obb.orientation[i][2]);
-			f32 distance = glm::dot(dir, axis);
-			if (distance > obb.size[i]) {
+			Vec3 axis = obb.orientation[i];
+			f64 distance = glm::dot(dir, axis);
+
+
+			if (distance > obb.size[i] + EPSILON) {
 				return false;
 			}
-			if (distance < -obb.size[i]) {
+			if (distance < -obb.size[i] - EPSILON) {
 				return false;
 			}
 		}
@@ -65,7 +68,7 @@ namespace illusion::core::physics::collisions {
 		Point result = obb.position;
 		Vec3 dir = point - obb.position;
 		for (i32 i = 0; i < 3; i++) {
-			Vec3 axis(obb.orientation[i][0], obb.orientation[i][1], obb.orientation[i][2]);
+			Vec3 axis = obb.orientation[i];
 			f32 distance = glm::dot(dir, axis);
 			if (distance > obb.size[i]) {
 				distance = obb.size[i];
@@ -73,7 +76,7 @@ namespace illusion::core::physics::collisions {
 			if (distance < -obb.size[i]) {
 				distance = -obb.size[i];
 			}
-			result = result + (axis * distance);
+			result += (axis * distance);
 		}
 		return result;
 	}
@@ -81,20 +84,20 @@ namespace illusion::core::physics::collisions {
 	//Plane
 	bool PointOnPlane(const Point& point, const Plane& plane) {
 		float dot = glm::dot(point, plane.normal);
-		return NEAR_EPSILON(dot - plane.distance);
+		return CMP(dot - plane.distance, 0.0f);
 	}
 
 	Point ClosestPoint(const Plane& plane, const Point& point) {
 		float dot = glm::dot(plane.normal, point);
 		float distance = dot - plane.distance;
-		return point - plane.normal * distance;
+		return point - (plane.normal * distance);
 	}
 
 	//Line
 	bool PointOnLine(const Point& point, const Line& line) {
 		Point closest = ClosestPoint(line, point);
 		float distanceSq = glm::length2(closest - point);
-		return NEAR_EPSILON(distanceSq);
+		return CMP(distanceSq, 0.0f);
 	}
 
 	Point ClosestPoint(const Line& line, const Point& point) {
@@ -111,7 +114,7 @@ namespace illusion::core::physics::collisions {
 		Vec3 norm = point - ray.origin;
 		glm::normalize(norm);
 		float diff = glm::dot(norm, ray.direction);
-		return NEAR_EPSILON(diff + 1.0f);
+		return NEAR_EPSILON(diff - 1.0f);
 	}
 
 	Point ClosestPoint(const Ray& ray, const Point& point) {

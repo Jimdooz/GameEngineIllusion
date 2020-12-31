@@ -10,6 +10,9 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(near);
 			COMPONENT_PUBLIC(far);
 			COMPONENT_PUBLIC(orthoMode);
+
+			COMPONENT_PROTECTED(yaw);
+			COMPONENT_PROTECTED(pitch);
 		}
 
 		COMPONENT_NAME("Camera");
