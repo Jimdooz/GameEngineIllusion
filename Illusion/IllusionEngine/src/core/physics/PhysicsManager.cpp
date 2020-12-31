@@ -16,7 +16,7 @@ namespace illusion::core::physics {
 
 		f32 LinearProjectionPercent = 0.45f;
 		f32 PenetrationSlack = 0.01f;
-		int ImpulseIteration = 70;
+		int ImpulseIteration = 7;
 
 		RigidBody* rigidbodies = scene.GetComponent<RigidBody>();
 		BoxCollider* boxColliders = scene.GetComponent<BoxCollider>();

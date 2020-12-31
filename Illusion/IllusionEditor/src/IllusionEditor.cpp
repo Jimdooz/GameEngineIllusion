@@ -830,17 +830,17 @@ int main(int argc, char* argv[]) {
 
 				Mat4x4 model = glm::translate(translation + (Vec3(0.7,0,0) * factor) ) * glm::scale(Vec3(1,0.1,0.1) * factor);
 
-				arrowShader.setVec4("color", Vec4(1, 0, 0, 1));
+				arrowShader.setVec4("color", Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
 				arrowShader.setMat4("model", model);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 
 				model = glm::translate(translation + (Vec3(0, 0.7, 0) * factor)) * glm::scale(Vec3(0.1, 1, 0.1) * factor);
-				arrowShader.setVec4("color", Vec4(0, 1, 0, 1));
+				arrowShader.setVec4("color", Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
 				arrowShader.setMat4("model", model);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 
 				model = glm::translate(translation + (Vec3(0, 0, 0.7) * factor)) * glm::scale(Vec3(0.1, 0.1, 1) * factor);
-				arrowShader.setVec4("color", Vec4(0, 0, 1, 1));
+				arrowShader.setVec4("color", Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
 				arrowShader.setMat4("model", model);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
