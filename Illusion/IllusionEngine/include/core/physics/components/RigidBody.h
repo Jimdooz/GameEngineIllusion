@@ -114,10 +114,10 @@ namespace illusion::core::physics {
 
 			velocity[index] += n_velocity[index];
 			dt_velocity[index] += n_velocity[index];
-			angVel[index] += Vec3(InvTensor(id) * Vec4(torques[index], 0.0));
+			angVel[index] += Vec3(InvTensor(id) * Vec4(torques[index], 1.0));
 
 			position += n_velocity[index] * Time::fixedDeltaTime;
-			rotation = glm::quat(Vec3(InvTensor(id) * Vec4(torques[index], 0.0)) * Time::fixedDeltaTime) * rotation;
+			rotation = glm::quat(Vec3(InvTensor(id) * Vec4(torques[index], 1.0)) * Time::fixedDeltaTime) * rotation;
 
 			n_velocity[index] = Vec3(0, 0, 0);
 			torques[index] = Vec3(0, 0, 0);

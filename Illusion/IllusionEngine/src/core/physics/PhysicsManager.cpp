@@ -59,7 +59,7 @@ namespace illusion::core::physics {
 				int jSize = results[i].contacts.size();
 				for (int j = 0; j < jSize; ++j) {
 
-					DEBUG_POINT(results[i].contacts[j]);
+					//DEBUG_POINT(results[i].contacts[j]);
 
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}
