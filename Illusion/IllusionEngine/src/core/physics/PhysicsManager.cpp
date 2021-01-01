@@ -14,7 +14,7 @@ namespace illusion::core::physics {
 		util::Array<ecs::entity_id> colliders2;
 		util::Array<CollisionManifold> results;
 
-		f32 LinearProjectionPercent = 0.45f;
+		f32 LinearProjectionPercent = 0.8f;
 		f32 PenetrationSlack = 0.01f;
 		int ImpulseIteration = 7;
 
@@ -58,9 +58,6 @@ namespace illusion::core::physics {
 			for (int i = 0; i < results.size(); ++i) {
 				int jSize = results[i].contacts.size();
 				for (int j = 0; j < jSize; ++j) {
-
-					//DEBUG_POINT(results[i].contacts[j]);
-
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}
 				rigidbodies->ApplyCurrentVelocity(colliders1[i]);

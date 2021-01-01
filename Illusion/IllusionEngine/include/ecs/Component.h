@@ -126,7 +126,7 @@ namespace illusion::ecs {
 		 * @param	id l'identifiant de l'entité
 		 * @return	l'index des datas de l'entité dans le component
 		 */
-		inline entity_id getId(component_id index) {
+		inline entity_id getId(id::id_type index) {
 			return ToEntity[index];
 		}
 

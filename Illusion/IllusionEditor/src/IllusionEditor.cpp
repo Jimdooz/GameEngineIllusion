@@ -32,6 +32,8 @@ namespace fs = std::filesystem;
 #include "core/physics/components/SphereCollider.h"
 #include "core/physics/components/RigidBody.h"
 
+#include "scene/SceneEditor.h"
+
 #include "project/ProjectManager.h"
 
 #include <iostream>
@@ -39,9 +41,6 @@ namespace fs = std::filesystem;
 #include <bitset>
 #include <map>
 #include <string>
-//auto start = high_resolution_clock::now();
-//auto stop = high_resolution_clock::now();
-//std::cout << "DURATION : " << duration_cast<microseconds>(stop - start).count() / 1000000.0 << std::endl;
 
 #include <glm/gtx/matrix_decompose.hpp>
 
@@ -237,6 +236,10 @@ int main(int argc, char* argv[]) {
 	illusion::resources::JsonConvertor::Initialize();
 	illusion::Time::Init();
 
+	// Init Editor
+	//----------
+	illusioneditor::scene::editor::Initialize();
+
 	// Init ECS
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
@@ -254,23 +257,25 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<CubeRenderer>();
 	scene.UseSystem<PlanetSystem>();
 
-	/*for (u32 i = 0; i < 100000; i++) {
+	/*for (u32 i = 0; i < 100; i++) {
 		ecs::entity_id entity = scene.CreateEntity();
+		scene.EntityAddComponent<CubeRenderer>(entity);
+		scene.EntityAddComponent<core::physics::RigidBody>(entity);
+		scene.EntityAddComponent<core::physics::BoxCollider>(entity);
 		if (i > 0) {
-			scene.GetComponent<ecs::core::Transform>()->SetParent(ecs::entity_id{ i }, ecs::entity_id{ i - 1 });
-			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(1, 0, 0);
+			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(sin(i), 5 + 1.2 * i, -5);
 		}
-		scene.EntityAddComponent<PlanetComponent>(ecs::entity_id{ i });
-		scene.GetComponent<PlanetComponent>()->speed[i] = 1.0f;
-		scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(0.5, 0.5, 0.5);
+		else {
+			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(0, 0, -5);
+			scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(2, 0.5, 2);
+			scene.GetComponent<core::physics::RigidBody>()->fixed[i] = true;
+		}
 	}*/
 
 	//Create Camera
 	ecs::entity_id entity = scene.CreateEntity();
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
-
-	std::vector<float> fpsMesure;
 
 	std::filesystem::directory_entry currentPath("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus");
 	std::string pathName = currentPath.path().string();
@@ -384,9 +389,6 @@ int main(int argc, char* argv[]) {
 			myfile.close();
 		}
 
-		if (!Input::isMouse(0)) {
-			isMoving = false;
-		}
 
 		//New Frame
 		ImGui_ImplOpenGL3_NewFrame();
@@ -595,28 +597,6 @@ int main(int argc, char* argv[]) {
 				
 				ComputePhysics(scene);
 				if (stepMode) scene.pause = true;
-
-				/*for (u32 i = 0; i < rigibodies.ToEntity.size(); i++) {
-
-					util::Array<primitives::OBB> constraints;
-
-					for (u32 j = 0; j < renderer.ToEntity.size(); j++) {
-						if (renderer.ToEntity[j] == rigibodies.ToEntity[i]) continue;
-						ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[j]);
-
-						glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
-						glm::vec3 skew; glm::vec4 perspective;
-						glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
-						Vec3 size = Vec3(0.5, 0.5, 0.5);
-
-						constraints.push_back(primitives::OBB(translation, scale* size, glm::inverse(glm::toMat4(rotation))));
-					}
-
-					rigibodies.ApplyForces(rigibodies.ToEntity[i]);
-					rigibodies.SolveConstraints(rigibodies.ToEntity[i], constraints);
-					rigibodies.Update(rigibodies.ToEntity[i]);
-				}*/
-
 			}
 		}
 		views::GameStats::EndChronoData("Physics", "Game");
@@ -669,182 +649,21 @@ int main(int argc, char* argv[]) {
 
 			float nearSelected = -1;
 
-			if (ecs::id::IsValid(views::GameHiearchy::selected)) {
-				ecs::component_id idTransform = transform.getIndex(views::GameHiearchy::selected);
-				ecs::component_id indexCamera = transform.getIndex(camera.ToEntity[0]);
-
-				glm::vec3 scale;
-				glm::quat rotation;
-				glm::vec3 translation;
-				glm::vec3 skew;
-				glm::vec4 perspective;
-				glm::decompose(transform.ComputeModel(idTransform), scale, rotation, translation, skew, perspective);
-
-				Vec3 CameraPosition = transform.position[indexCamera];
-
-				core::physics::primitives::Ray ray(Vec3(transform.position[indexCamera]), ray_wor);
-
-				if (isMoving) {
-					core::physics::primitives::Line intersectionRay, intersectionRay2;
-					bool result = core::physics::collisions::RayRayIntersect(directionSaved, ray, &intersectionRay);
-					bool result2 = core::physics::collisions::RayRayIntersect(directionISaved, ray, &intersectionRay2);
-
-					Vec3 pointF = core::physics::collisions::ClosestPoint(directionSaved, intersectionRay.start);
-					Vec3 pointB = core::physics::collisions::ClosestPoint(directionISaved, intersectionRay2.start);
-
-					Vec3 point = glm::distance(pointF, directionSaved.origin) > glm::distance(pointB, directionSaved.origin) ? pointF : pointB;
-					transform.position[idTransform] = OldPositionItemSave + (point - OriginPositionMove);
-					if (scene.entities.IsAlive(transform.parent[idTransform])) {
-						Mat4x4 inverseTransform = glm::inverse(transform.ComputeModel(transform.getIndex((ecs::entity_id)transform.parent[idTransform])));
-						transform.position[idTransform] = Vec3(inverseTransform * Vec4((OldPositionItemSave + (point - OriginPositionMove)), 1.0));
-					}
-					transform.ComputeModel(idTransform);
-				}
-				else {
-					f32 distanceObj = glm::distance(translation, CameraPosition);
-					f32 factor = distanceObj * 0.1;
-
-					// X AXIS
-					core::physics::primitives::OBB obbX(translation + (Vec3(0.7, 0, 0) * factor), Vec3(0.5, 0.5, 0.5)* Vec3(1, 0.3, 0.3)* factor);
-					core::physics::primitives::Ray rayX(translation + (Vec3(0.7, 0, 0) * factor), Vec3(1, 0, 0));
-					core::physics::primitives::Ray rayIX(translation + (Vec3(0.7, 0, 0) * factor), Vec3(-1, 0, 0));
-					f32 castX = core::physics::collisions::Raycast(obbX, ray);
-
-					core::physics::primitives::Line intersectionRay, intersectionRay2;
-					bool result = core::physics::collisions::RayRayIntersect(rayX, ray, &intersectionRay);
-					bool result2 = core::physics::collisions::RayRayIntersect(rayIX, ray, &intersectionRay2);
-
-					Vec3 pointXF = core::physics::collisions::ClosestPoint(rayX, intersectionRay.start);
-					Vec3 pointXB = core::physics::collisions::ClosestPoint(rayIX, intersectionRay2.start);
-
-					Vec3 pointX = glm::distance(pointXF, rayX.origin) > glm::distance(pointXB, rayX.origin) ? pointXF : pointXB;
-
-					// Y AXIS
-					core::physics::primitives::OBB obbY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 1, 0.3) * factor);
-					core::physics::primitives::Ray rayY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0, 1, 0));
-					core::physics::primitives::Ray rayIY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0, -1, 0));
-					f32 castY = core::physics::collisions::Raycast(obbY, ray);
-
-					intersectionRay, intersectionRay2;
-					result = core::physics::collisions::RayRayIntersect(rayY, ray, &intersectionRay);
-					result2 = core::physics::collisions::RayRayIntersect(rayIY, ray, &intersectionRay2);
-
-					Vec3 pointYF = core::physics::collisions::ClosestPoint(rayY, intersectionRay.start);
-					Vec3 pointYB = core::physics::collisions::ClosestPoint(rayIY, intersectionRay2.start);
-
-					Vec3 pointY = glm::distance(pointYF, rayY.origin) > glm::distance(pointYB, rayY.origin) ? pointYF : pointYB;
-
-					// Z AXIS
-					core::physics::primitives::OBB obbZ(translation + (Vec3(0, 0, 0.7) * factor), Vec3(0.5, 0.5, 0.5)* Vec3(0.3, 0.3, 1)* factor);
-					core::physics::primitives::Ray rayZ(translation + (Vec3(0, 0, 0.7) * factor), Vec3(0, 0, 1));
-					core::physics::primitives::Ray rayIZ(translation + (Vec3(0, 0, 0.7) * factor), Vec3(0, 0, -1));
-					f32 castZ = core::physics::collisions::Raycast(obbZ, ray);
-
-					intersectionRay, intersectionRay2;
-					result = core::physics::collisions::RayRayIntersect(rayZ, ray, &intersectionRay);
-					result2 = core::physics::collisions::RayRayIntersect(rayIZ, ray, &intersectionRay2);
-
-					Vec3 pointZF = core::physics::collisions::ClosestPoint(rayZ, intersectionRay.start);
-					Vec3 pointZB = core::physics::collisions::ClosestPoint(rayIZ, intersectionRay2.start);
-
-					Vec3 pointZ = glm::distance(pointZF, rayZ.origin) > glm::distance(pointZB, rayZ.origin) ? pointZF : pointZB;
-
-					if (Input::isMouseDown(0)) {
-						if (castX >= 0) {
-							isMoving = true;
-							directionSaved = rayX;
-							directionISaved = rayIX;
-							OldPositionItemSave = translation;
-							OriginPositionMove = pointX;
-						}else if (castY >= 0) {
-							isMoving = true;
-							directionSaved = rayY;
-							directionISaved = rayIY;
-							OldPositionItemSave = translation;
-							OriginPositionMove = pointY;
-						}else if (castZ >= 0) {
-							isMoving = true;
-							directionSaved = rayZ;
-							directionISaved = rayIZ;
-							OldPositionItemSave = translation;
-							OriginPositionMove = pointZ;
-						}
-					}
-				}
-				//DEBUG_POINT(core::physics::collisions::ClosestPoint(rayX, ray.origin + ray.direction * distanceObj * 2));
-				//DEBUG_POINT(core::physics::collisions::ClosestPoint(rayIX, ray.origin + ray.direction * distanceObj * 2));
-			}
+			illusioneditor::scene::editor::EditorTests(scene, ray_wor);
 
 			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
-				ecs::component_id idTransform = transform.getIndex((ecs::entity_id)ecs::id::Index(renderer.ToEntity[i]));
-				// calculate the model matrix for each object and pass it to shader before drawing
+				ecs::component_id index = transform.getIndex(renderer.ToEntity[i]);
 				ourShader.setBool("collision", false);
-				ourShader.setMat4("model", transform.modelTransform[idTransform]);
+				ourShader.setMat4("model", transform.modelTransform[index]);
 
-				glm::vec3 scale;
-				glm::quat rotation;
-				glm::vec3 translation;
-				glm::vec3 skew;
-				glm::vec4 perspective;
-				glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
-
-				Vec3 size = Vec3(0.5, 0.5, 0.5);
-
-				core::physics::primitives::OBB obb(translation, scale * size, glm::inverse(glm::toMat4(rotation)) );
-				core::physics::primitives::Ray ray(Vec3(transform.position[transform.getIndex(camera.ToEntity[0])]), ray_wor);
-
-				f32 cast = core::physics::collisions::Raycast(obb, ray);
-
-				if (cast >= 0 && (cast < nearSelected || nearSelected == -1) && !isMoving) {
-					if (Input::isMouseDown(0)) {
-						views::GameHiearchy::selected = renderer.ToEntity[i];
-						nearSelected = cast;
-					}
-				}
+				illusioneditor::scene::editor::ClickedNearTest(scene, renderer.getId(i), ray_wor);
 				
-				if (views::GameHiearchy::selected == renderer.ToEntity[i]) {
-					ourShader.setBool("collision", true);
-				}
+				if (views::GameHiearchy::selected == renderer.getId(i)) ourShader.setBool("collision", true);
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 
-			if (ecs::id::IsValid(views::GameHiearchy::selected)) {
-				glDisable(GL_DEPTH_TEST);
-				arrowShader.use();
-				ecs::component_id idTransform = transform.getIndex((ecs::entity_id)ecs::id::Index(views::GameHiearchy::selected));
-
-				glm::vec3 scale;
-				glm::quat rotation;
-				glm::vec3 translation;
-				glm::vec3 skew;
-				glm::vec4 perspective;
-				glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
-
-				Vec3 CameraPosition = transform.position[transform.getIndex(camera.ToEntity[0])];
-
-				arrowShader.setMat4("projection", projection);
-				arrowShader.setMat4("view", view);
-
-				f32 factor = glm::distance(translation, CameraPosition) * 0.1;
-
-				Mat4x4 model = glm::translate(translation + (Vec3(0.7,0,0) * factor) ) * glm::scale(Vec3(1,0.1,0.1) * factor);
-
-				arrowShader.setVec4("color", Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
-				arrowShader.setMat4("model", model);
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-
-				model = glm::translate(translation + (Vec3(0, 0.7, 0) * factor)) * glm::scale(Vec3(0.1, 1, 0.1) * factor);
-				arrowShader.setVec4("color", Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
-				arrowShader.setMat4("model", model);
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-
-				model = glm::translate(translation + (Vec3(0, 0, 0.7) * factor)) * glm::scale(Vec3(0.1, 0.1, 1) * factor);
-				arrowShader.setVec4("color", Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
-				arrowShader.setMat4("model", model);
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
-
+			illusioneditor::scene::editor::DrawArrowTranslate(scene, projection, view);
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
 

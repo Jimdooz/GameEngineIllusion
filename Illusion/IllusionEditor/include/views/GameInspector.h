@@ -13,6 +13,17 @@ namespace illusioneditor::views::GameInspector {
 	namespace {
 		illusion::ecs::Scene* currentScene = nullptr;
 		illusion::ecs::entity_id currentSelected;
+
+		std::string searchComponent = "";
+	}
+
+	void GenerateInputString(std::string name, std::string& str) {
+		int n = str.length() + 64;
+		char* buf1 = new char[n];
+		strcpy(buf1, str.c_str());
+		ImGui::InputText(name.c_str(), buf1, n);
+		str = std::string(buf1);
+		delete buf1;
 	}
 
 	void GenerateUiComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component *component) {
@@ -47,14 +58,7 @@ namespace illusioneditor::views::GameInspector {
 		} else if (data.type == typeid(illusion::util::Array<std::string>).hash_code()) {
 			illusion::util::Array<std::string>& val = *(illusion::util::Array<std::string>*)data.data;
 			std::string& value = val[componentId];
-			
-			int n = value.length() + 64;
-			char* buf1 = new char[n];
-			strcpy(buf1, value.c_str());
-			ImGui::InputText(data.name.c_str(), buf1, n);
-
-			value = std::string(buf1);
-			delete buf1;
+			GenerateInputString(data.name, value);
 		}
 	}
 	
@@ -64,6 +68,8 @@ namespace illusioneditor::views::GameInspector {
 		if (currentSelected != ecs::id::invalid_id && currentScene != nullptr) {
 
 			ecs::component_id iSelected = (ecs::component_id)ecs::id::Index(currentSelected);
+			ecs::core::Transform &transform = *currentScene->GetComponent<ecs::core::Transform>();
+			ecs::component_id indexTransform = transform.getIndex(currentSelected);
 
 			if (iSelected >= currentScene->entities.m_entities.size()
 				|| !currentScene->entities.IsAliveAtIndex(ecs::entity_id{ iSelected })) {
@@ -71,20 +77,57 @@ namespace illusioneditor::views::GameInspector {
 				return;
 			}
 
-			if (ImGui::TreeNodeEx("Components###COMPONENT", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding)) {
-				for (auto const& [key, val] : currentScene->components) {
-					std::string title = val->getName() + "###" + std::to_string(key);
-					if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
-					if (ImGui::TreeNode(title.c_str())) {
-						for (u32 i = 0; i < val->publicDatas.size(); i++) {
-							if(val->publicDatas[i].visible)
-								GenerateUiComponent(val->publicDatas[i], val);
-						}
-						ImGui::TreePop();
+			ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+			GenerateInputString("###EntityName", transform.name[indexTransform]);
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+			//Position
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::LabelText("###Position", "Position");
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
+
+			//Rotation
+			Vec3 euler = glm::eulerAngles(transform.rotation[indexTransform]);
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::LabelText("###Rotation", "Rotation");
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
+
+			transform.rotation[indexTransform] = glm::tquat(euler);
+
+			//Scale
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::LabelText("###Scale", "Scale");
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SX", &transform.scale[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SY", &transform.scale[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SZ", &transform.scale[indexTransform].z, 0.01f);
+
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+			ImGui::BeginChild("##ComponentSystemRegion");
+
+			for (auto const& [key, val] : currentScene->components) {
+				if (val->getName() == "Transform") continue;
+				std::string title = val->getName() + "###" + std::to_string(key);
+				if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
+				if (ImGui::TreeNode(title.c_str())) {
+					for (u32 i = 0; i < val->publicDatas.size(); i++) {
+						if(val->publicDatas[i].visible)
+							GenerateUiComponent(val->publicDatas[i], val);
 					}
+					ImGui::TreePop();
 				}
-				ImGui::TreePop();
 			}
+
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
 			if (ImGui::TreeNodeEx("Systems###SYSTEM", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding)) {
 				ImVec4 saveStyle = ImGui::GetStyle().Colors[ImGuiCol_Text];
 				ImGui::GetStyle().Colors[ImGuiCol_Text] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
@@ -94,22 +137,32 @@ namespace illusioneditor::views::GameInspector {
 				ImGui::GetStyle().Colors[ImGuiCol_Text] = saveStyle;
 				ImGui::TreePop();
 			}
+			ImGui::EndChild();
 
 			if (ImGui::Button("Add Component")) {
 				ImGui::OpenPopup("PopupComponent");
 			}
 
 			if (ImGui::BeginPopup("PopupComponent")) {
+				if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+					ImGui::SetKeyboardFocusHere(0);
+				GenerateInputString("###Search", searchComponent);
+				ImGui::Separator();
+
 				for (auto const& [key, val] : currentScene->components) {
 					if (key == typeid(ecs::core::Transform).hash_code()) continue;
+					if (searchComponent != "" && val->getName().find(searchComponent) == std::string::npos) continue;
+
 					if (val->getIndex(currentSelected) != ecs::id::invalid_id) {
-						std::string name = "Remove " + val->getName();
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 0.20f, 0.20f, 1.00f));
+						std::string name = "- " + val->getName();
 						if (ImGui::Button(name.c_str())) {
 							currentScene->EntityRemoveComponent(currentSelected, key);
 						}
+						ImGui::PopStyleColor();
 					}
 					else {
-						std::string name = "Add " + val->getName();
+						std::string name = "+ " + val->getName();
 						if (ImGui::Button(name.c_str())) {
 							currentScene->EntityAddComponent(currentSelected, key);
 						}
