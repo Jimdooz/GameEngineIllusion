@@ -89,14 +89,20 @@ namespace illusioneditor::views::GameInspector {
 			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
 
 			//Rotation
-			Vec3 euler = glm::eulerAngles(transform.rotation[indexTransform]);
+			Vec3 euler = glm::degrees(glm::eulerAngles(transform.rotation[indexTransform]));
+			if (abs(euler.x) >= 180) euler.x = 0;
+			if (abs(euler.y) >= 180) euler.y = 0;
+			if (abs(euler.z) >= 180) euler.z = 0;
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
 			ImGui::LabelText("###Rotation", "Rotation");
 			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
 			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
 			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
+			if (abs(euler.x) >= 180) euler.x = 0;
+			if (abs(euler.y) >= 180) euler.y = 0;
+			if (abs(euler.z) >= 180) euler.z = 0;
 
-			transform.rotation[indexTransform] = glm::tquat(euler);
+			transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
 
 			//Scale
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
@@ -108,8 +114,6 @@ namespace illusioneditor::views::GameInspector {
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
 			ImGui::Separator();
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
-
-			ImGui::BeginChild("##ComponentSystemRegion");
 
 			for (auto const& [key, val] : currentScene->components) {
 				if (val->getName() == "Transform") continue;
@@ -137,7 +141,6 @@ namespace illusioneditor::views::GameInspector {
 				ImGui::GetStyle().Colors[ImGuiCol_Text] = saveStyle;
 				ImGui::TreePop();
 			}
-			ImGui::EndChild();
 
 			if (ImGui::Button("Add Component")) {
 				ImGui::OpenPopup("PopupComponent");

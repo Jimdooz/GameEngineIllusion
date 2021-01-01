@@ -22,13 +22,7 @@ namespace illusion::core::physics {
 			// Display on inspector
 			COMPONENT_PUBLIC(fixed);
 			COMPONENT_PUBLIC(gravity);
-			COMPONENT_PUBLIC(velocity);
-			COMPONENT_PUBLIC(forces);
 			COMPONENT_PUBLIC(mass);
-
-			COMPONENT_PUBLIC(angVel);
-			COMPONENT_PUBLIC(torques);
-
 			COMPONENT_PUBLIC(cor);
 			COMPONENT_PUBLIC(friction);
 		}
