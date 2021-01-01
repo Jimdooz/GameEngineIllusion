@@ -10,6 +10,9 @@
 #include "views/GameHierarchy.h"
 #include "views/GameProject.h"
 
+#include "views/EditorMenuBar.h"
+#include "views/FileExplorer.h"
+
 #include "resources/DataConvertor.h"
 #include "resources/assets/Scenes.h"
 
@@ -17,8 +20,6 @@
 
 #include <streambuf>
 #include <sstream>
-#include <resources/system/Json.h>
-using json = illusion::json;
 
 #include <fstream>
 #include <iostream>
@@ -226,7 +227,6 @@ int main(int argc, char* argv[]) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 	views::theme::InitTheme();
@@ -257,29 +257,10 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<CubeRenderer>();
 	scene.UseSystem<PlanetSystem>();
 
-	/*for (u32 i = 0; i < 100; i++) {
-		ecs::entity_id entity = scene.CreateEntity();
-		scene.EntityAddComponent<CubeRenderer>(entity);
-		scene.EntityAddComponent<core::physics::RigidBody>(entity);
-		scene.EntityAddComponent<core::physics::BoxCollider>(entity);
-		if (i > 0) {
-			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(sin(i), 5 + 1.2 * i, -5);
-		}
-		else {
-			scene.GetComponent<ecs::core::Transform>()->position[i] = Vec3(0, 0, -5);
-			scene.GetComponent<ecs::core::Transform>()->scale[i] = Vec3(2, 0.5, 2);
-			scene.GetComponent<core::physics::RigidBody>()->fixed[i] = true;
-		}
-	}*/
-
 	//Create Camera
 	ecs::entity_id entity = scene.CreateEntity();
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
-
-	std::filesystem::directory_entry currentPath("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus");
-	std::string pathName = currentPath.path().string();
-	std::string projectName = "";
 
 	// Temp rendering
 	//---------
@@ -345,9 +326,6 @@ int main(int argc, char* argv[]) {
 
 	Shader ourShader("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
 					"D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
-
-	Shader arrowShader("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
-						"D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentArrow.glsl");
 	ourShader.use();
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -356,12 +334,6 @@ int main(int argc, char* argv[]) {
 	f32 physicsTime = 0.0f;
 
 	bool stepMode = false;
-
-	Vec3 OldPositionItemSave;
-	Vec3 OriginPositionMove;
-	core::physics::primitives::Ray directionSaved;
-	core::physics::primitives::Ray directionISaved;
-	bool isMoving = false;
 
 	// Main Loop
 	//---------
@@ -373,146 +345,16 @@ int main(int argc, char* argv[]) {
 
 		Input::Update();
 
-		double xpos, ypos;
-		glfwGetCursorPos(Window::glfwWindow, &xpos, &ypos);
-
-		float x = (2.0f * xpos) / Window::width - 1.0f;
-		float y = 1.0f - (2.0f * ypos) / Window::height;
+		float x = (2.0f * Input::getMousePos().x) / Window::width - 1.0f;
+		float y = 1.0f - (2.0f * Input::getMousePos().y) / Window::height;
 		float z = 1.0f;
 		Vec3 ray_nds = Vec3(x, y, z);
 		Vec4 ray_clip = Vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
-
-		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_S)) {
-			std::ofstream myfile;
-			myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-			myfile << resources::assets::ExportScene(scene).dump(4);
-			myfile.close();
-		}
-
 
 		//New Frame
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
-		{
-			if (ImGui::BeginMainMenuBar())
-			{
-				if (ImGui::BeginMenu("File"))
-				{
-					if (ImGui::MenuItem("Save", "CTRL+S")) {
-						std::ofstream myfile;
-						myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-						myfile << resources::assets::ExportScene(scene).dump(4);
-						myfile.close();
-					}
-					if (ImGui::MenuItem("Save As", "CTRL+Shift+S")) {}
-					ImGui::EndMenu();
-				}
-				if (ImGui::BeginMenu("Edit"))
-				{
-					if (ImGui::MenuItem("Undo", "CTRL+Z")) {} 
-					if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-					ImGui::Separator();
-					if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-					if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-					if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-					ImGui::EndMenu();
-				}
-				ImGui::EndMainMenuBar();
-			}
-		}
-
-		{
-			ImGui::Begin("File Explorer");
-
-			ImGui::Button("..");
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-				currentPath = std::filesystem::directory_entry(currentPath.path().parent_path());
-				pathName = currentPath.path().string();
-			}
-			ImGui::SameLine();
-			int n = pathName.length() + 64;
-			char *buf1 = new char[n];
-			strcpy(buf1, pathName.c_str());
-			ImGui::InputText("###goto", buf1, n);
-
-			pathName = std::string(buf1);
-			delete buf1;
-
-			ImGui::SameLine();
-			if (ImGui::Button("Go")) {
-				currentPath = std::filesystem::directory_entry(pathName);
-			}
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::BeginChild("##ScrollingRegion", ImVec2(0, ImGui::GetWindowHeight() * 1.0f - ImGui::GetFontSize() * 10.0f));
-			ImGui::Columns(2);
-
-			try {
-				for (auto& p : fs::directory_iterator(currentPath)) {
-					std::string path = p.path().filename().string();
-					if (p.is_directory() && path.find('.') == std::string::npos) {
-						ImGui::Button(path.c_str());
-						if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-							std::cout << p.path() << std::endl;
-							currentPath = std::filesystem::directory_entry(p.path());
-							pathName = currentPath.path().string();
-						}
-					}
-					else {
-						ImGui::TextColored((ImVec4)ImColor::ImColor(100, 100, 100), path.c_str());
-					}
-					ImGui::NextColumn();
-				}
-			}
-			catch (const std::exception&) {
-				try {
-					currentPath = std::filesystem::directory_entry(currentPath.path().parent_path());
-				}
-				catch (const std::exception&) {
-					currentPath = std::filesystem::directory_entry("D:\\");
-				}
-				pathName = currentPath.path().string();
-			}
-			
-			ImGui::EndChild();
-
-			ImGui::BeginChild("##BottomRegion");
-
-			n = projectName.length() + 64;
-			char* buf2 = new char[n];
-			strcpy(buf2, projectName.c_str());
-			ImGui::InputText("Project Name###createProject", buf2, n);
-
-			projectName = std::string(buf2);
-			delete buf2;
-
-			if (ImGui::Button("Create Project")) {
-				illusioneditor::project::tools::CreateProject(pathName, projectName);
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Load Project")) {
-				std::string error;
-				bool success = illusioneditor::project::tools::LoadProject(pathName, &error);
-
-				/*json jsonLoaded;
-				{
-					std::ifstream t(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-					std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-					jsonLoaded = json::parse(str);
-				}
-				scene.Reset();
-				resources::assets::LoadScene(scene, jsonLoaded);*/
-
-				INTERNAL_INFO("SUCCESS ", success, " -> ", error);
-			}
-			ImGui::EndChild();
-
-			ImGui::End();
-		}
 
 		{
 			ImGui::Begin("Scene Options###SceneOptions");
@@ -542,6 +384,12 @@ int main(int argc, char* argv[]) {
 
 			ImGui::End();
 		}
+
+
+		views::EditorMenuBar::SetScene(scene);
+		views::EditorMenuBar::Show();
+
+		views::FileExplorer::Show();
 
 		views::GameHiearchy::SetScene(scene);
 		views::GameHiearchy::Show();
@@ -579,7 +427,7 @@ int main(int argc, char* argv[]) {
 		if (views::GameStats::StartChronoData("Compute Models", "Game")) {
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
 				// calculate the model matrix for each object and pass it to shader before drawing
-				transform.ComputeModel(ecs::component_id{ i });
+				transform.ComputeModel((ecs::component_id)i);
 			}
 
 		}
@@ -619,7 +467,8 @@ int main(int argc, char* argv[]) {
 					transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
 															+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
 				}
-				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+				if(!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
+					transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
 			}
 
 
@@ -630,7 +479,6 @@ int main(int argc, char* argv[]) {
 
 			// create transformations
 			projection = glm::perspective(camera.fov[0], aspect, camera.near[0], camera.far[0]);
-
 			view = glm::lookAt(transform.position[camera.ToEntity[0]], transform.position[camera.ToEntity[0]] + camera.front[0], camera.up[0]);
 
 
