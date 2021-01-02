@@ -47,6 +47,58 @@ using namespace illusion;
 using namespace illusioneditor;
 using namespace illusion::core::physics;
 
+struct JumpBigCube : public ecs::Component {
+	COMPONENT_NAME("Jump My Big Cube");
+	COMPONENT_REGISTER(JumpBigCube);
+
+	JumpBigCube(ecs::Scene* scene) : Component(scene) {
+		COMPONENT_PUBLIC(direction);
+		COMPONENT_PUBLIC(powerJump);
+	}
+
+	COMPONENT_DATA(Vec3, direction);
+	COMPONENT_DATA(f32, powerJump);
+
+	// On Data added
+	virtual void AddDatas(ecs::entity_id id) override {
+		AddData(direction, Vec3(0,1,1));
+		AddData(powerJump, 1.f);
+	}
+
+	// On Data removed
+	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+		RemoveData(direction, index);
+		RemoveData(powerJump, index);
+	}
+};
+
+struct JumpBigCubeSystem : public ecs::System {
+	SYSTEM_NAME("JumpBigCube");
+	SYSTEM_REGISTER(JumpBigCubeSystem);
+
+	JumpBigCube* jumpBigCube;
+	core::physics::RigidBody* rigidbody;
+
+	/* la fonction Update */
+	SYSTEM_UPDATE_LOOP(
+		if (Input::isKeyDown(GLFW_KEY_SPACE)) {
+			velocity() = glm::normalize(direction()) * powerJump();
+		}
+	)
+
+	/* Definition des variables utiles */
+	SYSTEM_USE_DATA(direction, jumpBigCube, direction, Vec3);
+	SYSTEM_USE_DATA(powerJump, jumpBigCube, powerJump, f32);
+	SYSTEM_USE_DATA(velocity, rigidbody, velocity, Vec3);
+
+	/* Initialisation relative a la scene parente */
+	virtual void Initialize(ecs::Scene& scene) override {
+		jumpBigCube = scene.GetComponent<JumpBigCube>();
+		rigidbody = scene.GetComponent<core::physics::RigidBody>();
+		SetDependencies(jumpBigCube, rigidbody);
+	}
+};
+
 struct CubeRenderer : public ecs::Component {
 	// Declare component name
 	COMPONENT_NAME("Cube Renderer");
@@ -236,7 +288,9 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<CubeRenderer>();
+	illusion::ecs::Component::AppendComponents<JumpBigCube>();
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
+	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
 	// Init Scene
 	//----------

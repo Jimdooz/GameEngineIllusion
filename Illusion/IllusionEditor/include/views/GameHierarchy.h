@@ -22,6 +22,51 @@ namespace illusioneditor::views::GameHiearchy {
 		ecs::entity_id selected = (ecs::entity_id)ecs::id::invalid_id;
 	}
 
+	ecs::entity_id Duplicate(ecs::entity_id id) {
+		if (scene->entities.IsAlive(id)) {
+
+			ecs::entity_id newEntity = scene->CreateEntity();
+			ecs::core::Transform &transform = *scene->GetComponent<ecs::core::Transform>();
+
+			ecs::component_id indexId = transform.getIndex(id);
+			ecs::component_id indexNewEntity = transform.getIndex(newEntity);
+
+			transform.name[indexNewEntity] = transform.name[indexId];
+			transform.position[indexNewEntity] = transform.position[indexId];
+			transform.rotation[indexNewEntity] = transform.rotation[indexId];
+			transform.scale[indexNewEntity] = transform.scale[indexId];
+
+			for (auto const& [key, val] : scene->components) {
+				if (val->getIndex(id) != ecs::id::invalid_id && key != typeid(ecs::core::Transform).hash_code()) {
+					scene->EntityAddComponent(newEntity, key);
+
+					ecs::component_id indexComponentId = val->getIndex(id);
+					ecs::component_id indexComponentNewEntity = val->getIndex(newEntity);
+
+					ecs::component_id componentId = val->getIndex(id);
+					for (u32 j = 0; j < val->publicDatas.size(); j++) {
+						resources::JsonConvertor::ImportFromJSONFromArray(
+							resources::JsonConvertor::ExportToJSONFromArray(val->publicDatas[j].data, val->publicDatas[j].type, indexComponentId),
+							val->publicDatas[j].data,
+							val->publicDatas[j].type,
+							indexComponentNewEntity
+						);
+					}
+				}
+			}
+
+			for (u32 i = 0; i < transform.childs[indexId].size(); i++) {
+				ecs::entity_id childId = Duplicate(transform.childs[indexId][i]);
+
+				transform.SetParent(childId, newEntity);
+			}
+
+			return newEntity;
+		}
+
+		return (ecs::entity_id)ecs::id::invalid_id;
+	}
+
 	void ShowChild(ecs::entity_id parentId, ecs::core::Transform* transform, ecs::Scene& scene) {
 		ecs::component_id parentIndex = transform->getIndex(parentId);
 		if (parentIndex != ecs::id::invalid_id) {
@@ -98,6 +143,12 @@ namespace illusioneditor::views::GameHiearchy {
 		for (u32 i = 0; i < transforms->ToEntity.size(); i++) {
 			if (transforms->parent[i] == ecs::id::invalid_id) {
 				ShowChild(transforms->ToEntity[i], transforms, *scene);
+			}
+		}
+
+		if (ecs::id::IsValid(selected)) {
+			if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_D)) {
+				selected = Duplicate(selected);
 			}
 		}
 
