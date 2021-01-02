@@ -109,9 +109,11 @@ namespace illusioneditor::views::GameInspector {
 						}
 					}
 					else {
-						std::string name = "Add " + val->getName();
-						if (ImGui::Button(name.c_str())) {
+						std::string name = val->getName();
+						if (ImGui::Button(("Add " + name).c_str())) {
+							INFO("Adding ",name);
 							currentScene->EntityAddComponent(currentSelected, key);
+							INFO("Added ",name);
 						}
 					}
 				}

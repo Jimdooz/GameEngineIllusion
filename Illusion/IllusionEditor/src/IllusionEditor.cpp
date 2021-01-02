@@ -51,6 +51,7 @@ namespace fs = std::filesystem;
 
 //TEMP RENDERING
 #include "tmp/Shader.h"
+#include "Assimp_.h"
 
 using namespace std::chrono;
 using namespace illusion;
@@ -63,6 +64,27 @@ struct CubeRenderer : public ecs::Component {
 	COMPONENT_REGISTER(CubeRenderer);
 	// Declare constructor
 	CubeRenderer(ecs::Scene* scene) : Component(scene) {}
+};
+
+struct MeshRenderer : public ecs::Component {
+	// Declare component name
+	COMPONENT_NAME("Mesh Renderer");
+	COMPONENT_REGISTER(MeshRenderer);
+	// Declare constructor
+	MeshRenderer(ecs::Scene* scene) : Component(scene) {}
+	
+	// Declare datas
+	COMPONENT_DATA(Mesh,mesh);
+
+	// On Data added
+	virtual void AddDatas(ecs::entity_id id) override {
+		AddData(mesh, Mesh());
+	}
+
+	// On Data removed
+	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override {
+		RemoveData(mesh, index);
+	}
 };
 
 struct RigidBodyComponent : public ecs::Component {
@@ -243,6 +265,7 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<CubeRenderer>();
+	illusion::ecs::Component::AppendComponents<MeshRenderer>();
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 
 	// Init Scene
@@ -252,6 +275,7 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<RigidBodyComponent>();
 	scene.UseComponent<PlanetComponent>();
 	scene.UseComponent<CubeRenderer>();
+	scene.UseComponent<MeshRenderer>();
 	scene.UseSystem<PlanetSystem>();
 
 	/*for (u32 i = 0; i < 100000; i++) {
@@ -269,6 +293,8 @@ int main(int argc, char* argv[]) {
 	ecs::entity_id entity = scene.CreateEntity();
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
+
+	illusion::import3DModel("../../Assets/Meshes/cube.fbx",&scene);
 
 	std::vector<float> fpsMesure;
 
@@ -341,7 +367,7 @@ int main(int argc, char* argv[]) {
 	Shader ourShader("../GameProjects/Optimulus/Assets/Shader/vertexShader.glsl",
 					"../GameProjects/Optimulus/Assets/Shader/fragmentShader.glsl");
 	ourShader.use();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -551,6 +577,7 @@ int main(int argc, char* argv[]) {
 		RigidBodyComponent& rigibodies = *scene.GetComponent<RigidBodyComponent>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 		CubeRenderer& renderer = *scene.GetComponent<CubeRenderer>();
+		MeshRenderer& meshRenderer = *scene.GetComponent<MeshRenderer>();
 
 		//UPDATE
 		if(views::GameStats::StartChronoData("Update Loop", "Game")) {
@@ -582,10 +609,7 @@ int main(int argc, char* argv[]) {
 				/*for (u32 i = 0; i < rigibodies.ToEntity.size(); i++) {
 
 					util::Array<primitives::OBB> constraints;
-
-					for (u32 j = 0; j < renderer.ToEntity.size(); j++) {
-						if (renderer.ToEntity[j] == rigibodies.ToEntity[i]) continue;
-						ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[j]);
+path().parent_path());Transform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[j]);
 
 						glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
 						glm::vec3 skew; glm::vec4 perspective;
@@ -644,13 +668,17 @@ int main(int argc, char* argv[]) {
 			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
 			Vec3 ray_wor = (glm::inverse(view) * ray_eye);
 			ray_wor = glm::normalize(ray_wor);
-
-			// render boxes
-			glBindVertexArray(VAO);
+			
+			for (u32 i = 0; i < meshRenderer.ToEntity.size(); i++) {
+				if(!meshRenderer.mesh[i].isSetup) continue;
+				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(meshRenderer.ToEntity[i]);
+				ourShader.setMat4("model", transform.modelTransform[idTransform]);
+				RenderMesh(meshRenderer.mesh[i]);
+			}
 
 			float nearSelected = -1;
-
-
+			// render boxes
+			glBindVertexArray(VAO);
 			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
 				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
 				// calculate the model matrix for each object and pass it to shader before drawing

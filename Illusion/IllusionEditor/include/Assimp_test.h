@@ -5,23 +5,14 @@
 #include "assimp/cimport.h"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
-#include "Shader.h"
+#include "Assimp_.h"
 
 using namespace illusion;
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-struct Vertex{
-	Vec3 position;
-	Vec3 normal;
-	Vec2 uv;
-};
-struct Mesh{
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	GLuint VAO,VBO,EBO;
-};
+
 
 Mesh GetTestMesh(){
 	// set up vertex data (and buffer(s)) and configure vertex attributes
@@ -53,39 +44,11 @@ aiMesh *LoadMesh(const char * path){
 		return NULL;
 	}
     INFO("meshes :",scene->mNumMeshes );
-	return scene->mMeshes[1];
+	return scene->mMeshes[0];
 }
-Mesh ConvertToMesh(const aiMesh *aimesh){
-	Mesh mesh;
-    if(aimesh->HasNormals()){
-        INFO("HasNormals");
-    }
-    if(aimesh->HasTextureCoords(0)){
-        INFO("HasUvs");
-    }
-	for(int i=0;i<aimesh->mNumVertices; i++){
-		auto current_Position =aimesh->mVertices[i];
-		auto current_Normal =aimesh->mNormals[i];
-		auto current_Uv =aimesh->mTextureCoords[0][i];
-        Vertex vertex={
-			Vec3(current_Position.x,current_Position.y,current_Position.z)
-			,Vec3(current_Normal.x,current_Normal.y,current_Normal.z)
-			,Vec2(current_Uv.x,current_Uv.y)
-		};
-		INFO(vertex.position.x,",",vertex.position.y,",",vertex.position.z);
-		mesh.vertices.push_back(vertex);
-	}
-	for(int i=0;i<aimesh->mNumFaces; i++){
-		auto current =aimesh->mFaces[i]; 
-		INFO(aimesh->mFaces[i].mNumIndices);
-		//only triangles supported
-		mesh.indices.push_back(current.mIndices[0]);
-		mesh.indices.push_back(current.mIndices[1]);
-		mesh.indices.push_back(current.mIndices[2]);
-	}
-	return mesh;
-}
+
 void SetupMesh(Mesh& mesh){    
+    INFO("Setup Mesh");
     glGenVertexArrays(1, &(mesh.VAO));
     glGenBuffers(1, &(mesh.VBO));
     glGenBuffers(1, &(mesh.EBO));
@@ -117,11 +80,15 @@ void SetupMesh(Mesh& mesh){
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
+    mesh.isSetup=true;
+    INFO("End Setup Mesh");
 }
 inline void RenderMesh(Mesh & m){
+    INFO("Render Mesh");
     glBindVertexArray(m.VAO);
     glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, 0);
     //glBindVertexArray(0); // no need to unbind it every time 
+    INFO("End Render Mesh");
 }
 GLuint CompileShaders();
 void launchApp()
