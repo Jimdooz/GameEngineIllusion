@@ -47,12 +47,11 @@ namespace illusion::core::physics {
 		}
 
 
-		// Calculate foces acting on the object
+		// Calculate forces acting on the object
 		for (int i = 0, size = rigidbodies->size(); i < size; ++i) {
 			rigidbodies->ApplyForces(rigidbodies->getId((ecs::component_id)i));
+			rigidbodies->collisions[i].clear();
 		}
-
-		glPointSize(10);
 
 		for (int k = 0; k < ImpulseIteration; ++k) {
 			for (int i = 0; i < results.size(); ++i) {
@@ -86,6 +85,9 @@ namespace illusion::core::physics {
 
 			if(!rigidbodies->fixed[rigidbodies->getIndex(A)]) positionA = positionA - correction * rigidbodies->InvMass(A);
 			if(!rigidbodies->fixed[rigidbodies->getIndex(B)]) positionB = positionB + correction * rigidbodies->InvMass(B);
+
+			rigidbodies->collisions[rigidbodies->getIndex(A)].push_back(B);
+			rigidbodies->collisions[rigidbodies->getIndex(B)].push_back(A);
 		}
 	}
 

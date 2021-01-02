@@ -47,6 +47,9 @@ namespace illusion::core::physics {
 		COMPONENT_DATA(Vec3, n_velocity); // Next velocity
 		COMPONENT_DATA(Vec3, dt_velocity);
 
+		//Informations
+		COMPONENT_DATA(util::Array<ecs::entity_id>, collisions);
+
 		Mat4x4 InvTensor(ecs::entity_id id) {
 			ecs::component_id index = getIndex(id);
 
@@ -163,27 +166,18 @@ namespace illusion::core::physics {
 
 			AddData(n_velocity, Vec3(0,0,0));
 			AddData(dt_velocity, Vec3(0, 0, 0));
+
+			AddData(collisions, util::Array<ecs::entity_id>());
 		}
 
 		// On Data removed
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-			RemoveData(fixed, index);
-
-			RemoveData(velocity, index);
-			RemoveData(forces, index);
-
-			RemoveData(mass, index);
-			RemoveData(cor, index);
-			RemoveData(friction, index);
-
-			RemoveData(gravity, index);
-
-			RemoveData(angVel, index);
-			RemoveData(torques, index);
-			RemoveData(invTensor, index);
-
-			RemoveData(n_velocity, index);
-			RemoveData(dt_velocity, index);
+			RemoveData(index, fixed);
+			RemoveData(index, velocity, forces, gravity);
+			RemoveData(index, mass, cor, friction);
+			RemoveData(index, angVel, torques, invTensor);
+			RemoveData(index, n_velocity, dt_velocity);
+			RemoveData(index, collisions);
 		}
 
 	};

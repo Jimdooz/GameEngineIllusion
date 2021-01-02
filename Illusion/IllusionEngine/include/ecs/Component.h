@@ -180,6 +180,16 @@ namespace illusion::ecs {
 			util::EraseUnordered(array, index);
 		}
 
+		/**
+		 * Fonction permettant d'ajouter les Components dont dépend le System
+		 * Cette fonction doit être appelé lors de la fonction d'Initialisation du System
+		 */
+		constexpr void RemoveData(component_id index) {}
+		template<typename Arg1, class... Args> inline void RemoveData(component_id index, illusion::util::Array<Arg1>& c1, Args... cNext) {
+			util::EraseUnordered(c1, index);
+			RemoveData(index, cNext...);
+		}
+
 	public:
 
 		static util::Map<size_t, Component*> AllComponents;
