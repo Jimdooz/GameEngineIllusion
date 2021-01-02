@@ -18,14 +18,6 @@
 
 #include "ecs/CoreComponents/Camera.h"
 
-#include <streambuf>
-#include <sstream>
-
-#include <fstream>
-#include <iostream>
-#include <filesystem>
-namespace fs = std::filesystem;
-
 #include "core/Time.h"
 #include "core/physics/PhysicsManager.h"
 #include "core/physics/collisions/Collisions.h"
@@ -42,8 +34,6 @@ namespace fs = std::filesystem;
 #include <bitset>
 #include <map>
 #include <string>
-
-#include <glm/gtx/matrix_decompose.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
