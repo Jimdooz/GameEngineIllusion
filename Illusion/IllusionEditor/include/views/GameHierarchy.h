@@ -71,11 +71,10 @@ namespace illusioneditor::views::GameHiearchy {
 		ecs::component_id parentIndex = transform->getIndex(parentId);
 		if (parentIndex != ecs::id::invalid_id) {
 			util::Array<ecs::entity_id>& childs = transform->childs[parentIndex];
-			std::string name = transform->name[parentIndex];
+			std::string name = transform->name[parentIndex] + "###" + std::to_string(parentId);
 
 			bool open = ImGui::TreeNodeEx(name.c_str(),
-				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow,
-				name.c_str());
+				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow);
 			if (ImGui::IsItemClicked()) {
 				itemAlreadyDropped = false;
 				selected = parentId;
