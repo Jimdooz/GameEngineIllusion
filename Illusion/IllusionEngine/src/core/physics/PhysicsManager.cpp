@@ -53,10 +53,12 @@ namespace illusion::core::physics {
 			rigidbodies->collisions[i].clear();
 		}
 
+		glPointSize(10);
 		for (int k = 0; k < ImpulseIteration; ++k) {
 			for (int i = 0; i < results.size(); ++i) {
 				int jSize = results[i].contacts.size();
 				for (int j = 0; j < jSize; ++j) {
+					//DEBUG_POINT(results[i].contacts[j]);
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}
 				rigidbodies->ApplyCurrentVelocity(colliders1[i]);
@@ -86,8 +88,11 @@ namespace illusion::core::physics {
 			if(!rigidbodies->fixed[rigidbodies->getIndex(A)]) positionA = positionA - correction * rigidbodies->InvMass(A);
 			if(!rigidbodies->fixed[rigidbodies->getIndex(B)]) positionB = positionB + correction * rigidbodies->InvMass(B);
 
-			rigidbodies->collisions[rigidbodies->getIndex(A)].push_back(B);
-			rigidbodies->collisions[rigidbodies->getIndex(B)].push_back(A);
+			rigidbodies->collisions[rigidbodies->getIndex(A)].push_back({ B, - results[i].normal });
+			rigidbodies->collisions[rigidbodies->getIndex(B)].push_back({ A, results[i].normal });
+
+			transform->ComputeModel(transform->getIndex((ecs::entity_id)A));
+			transform->ComputeModel(transform->getIndex((ecs::entity_id)B));
 		}
 	}
 
@@ -130,6 +135,7 @@ namespace illusion::core::physics {
 
 		// Relative velocity
 		Vec3 relativeVel = (rigidbodies->velocity[indexB] + glm::cross(rigidbodies->angVel[indexB], r2)) - (rigidbodies->velocity[indexA] + glm::cross(rigidbodies->angVel[indexA], r1));
+
 		// Relative collision normal
 		Vec3 relativeNorm = glm::normalize(M.normal);
 		// Moving away from each other? Do nothing!

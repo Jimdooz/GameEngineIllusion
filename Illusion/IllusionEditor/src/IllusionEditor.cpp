@@ -85,11 +85,14 @@ struct JumpBigCubeSystem : public ecs::System {
 
 	/* la fonction Update */
 	SYSTEM_UPDATE_LOOP(
-		if (collisions().size() > 0 && timerJump() > 0.5f) activeJump() = true;
+		if (collisions().size() > 0 && timerJump() > 0.1f) activeJump() = true;
 		timerJump() += Time::deltaTime;
 
 		if (Input::isKeyDown(GLFW_KEY_SPACE) && activeJump()) {
-			velocity() = glm::normalize(direction()) * powerJump();
+			if (collisions().size() > 0) {
+				velocity() = glm::normalize(direction()) * powerJump();
+			}
+			else velocity() = glm::normalize(direction()) * powerJump();
 			activeJump() = false;
 			timerJump() = 0.0f;
 		}
@@ -98,9 +101,7 @@ struct JumpBigCubeSystem : public ecs::System {
 		if (Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(5, velocity().y, 0);
 
 		if(!Input::isKey(GLFW_KEY_LEFT) && !Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(0, velocity().y, 0);
-
-		rotation() = Quaternion();
-		position() = Vec3(position().x, position().y, 0);
+		position().z = 0;
 	)
 
 	/* Definition des variables utiles */
@@ -109,7 +110,7 @@ struct JumpBigCubeSystem : public ecs::System {
 	SYSTEM_USE_DATA(activeJump, jumpBigCube, activeJump, boolean);
 	SYSTEM_USE_DATA(timerJump, jumpBigCube, timerJump, f32);
 	SYSTEM_USE_DATA(velocity, rigidbody, velocity, Vec3);
-	SYSTEM_USE_DATA(collisions, rigidbody, collisions, util::Array<ecs::entity_id>);
+	SYSTEM_USE_DATA(collisions, rigidbody, collisions, util::Array<core::physics::CollisionRigidBody>);
 	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion);
 	SYSTEM_USE_DATA(position, transform, position, Vec3);
 

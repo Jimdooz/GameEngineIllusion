@@ -12,6 +12,11 @@ namespace illusion::core::physics {
 
 	using namespace illusion;
 
+	struct CollisionRigidBody {
+		ecs::entity_id id;
+		Vec3 normal;
+	};
+
 	struct RigidBody : public ecs::Component {
 		// Declare component name
 		COMPONENT_NAME("RigidBody");
@@ -21,6 +26,10 @@ namespace illusion::core::physics {
 		RigidBody(ecs::Scene* scene) : Component(scene) {
 			// Display on inspector
 			COMPONENT_PUBLIC(fixed);
+			COMPONENT_PUBLIC(fixedRotationX);
+			COMPONENT_PUBLIC(fixedRotationY);
+			COMPONENT_PUBLIC(fixedRotationZ);
+
 			COMPONENT_PUBLIC(gravity);
 			COMPONENT_PUBLIC(mass);
 			COMPONENT_PUBLIC(cor);
@@ -28,6 +37,10 @@ namespace illusion::core::physics {
 		}
 
 		COMPONENT_DATA(boolean, fixed);
+
+		COMPONENT_DATA(boolean, fixedRotationX);
+		COMPONENT_DATA(boolean, fixedRotationY);
+		COMPONENT_DATA(boolean, fixedRotationZ);
 
 		//Linear Velocity
 		COMPONENT_DATA(Vec3, velocity);
@@ -48,7 +61,7 @@ namespace illusion::core::physics {
 		COMPONENT_DATA(Vec3, dt_velocity);
 
 		//Informations
-		COMPONENT_DATA(util::Array<ecs::entity_id>, collisions);
+		COMPONENT_DATA(util::Array<CollisionRigidBody>, collisions);
 
 		Mat4x4 InvTensor(ecs::entity_id id) {
 			ecs::component_id index = getIndex(id);
@@ -67,6 +80,8 @@ namespace illusion::core::physics {
 		void AddRotationImpulse(ecs::entity_id id, const Vec3& point, const Vec3& impulse) {
 			ecs::component_id index = getIndex(id);
 
+			if (fixed[index]) return;
+
 			//Get Position
 			ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
 			Vec3& position = transform->position[transform->getIndex(id)];
@@ -74,20 +89,24 @@ namespace illusion::core::physics {
 			Vec3 centerOfMass = position;
 			Vec3 torque = glm::cross(point - centerOfMass, impulse);
 
-			/*Vec3 angAccel = InvTensor(id) * Vec4(torque, 0.0);
-			angVel[index] = angVel[index] + angAccel;*/
+			if (fixedRotationX[index]) torque.x = 0;
+			if (fixedRotationY[index]) torque.y = 0;
+			if (fixedRotationZ[index]) torque.z = 0;
+
 			torques[index] += torque;
 		}
 
 		void ApplyForces(ecs::entity_id id) {
 			ecs::component_id index = getIndex(id);
 
-			if(!fixed[index])
-				forces[index] = gravity[index] * mass[index];
+			if (fixed[index]) return;
+
+			forces[index] = gravity[index] * mass[index];
 		}
 
 		void AddLinearImpulse(ecs::entity_id id, const Vec3& impulse) {
 			ecs::component_id index = getIndex(id);
+			if (fixed[index]) return;
 
 			n_velocity[index] += impulse * InvMass(id);
 		}
@@ -114,7 +133,13 @@ namespace illusion::core::physics {
 			angVel[index] += Vec3(InvTensor(id) * Vec4(torques[index], 1.0));
 
 			position += n_velocity[index] * Time::fixedDeltaTime;
-			rotation = glm::quat(Vec3(InvTensor(id) * Vec4(torques[index], 1.0)) * Time::fixedDeltaTime) * rotation;
+			Quaternion wanted = glm::quat(Vec3(InvTensor(id) * Vec4(torques[index], 1.0)) * Time::fixedDeltaTime);
+			Vec3 euler = glm::degrees(glm::eulerAngles(wanted));
+			if (fixedRotationX[index]) euler.x = 0;
+			if (fixedRotationY[index]) euler.y = 0;
+			if (fixedRotationZ[index]) euler.z = 0;
+			wanted = glm::tquat(glm::radians(euler));
+			rotation = wanted * rotation;
 
 			n_velocity[index] = Vec3(0, 0, 0);
 			torques[index] = Vec3(0, 0, 0);
@@ -140,7 +165,14 @@ namespace illusion::core::physics {
 
 			position += (velocity[index] - dt_velocity[index]) * Time::fixedDeltaTime;
 
-			rotation = glm::quat(angVel[index] * Time::fixedDeltaTime) * rotation;
+			Quaternion wanted = glm::quat(angVel[index] * Time::fixedDeltaTime);
+			Vec3 euler = glm::degrees(glm::eulerAngles(wanted));
+			if (fixedRotationX[index]) euler.x = 0;
+			if (fixedRotationY[index]) euler.y = 0;
+			if (fixedRotationZ[index]) euler.z = 0;
+			wanted = glm::tquat(glm::radians(euler));
+
+			rotation = wanted * rotation;
 
 			torques[index] = Vec3(0, 0, 0);
 			n_velocity[index] = Vec3(0, 0, 0);
@@ -150,6 +182,9 @@ namespace illusion::core::physics {
 		// On Data added
 		virtual void AddDatas(ecs::entity_id id) override {
 			AddData<boolean>(fixed, false);
+			AddData<boolean>(fixedRotationX, false);
+			AddData<boolean>(fixedRotationY, false);
+			AddData<boolean>(fixedRotationZ, false);
 
 			AddData(velocity, Vec3(0, 0, 0));
 			AddData(forces, Vec3(0, 0, 0));
@@ -167,12 +202,12 @@ namespace illusion::core::physics {
 			AddData(n_velocity, Vec3(0,0,0));
 			AddData(dt_velocity, Vec3(0, 0, 0));
 
-			AddData(collisions, util::Array<ecs::entity_id>());
+			AddData(collisions, util::Array<CollisionRigidBody>());
 		}
 
 		// On Data removed
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-			RemoveData(index, fixed);
+			RemoveData(index, fixed, fixedRotationX, fixedRotationY, fixedRotationZ);
 			RemoveData(index, velocity, forces, gravity);
 			RemoveData(index, mass, cor, friction);
 			RemoveData(index, angVel, torques, invTensor);

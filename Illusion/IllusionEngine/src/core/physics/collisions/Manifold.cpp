@@ -238,7 +238,7 @@ namespace illusion::core::physics::collisions {
 		float distance = (i.max - i.min) * 0.5f - result.depth * 0.5f;
 		Vec3 pointOnPlane = A.position + axis * distance;
 		for (int i = result.contacts.size() - 1; i >= 0; --i) {
-			Vec3 contact = result.contacts[i];
+			Vec3 &contact = result.contacts[i];
 			result.contacts[i] = contact + (axis * glm::dot(axis, pointOnPlane - contact));
 			for (int j = result.contacts.size() - 1; j > i; --j) {
 				if (glm::length2(result.contacts[j] - result.contacts[i]) < 0.0001f) {

@@ -26,7 +26,7 @@ namespace illusion::core::physics {
 			glm::decompose(transform->ComputeModel(transform->getIndex(id)), scale, rotation, translation, skew, perspective);
 			f32 size = 0.5;
 
-			return primitives::OBB(translation, scale * size, glm::inverse(glm::toMat4(rotation)));
+			return primitives::OBB(translation, scale * size, glm::toMat4(glm::conjugate(rotation)));
 		}
 
 		Mat4x4 InvTensor(ecs::entity_id id, const f32 &mass) {
