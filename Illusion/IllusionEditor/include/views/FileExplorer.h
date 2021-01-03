@@ -59,7 +59,7 @@ namespace illusioneditor::views::FileExplorer {
 					}
 				}
 				else {
-					ImGui::TextColored((ImVec4)ImColor::ImColor(100, 100, 100), path.c_str());
+					ImGui::TextColored((ImVec4)ImColor(100, 100, 100), path.c_str());
 				}
 				ImGui::NextColumn();
 			}

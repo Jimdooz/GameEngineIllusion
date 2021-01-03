@@ -3,6 +3,7 @@
 #include "ecs/Ecs.h"
 
 #include "project/ProjectManager.h"
+#include "resources/Project.h"
 
 #include <string>
 
@@ -83,7 +84,9 @@ namespace illusioneditor::views::GameProject {
 
 		illusioneditor::views::GameHiearchy::SetSelected((ecs::entity_id)ecs::id::invalid_id);
 		resources::assets::LoadScene(*scene, jsonLoaded);
+		// /!\ [Romain Saclier] On va devoir faire un changement sur l'endroit où se trouve les données du projet courant
 		illusioneditor::project::config::currentScenePath = fs::relative(pathScene, illusioneditor::project::config::projectPath).string();
+		illusion::resources::project::currentScenePath = illusioneditor::project::config::currentScenePath;
 	}
 
 	void RecursiveTreeAssets(std::string path) {

@@ -2,6 +2,8 @@
 
 #include "ecs/Ecs.h"
 #include "resources/assets/Scenes.h"
+#include "resources/assets/Shaders.h"
+#include "resources/assets/Materials.h"
 
 #include "resources/assets/Levels.h"
 
@@ -15,6 +17,7 @@
 using json = illusion::json;
 
 #include <string>
+#include "resources/Project.h"
 
 namespace illusioneditor::project {
 	
@@ -69,11 +72,20 @@ namespace illusioneditor::project {
 				return false;
 			}
 
+			// /!\ [Romain Saclier] To change
 			config::projectPath = projectPath;
 			config::projectName = jsonLoaded["projectName"];
 			config::currentScenePath = jsonLoaded["currentScenePath"];
 
 			config::projectOpen = true;
+
+			illusion::resources::project::projectPath = config::projectPath;
+			illusion::resources::project::projectName = config::projectName;
+			illusion::resources::project::currentScenePath = config::currentScenePath;
+			illusion::resources::project::projectOpen = config::projectOpen;
+
+			illusion::resources::assets::LoadAllShaders();
+			illusion::resources::assets::LoadAllMaterials();
 
 			return true;
 		}

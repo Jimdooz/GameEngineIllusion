@@ -284,6 +284,9 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1280,720,"MyGame");
 
+	// Test [Romain Saclier]
+	//--------
+
 	// Setup IMGUI
 	//--------
 	IMGUI_CHECKVERSION();
@@ -401,7 +404,7 @@ int main(int argc, char* argv[]) {
 	Shader ourShader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
 					"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
 	ourShader.use();
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
 
