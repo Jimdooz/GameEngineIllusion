@@ -44,240 +44,16 @@
 #include "Renderer.h"
 #include "Importer.h"
 
+//Scripting
+#include "scripting/CubeRenderer.h"
+#include "scripting/JumpBigCube.h"
+#include "scripting/Planet.h"
+
 using namespace std::chrono;
 using namespace illusion;
 using namespace illusioneditor;
 using namespace illusion::core::physics;
 
-struct JumpBigCube : public ecs::Component {
-	COMPONENT_NAME("Jump My Big Cube");
-	COMPONENT_REGISTER(JumpBigCube);
-
-	JumpBigCube(ecs::Scene* scene) : Component(scene) {
-		COMPONENT_PUBLIC(direction);
-		COMPONENT_PUBLIC(powerJump);
-	}
-
-	COMPONENT_DATA(Vec3, direction);
-	COMPONENT_DATA(f32, powerJump);
-	COMPONENT_DATA(boolean, activeJump);
-	COMPONENT_DATA(f32, timerJump);
-
-	// On Data added
-	virtual void AddDatas(ecs::entity_id id) override {
-		AddData(direction, Vec3(0,1,1));
-		AddData(powerJump, 1.f);
-		AddData<boolean>(activeJump, false);
-		AddData(timerJump, 0.0f);
-	}
-
-	// On Data removed
-	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, direction, powerJump, activeJump, timerJump);
-	}
-};
-
-struct JumpBigCubeSystem : public ecs::System {
-	SYSTEM_NAME("JumpBigCube");
-	SYSTEM_REGISTER(JumpBigCubeSystem);
-
-	ecs::core::Transform* transform;
-	JumpBigCube* jumpBigCube;
-	core::physics::RigidBody* rigidbody;
-
-	/* la fonction Update */
-	SYSTEM_UPDATE_LOOP(
-		if (collisions().size() > 0 && timerJump() > 0.1f) activeJump() = true;
-		timerJump() += Time::deltaTime;
-
-		if (Input::isKeyDown(GLFW_KEY_SPACE) && activeJump()) {
-			if (collisions().size() > 0) {
-				velocity() = glm::normalize(direction()) * powerJump();
-			}
-			else velocity() = glm::normalize(direction()) * powerJump();
-			activeJump() = false;
-			timerJump() = 0.0f;
-		}
-
-		if (Input::isKey(GLFW_KEY_LEFT)) velocity() = Vec3(-5, velocity().y, 0);
-		if (Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(5, velocity().y, 0);
-
-		if(!Input::isKey(GLFW_KEY_LEFT) && !Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(0, velocity().y, 0);
-		position().z = 0;
-	)
-
-	/* Definition des variables utiles */
-	SYSTEM_USE_DATA(direction, jumpBigCube, direction, Vec3);
-	SYSTEM_USE_DATA(powerJump, jumpBigCube, powerJump, f32);
-	SYSTEM_USE_DATA(activeJump, jumpBigCube, activeJump, boolean);
-	SYSTEM_USE_DATA(timerJump, jumpBigCube, timerJump, f32);
-	SYSTEM_USE_DATA(velocity, rigidbody, velocity, Vec3);
-	SYSTEM_USE_DATA(collisions, rigidbody, collisions, util::Array<core::physics::CollisionRigidBody>);
-	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion);
-	SYSTEM_USE_DATA(position, transform, position, Vec3);
-
-	/* Initialisation relative a la scene parente */
-	virtual void Initialize(ecs::Scene& scene) override {
-		transform = scene.GetComponent<ecs::core::Transform>();
-		jumpBigCube = scene.GetComponent<JumpBigCube>();
-		rigidbody = scene.GetComponent<core::physics::RigidBody>();
-		SetDependencies(transform, jumpBigCube, rigidbody);
-	}
-};
-
-struct CubeRenderer : public ecs::Component {
-	// Declare component name
-	COMPONENT_NAME("Cube Renderer");
-	COMPONENT_REGISTER(CubeRenderer);
-	// Declare constructor
-	CubeRenderer(ecs::Scene* scene) : Component(scene) {}
-};
-
-
-
-struct RigidBodyComponent : public ecs::Component {
-	// Declare component name
-	COMPONENT_NAME("ParticleRigidbody");
-	COMPONENT_REGISTER(RigidBodyComponent);
-
-	// Declare constructor
-	RigidBodyComponent(ecs::Scene* scene) : Component(scene) {
-		// Display on inspector
-	}
-
-	// Declare datas
-	COMPONENT_DATA(Vec3, oldPosition);
-
-	COMPONENT_DATA(Vec3, forces);
-	COMPONENT_DATA(f32, mass);
-	COMPONENT_DATA(f32, bounce);
-
-	COMPONENT_DATA(f32, friction);
-	COMPONENT_DATA(Vec3, gravity);
-
-	void ApplyForces(ecs::entity_id id) {
-		ecs::component_id index = getIndex(id);
-
-		forces[index] = gravity[index];
-	}
-
-	void Update(ecs::entity_id id) {
-		//Get Index
-		ecs::component_id index = getIndex(id);
-		//Get Position
-		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
-		Vec3& position = transform->position[transform->getIndex(id)];
-
-		//Compute Physics
-		Vec3 velocity = position - oldPosition[index];
-		oldPosition[index] = position;
-
-		f32 deltaSquare = Time::fixedDeltaTime * Time::fixedDeltaTime;
-		position = position + (velocity * friction[index] + forces[index] * deltaSquare);
-	}
-
-	void SolveConstraints(ecs::entity_id id, const util::Array<primitives::OBB>& constraints) {
-		//Get Index
-		ecs::component_id index = getIndex(id);
-		//Get Position
-		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
-		Vec3& position = transform->position[transform->getIndex(id)];
-
-		int size = constraints.size();
-		for (int i = 0; i < size; ++i) {
-			primitives::Line traveled(oldPosition[index], position);
-			if (collisions::Linetest(constraints[i], traveled)) {
-				Vec3 velocity = position - oldPosition[index];
-				Vec3 direction = glm::normalize(velocity);
-				primitives::Ray ray(oldPosition[index], direction);
-				collisions::RaycastResult result;
-				if (Raycast(constraints[i], ray, &result)) {
-					position = result.point + result.normal * 0.003f;
-					Vec3 vn = result.normal * glm::dot(result.normal, velocity);
-					Vec3 vt = velocity - vn;
-					oldPosition[index] = position - (vt - vn * bounce[index]);
-					break;
-				}
-			}
-		}
-	}
-
-	// On Data added
-	virtual void AddDatas(ecs::entity_id id) override {
-
-		//Get Position
-		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
-		Vec3& position = transform->position[transform->getIndex(id)];
-
-		AddData(oldPosition, position);
-		AddData(forces, Vec3(0, 0, 0));
-
-		AddData(mass, 1.0f);
-		AddData(bounce, 0.7f);
-
-		AddData(friction, 0.95f);
-		AddData(gravity, Vec3(0, -9.82f, 0));
-	}
-
-	// On Data removed
-	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, oldPosition, forces, mass, bounce, friction, gravity);
-	}
-};
-
-struct PlanetComponent : public ecs::Component {
-	// Declare component name
-	COMPONENT_NAME("Planet");
-	COMPONENT_REGISTER(PlanetComponent);
-
-	// Declare constructor
-	PlanetComponent(ecs::Scene* scene) : Component(scene) {
-		// Display on inspector
-		COMPONENT_PUBLIC(speed);
-	}
-
-	// Declare datas
-	COMPONENT_DATA(f32, speed);
-	COMPONENT_DATA(f32, evolution);
-
-	// On Data added
-	virtual void AddDatas(ecs::entity_id id) override {
-		AddData(speed, f32(0));
-		AddData(evolution, f32(0));
-	}
-
-	// On Data removed
-	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, speed, evolution);
-	}
-};
-
-struct PlanetSystem : public ecs::System {
-	SYSTEM_NAME("Planet");
-	SYSTEM_REGISTER(PlanetSystem);
-
-	ecs::core::Transform* transform;
-	PlanetComponent* planet;
-
-	/* la fonction Update */
-	SYSTEM_UPDATE_LOOP(
-		rotation() = glm::rotate(rotation(), Vec3(0, evolution(), 0));
-		evolution() += speed() * Time::deltaTime;
-	)
-
-	/* Definition des variables utiles */
-	SYSTEM_USE_DATA(position, transform, position, Vec3);
-	SYSTEM_USE_DATA(rotation, transform, rotation, Quaternion);
-	SYSTEM_USE_DATA(speed, planet, speed, f32);
-	SYSTEM_USE_DATA(evolution, planet, evolution, f32);
-
-	/* Initialisation relative a la scene parente */
-	virtual void Initialize(ecs::Scene& scene) override {
-		transform = scene.GetComponent<ecs::core::Transform>();
-		planet = scene.GetComponent<PlanetComponent>();
-		SetDependencies(transform, planet);
-	}
-};
 
 int main(int argc, char* argv[]) {
 	// Create Window
@@ -308,10 +84,10 @@ int main(int argc, char* argv[]) {
 	// Init ECS
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
-	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
+	//Components
+	illusion::ecs::Component::AppendComponents<CubeRenderer>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
-
 	//Systems
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
@@ -320,9 +96,8 @@ int main(int argc, char* argv[]) {
 	//----------
 	ecs::Scene scene;
 
-	scene.UseComponent<RigidBodyComponent>();
-	scene.UseComponent<PlanetComponent>();
-	scene.UseSystem<PlanetSystem>();
+	//Load Project
+	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
 
 	//Create Camera
 	ecs::entity_id entity = scene.CreateEntity();
@@ -331,7 +106,7 @@ int main(int argc, char* argv[]) {
 
 	Renderer renderer(scene);
 
-	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx",&renderer,&scene);
+	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", &renderer, &scene);
 
 	std::vector<float> fpsMesure;
 
@@ -400,10 +175,7 @@ int main(int argc, char* argv[]) {
 	// texture coord attribute
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
-	Shader ourShader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
-					"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
-	ourShader.use();
+	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
@@ -490,9 +262,8 @@ int main(int argc, char* argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
-		RigidBodyComponent& rigibodies = *scene.GetComponent<RigidBodyComponent>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
-		CubeRenderer& renderer = *scene.GetComponent<CubeRenderer>();
+		CubeRenderer& cubeRenderer = *scene.GetComponent<CubeRenderer>();
 		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		//UPDATE
@@ -510,8 +281,6 @@ int main(int argc, char* argv[]) {
 
 		}
 		views::GameStats::EndChronoData("Compute Models", "Game");
-
-		ourShader.setMat4("model", glm::mat4(1.0f));
 
 		//PHYSICS
 		if (views::GameStats::StartChronoData("Physics", "Game")) {
@@ -544,7 +313,7 @@ int main(int argc, char* argv[]) {
 
 		//RENDERING
 		if (views::GameStats::StartChronoData("Rendering", "Game")) {
-			//renderer.
+			renderer.Render();
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
 

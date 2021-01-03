@@ -103,11 +103,12 @@ namespace illusion {
 		ecs::core::Transform& transform;
 		MeshInstance& meshInstance;
 
-		util::Array<Mesh> meshes;
+		util::UnorderedMap<size_t,Shader> shaders;
+		util::UnorderedMap<size_t, Mesh> meshes;
+		util::UnorderedMap<size_t, Material> materials;
 
-		util::Array<Shader> shaders;
-		util::Array<util::Array<util::Array<ecs::entity_id>>> instancesByMeshByShader;
-		util::Array<Material> materials;
+		util::UnorderedMap<size_t, util::UnorderedMap<size_t, util::Array<ecs::entity_id>>> instancesByMeshByShader;
+				
 		size_t instanceRenderingThreshold;
 
 		Renderer(ecs::Scene &_scene) : 
@@ -115,37 +116,106 @@ namespace illusion {
 			camera(*(scene.GetComponent<ecs::core::Camera>())), 
 			transform(*(scene.GetComponent<ecs::core::Transform>())), 
 			meshInstance(*(scene.GetComponent<MeshInstance>())),
-			instanceRenderingThreshold(10)
+			instanceRenderingThreshold(3)
 		{			
 		}
 
-		size_t AddMesh(Mesh mesh) {
-			meshes.push_back(mesh);
+		/**
+		 * Permet d'ajouter un mesh par son id
+		 */
+		void AddMesh(Mesh mesh, size_t idMesh) {
+			meshes[idMesh] = mesh;
 			mesh.Setup();
-			return meshes.size() - 1;
 		}
+
+		/**
+		 * Permet de savoir si un mesh est déjà existant par son Id
+		 */
 		bool ContainsMesh(size_t hash) {
-			std::vector<Mesh>::iterator it =std::find_if(meshes.begin(), meshes.end(), [&](const auto& val) { return val.hash == hash; });
 			return true;
 		}
 
-		size_t AddShader(Shader shader) {
-			shaders.push_back(shader);
-			return shaders.size() - 1;
+		/**
+		 * Permet d'ajouter un shader
+		 */
+		void AddShader(Shader shader, size_t idShader) {
+			shaders[idShader] = shader;
+			//On créé automatiquement un espace pour la suite
+			instancesByMeshByShader[idShader] = util::UnorderedMap<size_t, util::Array<ecs::entity_id>>() ;
 		}
-		bool ContainsMesh(size_t hash) {
-			std::vector<Shader>::iterator it = std::find_if(shaders.begin(), shaders.end(), [&](const auto& val) { return val.hash == hash; });
-			return true;
+
+		/**
+		 * Permet de savoir si un shader existe déjà par son id
+		 */
+		bool ContainsShader(size_t idShader) {
+			return shaders.find(idShader) != shaders.end();
 		}
+
+		/**
+		 * Permet d'ajouter un material
+		 */
+		void AddMaterial(Material material, size_t idMaterial) {
+			materials[idMaterial]=material;
+		}
+
+		/**
+		 * Permet de savoir si un material existe déjà par son id
+		 */
+		bool ContainsMaterial(size_t idMaterial) {
+			return materials.find(idMaterial) != materials.end();
+		}
+
+		/*********************************************/
+		/* Ajout & Suppression par [Shader / Mesh] */
+		/*********************************************/
+
+		bool MeshExistInShader(size_t idShader, size_t idMesh){
+			return instancesByMeshByShader[idShader].find(idMesh) != instancesByMeshByShader[idShader].end();
+		}
+
+		void AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity){
+			if (!ContainsShader(idShader) || !ContainsMesh(idMesh) || !scene.entities.IsAlive(entity)) return;
+
+			if(!MeshExistInShader(idShader, idMesh)) {
+				//Création de l'espace pour le mesh
+				instancesByMeshByShader[idShader][idMesh] = util::Array<ecs::entity_id>();
+			}
+
+			instancesByMeshByShader[idShader][idMesh].push_back(entity);
+		}
+
+		void RemoveMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity){
+			if (!ContainsShader(idShader) || !ContainsMesh(idMesh) || !scene.entities.IsAlive(entity)) return;
+			if (!MeshExistInShader(idShader, idMesh)){
+				WARN("Mesh doesn't exist in [instancesByMeshByShader] but entity try to be removed from him");
+				return;
+			}
+
+			for(u32 i = 0; i < instancesByMeshByShader[idShader][idMesh].size(); i++){
+				if(instancesByMeshByShader[idShader][idMesh][i] == entity || !scene.entities.IsAlive(instancesByMeshByShader[idShader][idMesh][i])){
+					instancesByMeshByShader[idShader][idMesh].erase(
+						instancesByMeshByShader[idShader][idMesh].begin() + i
+					);
+					i--;
+				}
+			}
+
+			if(instancesByMeshByShader[idShader][idMesh].size() == 0) instancesByMeshByShader[idShader].erase(instancesByMeshByShader[idShader].find(idMesh));
+
+		}
+
+		/**
+		 * Permet de rendre la scène
+		 */
 		void Render() {//@Todo register draw calls and num entities rendered per frame
 			if (camera.size() < 1) {
 				INTERNAL_ERR("No Camera, the scene can't be rendered");
 				return;
 			}
 			//for each shader
-			size_t numShaders = instancesByMeshByShader.size();
-			for (size_t i = 0;i < numShaders;i++) {
-				Shader& shader = shaders[i];
+			for (auto const& [shaderKey, meshMap] : instancesByMeshByShader)
+			{
+				Shader& shader = shaders[shaderKey];
 				shader.use();
 
 				//@Todo change projection only if one of these values are changed
@@ -160,16 +230,16 @@ namespace illusion {
 				shader.setMat4("projection", projection);
 
 				//for each Mesh using this shader
-				size_t numMeshes = instancesByMeshByShader[i].size();
-				for (size_t j = 0;j < numMeshes;j++) {
-					Mesh& mesh = meshes[j];
+				for (auto const& [meshKey, entitiesArray] : meshMap)
+				{
+					Mesh& mesh = meshes[meshKey];
 					if (!mesh.isSetup) continue;
 					mesh.Bind();
 
 					//for each instance
-					size_t numInstances = instancesByMeshByShader[i][j].size();
-					for (size_t k = 0;k<instancesByMeshByShader[i][j].size();k++) {
-						ecs::entity_id instance_id = instancesByMeshByShader[i][j][k];
+					size_t numInstances = entitiesArray.size();
+					for (size_t i = 0;i< numInstances;i++) {
+						ecs::entity_id instance_id = entitiesArray[i];
 						ecs::component_id idTransform = transform.getIndex(instance_id);
 						transform.ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
 						Mat4x4 modelMatrix = transform.modelTransform[instance_id];

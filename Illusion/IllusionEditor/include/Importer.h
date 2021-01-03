@@ -6,6 +6,13 @@
 
 #include "glm/gtx/matrix_decompose.hpp"
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
+#include "resources/Project.h"
+
+
+
 namespace illusion {
 	// For converting between ASSIMP and glm
 	static inline glm::vec3 vec3_convert(const aiVector3D& v) { return glm::vec3(v.x, v.y, v.z); }
@@ -46,7 +53,7 @@ namespace illusion {
 		}
 		return mesh;
 	}
-	void processNode(aiNode* node, const aiScene* ai_scene, illusion::Renderer* renderer, illusion::ecs::Scene* scene, ecs::entity_id parentId) {
+	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer* renderer, illusion::ecs::Scene* scene, ecs::entity_id parentId) {
 		illusion::ecs::entity_id id = scene->CreateEntity();
 		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
 		ecs::component_id transform_id = transform->getIndex(id);
@@ -58,7 +65,7 @@ namespace illusion {
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
 		transform->position[transform_id] = position;
-		transform->rotation[transform_id] = rotation;
+		transform->rotation[transform_id] = glm::conjugate(rotation);
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same node		
 		if (node->mNumMeshes > 0) {
@@ -66,13 +73,23 @@ namespace illusion {
 			scene->EntityAddComponent<MeshInstance>(id);
 			INFO("num meshes : ", node->mNumMeshes);
 			unsigned int ai_meshid = node->mMeshes[0];
-			Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid]);
-			size_t meshId=renderer->AddMesh(mesh);
+			std::string relativePath = fs::relative(path, resources::project::projectPath + "/Assets/").string();
+			size_t id = std::hash<std::string>{}(relativePath);
+			//Set MeshInstance meshid
+			//if don't contains 
+				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid]);
+				//Add Mesh to Renderer
+			//get materialId hash 
+			//Set MeshInstance materialId
+			//if don't contains 
+				//Get Matrial from Assimp
+				//Add Material to Renderer
+			
 		}
 		// then do the same for each of its children
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			processNode(node->mChildren[i], ai_scene, renderer ,scene, id);
+			processNode(path, node->mChildren[i], ai_scene, renderer ,scene, id);
 		}
 	}
 	void import3DModel(const char* path, illusion::Renderer* renderer,illusion::ecs::Scene* scene)
@@ -88,7 +105,7 @@ namespace illusion {
 			ERR("ASSIMP : ", aiGetErrorString());
 			return;
 		}
-		processNode(ai_scene->mRootNode, ai_scene, renderer,scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
+		processNode(path,ai_scene->mRootNode, ai_scene, renderer,scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
 		aiReleaseImport(ai_scene);
 	}
 }

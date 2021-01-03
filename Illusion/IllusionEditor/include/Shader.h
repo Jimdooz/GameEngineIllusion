@@ -14,6 +14,10 @@ class Shader
 {
 public:
     unsigned int ID;
+
+    Shader(){
+        ERR("Invalid Shader");
+    }
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(const std::string& vertexCode, const std::string& fragmentCode, const std::string& geometryCode = "")

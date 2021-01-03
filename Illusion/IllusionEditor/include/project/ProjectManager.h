@@ -87,6 +87,7 @@ namespace illusioneditor::project {
 			illusion::resources::assets::LoadAllShaders();
 			illusion::resources::assets::LoadAllMaterials();
 
+
 			return true;
 		}
 

@@ -20,7 +20,7 @@ namespace illusioneditor::scene::editor {
 
 	namespace {
 		ecs::Scene *scene;
-		Shader *arrowShader;
+		//Shader *arrowShader;
 
 		f32 nearItem = -1;
 
@@ -35,8 +35,8 @@ namespace illusioneditor::scene::editor {
 	}
 
 	void Initialize() {
-		arrowShader = new Shader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
-							"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentArrow.glsl");
+		/*arrowShader = new Shader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
+							"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentArrow.glsl");*/
 	}
 
 	inline bool CanChangeItem() {
@@ -163,8 +163,8 @@ namespace illusioneditor::scene::editor {
 
 	void DrawArrow(Vec3& origin, const Vec3& direction, f32 scale, const Vec4& color) {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
-		arrowShader->setVec4("color", color);
-		arrowShader->setMat4("model", model);
+		//arrowShader->setVec4("color", color);
+		//arrowShader->setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 
@@ -174,7 +174,7 @@ namespace illusioneditor::scene::editor {
 			ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 
 			glDisable(GL_DEPTH_TEST);
-			arrowShader->use();
+			//arrowShader->use();
 			ecs::component_id idTransform = transform.getIndex((ecs::entity_id)ecs::id::Index(views::GameHiearchy::selected));
 
 			glm::vec3 scale;
@@ -186,8 +186,8 @@ namespace illusioneditor::scene::editor {
 
 			Vec3 CameraPosition = transform.position[transform.getIndex(camera.ToEntity[0])];
 
-			arrowShader->setMat4("projection", projection);
-			arrowShader->setMat4("view", view);
+			//arrowShader->setMat4("projection", projection);
+			//arrowShader->setMat4("view", view);
 
 			f32 factor = glm::distance(translation, CameraPosition) * 0.1;
 
