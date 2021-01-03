@@ -171,10 +171,10 @@ namespace illusion{
 		aiReleaseImport(ai_scene);
 	}
 	inline void RenderMesh(Mesh & m){
-		INFO("Render Mesh");
+		//INFO("Render Mesh");
 		glBindVertexArray(m.VAO);
 		glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, 0);
 		//glBindVertexArray(0); // no need to unbind it every time 
-		INFO("End Render Mesh");
+		//INFO("End Render Mesh");
 	}
 }
