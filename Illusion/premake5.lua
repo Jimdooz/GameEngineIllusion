@@ -66,11 +66,19 @@ project "IllusionEngine"
 		{
 			"ILS_PLATFORM_WINDOWS"
 		}
-
+		libdirs 
+		{
+			"%{wks.location}/libs/glfw/lib-vc2019/",
+			"%{wks.location}/libs/assimp/lib-vc2019/"
+		}
 		links
 		{
 			"Glad",
-			"libs/glfw/lib-vc2019/glfw3.lib"
+			"glfw3.lib",
+			"IrrXMLd.lib",
+			"zlibstaticd.lib",
+			"assimp-vc142-mtd.lib"
+
 		}
 
 		postbuildcommands

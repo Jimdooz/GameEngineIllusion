@@ -6,8 +6,17 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
+#include "glm/gtx/matrix_decompose.hpp"
 
 namespace illusion{
+	// For converting between ASSIMP and glm
+	static inline glm::vec3 vec3_convert(const aiVector3D& v) { return glm::vec3(v.x, v.y, v.z); }
+	static inline glm::vec2 vec2_convert(const aiVector3D& v) { return glm::vec2(v.x, v.y); }
+	static inline glm::quat quat_convert(const aiQuaternion& q) { return glm::quat(q.w, q.x, q.y, q.z); }
+	static inline glm::mat4 mat4_convert(const aiMatrix4x4& m) { return glm::transpose(glm::make_mat4(&m.a1)); }
+	//mat3
+	static inline glm::mat4 mat4_convert(const aiMatrix3x3& m) { return glm::transpose(glm::make_mat3(&m.a1)); }
+	
 	struct Vertex{
 		Vec3 position;
 		Vec3 normal;
@@ -27,7 +36,26 @@ namespace illusion{
 			isSetup=false;
 		}
 	};
+	struct MeshRenderer : public ecs::Component {
+		// Declare component name
+		COMPONENT_NAME("Mesh Renderer");
+		COMPONENT_REGISTER(MeshRenderer);
+		// Declare constructor
+		MeshRenderer(ecs::Scene* scene) : Component(scene) {}
 
+		// Declare datas
+		COMPONENT_DATA(Mesh, mesh);
+
+		// On Data added
+		virtual void AddDatas(ecs::entity_id id) override {
+			AddData(mesh, Mesh());
+		}
+
+		// On Data removed
+		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override {
+			RemoveData(mesh, index);
+		}
+	};
 	void SetupMesh(Mesh& mesh){    
 		INFO("Setup Mesh");
 		glGenVertexArrays(1, &(mesh.VAO));
@@ -99,16 +127,25 @@ namespace illusion{
 		illusion::ecs::entity_id id=scene->CreateEntity();
 		ecs::core::Transform *transform=scene->GetComponent<ecs::core::Transform>();
 		ecs::component_id transform_id=transform->getIndex(id);
+		transform->SetParent(id,parentId);
 		transform->name[transform_id]=node->mName.C_Str();
-		transform->position[transform_id]=node->.C_Str();
-		transform->rotation[transform_id]=node->mName.C_Str();
-		transform->rotation[transform_id]=node->mName.C_Str();
+		Mat4x4 transformation = mat4_convert(node->mTransformation);
+		Vec3 position, scale, skew;
+		Quaternion rotation;
+		Vec4 perspective;
+		glm::decompose(transformation, scale, rotation, position, skew, perspective);
+		transform->position[transform_id] = position;
+		transform->rotation[transform_id] = rotation;
+		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same node		
 		if(node->mNumMeshes>0){
 			MeshRenderer *meshRenderer = scene->GetComponent<MeshRenderer>();
-			meshRenderer->AddDatas(id);
+			scene->EntityAddComponent<MeshRenderer>(id);
+			INFO("meshRendererid : ", meshRenderer->getIndex(id));
 			Mesh& mesh=meshRenderer->mesh[meshRenderer->getIndex(id)];
-			mesh=ConvertToMesh(ai_scene->mMeshes[node->mMeshes[0]]);
+			INFO("num meshes : ", node->mNumMeshes);
+			unsigned int ai_meshid = node->mMeshes[0];
+			mesh=ConvertToMesh(ai_scene->mMeshes[ai_meshid]);
 			SetupMesh(mesh);
 		}
 		// then do the same for each of its children

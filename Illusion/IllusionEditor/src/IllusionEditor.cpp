@@ -66,26 +66,7 @@ struct CubeRenderer : public ecs::Component {
 	CubeRenderer(ecs::Scene* scene) : Component(scene) {}
 };
 
-struct MeshRenderer : public ecs::Component {
-	// Declare component name
-	COMPONENT_NAME("Mesh Renderer");
-	COMPONENT_REGISTER(MeshRenderer);
-	// Declare constructor
-	MeshRenderer(ecs::Scene* scene) : Component(scene) {}
-	
-	// Declare datas
-	COMPONENT_DATA(Mesh,mesh);
 
-	// On Data added
-	virtual void AddDatas(ecs::entity_id id) override {
-		AddData(mesh, Mesh());
-	}
-
-	// On Data removed
-	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override {
-		RemoveData(mesh, index);
-	}
-};
 
 struct RigidBodyComponent : public ecs::Component {
 	// Declare component name
@@ -294,11 +275,11 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	illusion::import3DModel("../../Assets/Meshes/cube.fbx",&scene);
+	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx",&scene);
 
 	std::vector<float> fpsMesure;
 
-	std::filesystem::directory_entry currentPath("../GameProjects/Optimulus");
+	std::filesystem::directory_entry currentPath("..\\GameProjects\\Optimulus");
 	std::string pathName = currentPath.path().string();
 	std::string projectName = "";
 
@@ -364,8 +345,8 @@ int main(int argc, char* argv[]) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	Shader ourShader("../GameProjects/Optimulus/Assets/Shader/vertexShader.glsl",
-					"../GameProjects/Optimulus/Assets/Shader/fragmentShader.glsl");
+	Shader ourShader("..\\..\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
+		"..\\..\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentShader.glsl");
 	ourShader.use();
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -662,12 +643,11 @@ path().parent_path());Transform = (ecs::component_id)ecs::id::Index(renderer.ToE
 			// pass transformation matrices to the shader
 			ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 			ourShader.setMat4("view", view);
-			ourShader.setMat4("model", glm::mat4(1.0f));
 
-			Vec4 ray_eye = glm::inverse(projection) * ray_clip;
+			/*Vec4 ray_eye = glm::inverse(projection) * ray_clip;
 			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
 			Vec3 ray_wor = (glm::inverse(view) * ray_eye);
-			ray_wor = glm::normalize(ray_wor);
+			ray_wor = glm::normalize(ray_wor);*/
 			
 			for (u32 i = 0; i < meshRenderer.ToEntity.size(); i++) {
 				if(!meshRenderer.mesh[i].isSetup) continue;
@@ -676,42 +656,42 @@ path().parent_path());Transform = (ecs::component_id)ecs::id::Index(renderer.ToE
 				RenderMesh(meshRenderer.mesh[i]);
 			}
 
-			float nearSelected = -1;
-			// render boxes
-			glBindVertexArray(VAO);
-			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
-				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
-				// calculate the model matrix for each object and pass it to shader before drawing
-				ourShader.setBool("collision", false);
-				ourShader.setMat4("model", transform.modelTransform[idTransform]);
+			//float nearSelected = -1;
+			//// render boxes
+			//glBindVertexArray(VAO);
+			//for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
+			//	ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(renderer.ToEntity[i]);
+			//	// calculate the model matrix for each object and pass it to shader before drawing
+			//	ourShader.setBool("collision", false);
+			//	ourShader.setMat4("model", transform.modelTransform[idTransform]);
 
-				glm::vec3 scale;
-				glm::quat rotation;
-				glm::vec3 translation;
-				glm::vec3 skew;
-				glm::vec4 perspective;
-				glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
+			//	glm::vec3 scale;
+			//	glm::quat rotation;
+			//	glm::vec3 translation;
+			//	glm::vec3 skew;
+			//	glm::vec4 perspective;
+			//	glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
 
-				Vec3 size = Vec3(0.5, 0.5, 0.5);
+			//	Vec3 size = Vec3(0.5, 0.5, 0.5);
 
-				core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, glm::inverse(glm::toMat4(rotation)) );
-				core::physics::primitives::Ray ray(Vec3(transform.position[camera.ToEntity[0]]), ray_wor);
+			//	core::physics::primitives::OBB obb(transform.modelTransform[idTransform] * Vec4(0,0,0,1), scale * size, glm::inverse(glm::toMat4(rotation)) );
+			//	core::physics::primitives::Ray ray(Vec3(transform.position[camera.ToEntity[0]]), ray_wor);
 
-				f32 cast = core::physics::collisions::Raycast(obb, ray);
+			//	f32 cast = core::physics::collisions::Raycast(obb, ray);
 
-				if (cast >= 0 && (cast < nearSelected || nearSelected == -1)) {
-					if (Input::isMouseDown(0)) {
-						views::GameHiearchy::selected = renderer.ToEntity[i];
-						nearSelected = cast;
-					}
-				}
-				
-				if (views::GameHiearchy::selected == renderer.ToEntity[i]) {
-					ourShader.setBool("collision", true);
-				}
+			//	if (cast >= 0 && (cast < nearSelected || nearSelected == -1)) {
+			//		if (Input::isMouseDown(0)) {
+			//			views::GameHiearchy::selected = renderer.ToEntity[i];
+			//			nearSelected = cast;
+			//		}
+			//	}
+			//	
+			//	if (views::GameHiearchy::selected == renderer.ToEntity[i]) {
+			//		ourShader.setBool("collision", true);
+			//	}
 
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
+			//	glDrawArrays(GL_TRIANGLES, 0, 36);
+			//}
 
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
