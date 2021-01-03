@@ -283,6 +283,9 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1280,720,"MyGame");
 
+	// Test [Romain Saclier]
+	//--------
+
 	// Setup IMGUI
 	//--------
 	IMGUI_CHECKVERSION();
