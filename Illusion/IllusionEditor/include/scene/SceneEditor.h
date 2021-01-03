@@ -142,7 +142,7 @@ namespace illusioneditor::scene::editor {
 			}
 			else {
 				f32 distanceObj = glm::distance(translation, CameraPosition);
-				f32 factor = distanceObj * 0.1;
+				f32 factor = distanceObj * 0.1f;
 
 				core::physics::primitives::OBB obbX(translation + (Vec3(0.7, 0, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(1, 0.3, 0.3) * factor);
 				core::physics::primitives::OBB obbY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 1, 0.3) * factor);
@@ -189,7 +189,7 @@ namespace illusioneditor::scene::editor {
 			arrowShader->setMat4("projection", projection);
 			arrowShader->setMat4("view", view);
 
-			f32 factor = glm::distance(translation, CameraPosition) * 0.1;
+			f32 factor = glm::distance(translation, CameraPosition) * 0.1f;
 
 			DrawArrow(translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
 			DrawArrow(translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));

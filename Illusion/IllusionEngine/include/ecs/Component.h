@@ -146,7 +146,7 @@ namespace illusion::ecs {
 		 * @return	le nombre d'éléments que compose le component
 		 */
 		inline i32 size() {
-			return ToEntity.size();
+			return static_cast<i32>(ToEntity.size());
 		}
 
 	protected:

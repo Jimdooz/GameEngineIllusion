@@ -10,7 +10,7 @@
  */
 #define SYSTEM_UPDATE_LOOP(BEHAVIOUR) \
 	virtual void Update() override { \
-	u32 size = ToEntity.size(); \
+	u32 size = static_cast<u32>(ToEntity.size()); \
 	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
 
  /**

@@ -55,9 +55,9 @@ namespace illusion::core::physics {
 
 		glPointSize(10);
 		for (int k = 0; k < ImpulseIteration; ++k) {
-			for (int i = 0; i < results.size(); ++i) {
-				int jSize = results[i].contacts.size();
-				for (int j = 0; j < jSize; ++j) {
+			for (size_t i = 0; i < results.size(); ++i) {
+				size_t jSize = results[i].contacts.size();
+				for (size_t j = 0; j < jSize; ++j) {
 					//DEBUG_POINT(results[i].contacts[j]);
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}

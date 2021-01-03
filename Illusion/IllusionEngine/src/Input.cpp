@@ -59,7 +59,7 @@ namespace illusion {
 			currentInputState.mouseButton[button] = action != GLFW_RELEASE;
 		});
 		glfwSetScrollCallback(Window::glfwWindow, [](GLFWwindow * _glfwWindow, double xoffset, double yoffset) {
-			currentInputState.wheelDelta = yoffset;
+			currentInputState.wheelDelta = static_cast<f32>(yoffset);
 		});
 		glfwSetKeyCallback(Window::glfwWindow, [](GLFWwindow* _glfwWindow, int keyId, int scancode, int action, int mods) {
 			if (keyId < 0) INTERNAL_WARN("GLFW : UNKNOW KEY");

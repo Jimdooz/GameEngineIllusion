@@ -11,7 +11,7 @@ namespace illusion::ecs {
 	//Events
 	void System::OnEntityCreate(entity_id id) {
 		id::id_type index = id::Index(id);
-		if (index >= ToData.size()) ToData.resize(index + 1);
+		if (index >= ToData.size()) ToData.resize(static_cast<size_t>(index) + 1);
 		ToData[index] = component_id{ id::invalid_id };
 	}
 	void System::OnEntityDestroy(entity_id id) {

@@ -260,13 +260,13 @@ namespace illusioneditor::views::GameProject {
 					needOpenPopupRename = false;
 				}
 				if (ImGui::BeginPopupModal("Rename Directory", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-					int n = pathToRename.length() + 64;
+					size_t n = pathToRename.length() + 64;
 					char* buf1 = new char[n];
 					strcpy(buf1, pathToRename.c_str());
 					ImGui::InputText("###goto", buf1, n);
 
 					pathToRename = std::string(buf1);
-					delete buf1;
+					delete[] buf1;
 
 					if (ImGui::Button("Close")) ImGui::CloseCurrentPopup();
 					ImGui::SameLine();
