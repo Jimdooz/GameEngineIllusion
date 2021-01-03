@@ -14,7 +14,7 @@ namespace illusion::core::physics {
 		util::Array<ecs::entity_id> colliders2;
 		util::Array<CollisionManifold> results;
 
-		f32 LinearProjectionPercent = 0.45f;
+		f32 LinearProjectionPercent = 0.8f;
 		f32 PenetrationSlack = 0.01f;
 		int ImpulseIteration = 7;
 
@@ -47,17 +47,22 @@ namespace illusion::core::physics {
 		}
 
 
-		// Calculate foces acting on the object
+		// Calculate forces acting on the object
 		for (int i = 0, size = rigidbodies->size(); i < size; ++i) {
 			rigidbodies->ApplyForces(rigidbodies->getId((ecs::component_id)i));
+			rigidbodies->collisions[i].clear();
 		}
 
+		glPointSize(10);
 		for (int k = 0; k < ImpulseIteration; ++k) {
 			for (int i = 0; i < results.size(); ++i) {
 				int jSize = results[i].contacts.size();
 				for (int j = 0; j < jSize; ++j) {
+					//DEBUG_POINT(results[i].contacts[j]);
 					ApplyImpulse(scene, colliders1[i], colliders2[i], results[i], j);
 				}
+				rigidbodies->ApplyCurrentVelocity(colliders1[i]);
+				rigidbodies->ApplyCurrentVelocity(colliders2[i]);
 			}
 		}
 
@@ -82,6 +87,12 @@ namespace illusion::core::physics {
 
 			if(!rigidbodies->fixed[rigidbodies->getIndex(A)]) positionA = positionA - correction * rigidbodies->InvMass(A);
 			if(!rigidbodies->fixed[rigidbodies->getIndex(B)]) positionB = positionB + correction * rigidbodies->InvMass(B);
+
+			rigidbodies->collisions[rigidbodies->getIndex(A)].push_back({ B, - results[i].normal });
+			rigidbodies->collisions[rigidbodies->getIndex(B)].push_back({ A, results[i].normal });
+
+			transform->ComputeModel(transform->getIndex((ecs::entity_id)A));
+			transform->ComputeModel(transform->getIndex((ecs::entity_id)B));
 		}
 	}
 
@@ -100,17 +111,21 @@ namespace illusion::core::physics {
 	}
 
 	void ApplyImpulse(ecs::Scene& scene, ecs::entity_id A, ecs::entity_id B, const CollisionManifold& M, int c) {
+		// Helper
 		RigidBody* rigidbodies = scene.GetComponent<RigidBody>();
 		ecs::component_id indexA = rigidbodies->getIndex(A);
 		ecs::component_id indexB = rigidbodies->getIndex(B);
+
 		ecs::core::Transform* transforms = scene.GetComponent<ecs::core::Transform>();
 		ecs::component_id indexTA = transforms->getIndex(A);
 		ecs::component_id indexTB = transforms->getIndex(B);
+
 		// Linear Velocity
 		float invMass1 = rigidbodies->InvMass(A);
 		float invMass2 = rigidbodies->InvMass(B);
 		float invMassSum = invMass1 + invMass2;
-		if (invMassSum == 0.0f) { return; }
+
+		if (invMassSum == 0.0f) return;
 
 		Vec3 r1 = M.contacts[c] - transforms->position[indexTA];
 		Vec3 r2 = M.contacts[c] - transforms->position[indexTB];
@@ -120,20 +135,21 @@ namespace illusion::core::physics {
 
 		// Relative velocity
 		Vec3 relativeVel = (rigidbodies->velocity[indexB] + glm::cross(rigidbodies->angVel[indexB], r2)) - (rigidbodies->velocity[indexA] + glm::cross(rigidbodies->angVel[indexA], r1));
+
 		// Relative collision normal
-		Vec3 relativeNorm = M.normal;
-		glm::normalize(relativeNorm);
+		Vec3 relativeNorm = glm::normalize(M.normal);
 		// Moving away from each other? Do nothing!
-		if (glm::dot(relativeVel, relativeNorm) > 0.0f) {
-			return;
-		}
-		float e = fminf(rigidbodies->cor[indexA], rigidbodies->cor[indexB]);
+		if (glm::dot(relativeVel, relativeNorm) > 0.0f) return;
+
+		// Compute the impulse needed
+		float e = fmaxf(rigidbodies->cor[indexA], rigidbodies->cor[indexB]);
 		float numerator = (-(1.0f + e) * glm::dot(relativeVel, relativeNorm));
 
 		float d1 = invMassSum;
-		Vec3 d2 = glm::cross(Vec3(i1 * Vec4(glm::cross(r1, relativeNorm), 0.0)), r1);
-		Vec3 d3 = glm::cross(Vec3(i2 * Vec4(glm::cross(r2, relativeNorm), 0.0)), r2);
+		Vec3 d2 = glm::cross(Vec3(i1 * Vec4(glm::cross(r1, relativeNorm), 1.0)), r1);
+		Vec3 d3 = glm::cross(Vec3(i2 * Vec4(glm::cross(r2, relativeNorm), 1.0)), r2);
 		float denominator = d1 + glm::dot(relativeNorm, d2 + d3);
+		//INTERNAL_INFO(e, " ", numerator, " ", d1, " ", d2, " ", d3, " ", denominator);
 
 		float j = (denominator == 0.0f) ? 0.0f : numerator / denominator;
 		if (M.contacts.size() > 0.0f && j != 0.0f) {
@@ -141,18 +157,16 @@ namespace illusion::core::physics {
 		}
 		Vec3 impulse = relativeNorm * j;
 
-		rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - impulse * invMass1;
-		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + impulse * invMass2;
+		rigidbodies->AddLinearImpulse(A, -impulse);
+		rigidbodies->AddLinearImpulse(B, impulse);
 
-		rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, impulse), 1.0));
-		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, impulse), 1.0));
+		rigidbodies->AddRotationImpulse(A, M.contacts[c], -impulse);
+		rigidbodies->AddRotationImpulse(B, M.contacts[c], impulse);
 
 		// Friction
 		Vec3 t = relativeVel - (relativeNorm * glm::dot(relativeVel, relativeNorm));
-		if (CMP(glm::length2(t), 0.0f)) {
-			return;
-		}
-		glm::normalize(t);
+		if (CMP(glm::length2(t), 0.0f)) return;
+		t = glm::normalize(t);
 		numerator = -glm::dot(relativeVel, t);
 
 		d1 = invMassSum;
@@ -166,9 +180,8 @@ namespace illusion::core::physics {
 		if (M.contacts.size() > 0.0f && jt != 0.0f) {
 			jt /= (float)M.contacts.size();
 		}
-		if (CMP(jt, 0.0f)) {
-			return;
-		}
+		if (CMP(jt, 0.0f)) return;
+
 		float friction = sqrtf(rigidbodies->friction[indexA] * rigidbodies->friction[indexB]);
 		if (jt > j * friction) {
 			jt = j * friction;
@@ -179,12 +192,11 @@ namespace illusion::core::physics {
 
 		Vec3 tangentImpuse = t * jt;
 
-		rigidbodies->velocity[indexA] = rigidbodies->velocity[indexA] - tangentImpuse * invMass1;
-		rigidbodies->velocity[indexB] = rigidbodies->velocity[indexB] + tangentImpuse * invMass2;
+		rigidbodies->AddLinearImpulse(A, -tangentImpuse);
+		rigidbodies->AddLinearImpulse(B, tangentImpuse);
 
-
-		rigidbodies->angVel[indexA] = rigidbodies->angVel[indexA] - Vec3(i1 * Vec4(glm::cross(r1, tangentImpuse), 1.0));
-		rigidbodies->angVel[indexB] = rigidbodies->angVel[indexB] + Vec3(i2 * Vec4(glm::cross(r2, tangentImpuse), 1.0));
+		rigidbodies->AddRotationImpulse(A, M.contacts[c], -tangentImpuse);
+		rigidbodies->AddRotationImpulse(B, M.contacts[c], tangentImpuse);
 	}
 
 }

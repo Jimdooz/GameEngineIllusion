@@ -98,7 +98,7 @@ namespace illusion::core::physics::collisions {
 
 	bool OverlapOnAxis(const OBB& obb1, const OBB& obb2, const Vec3& axis) {
 		Interval a = GetInterval(obb1, axis);
-		Interval b = GetInterval(obb1, axis);
+		Interval b = GetInterval(obb2, axis);
 		return ((b.min <= a.max) && (a.min <= b.max));
 	}
 

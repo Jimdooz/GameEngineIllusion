@@ -80,7 +80,8 @@ namespace illusioneditor::views::GameProject {
 			std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 			jsonLoaded = json::parse(str);
 		}
-		
+
+		illusioneditor::views::GameHiearchy::SetSelected((ecs::entity_id)ecs::id::invalid_id);
 		resources::assets::LoadScene(*scene, jsonLoaded);
 		illusioneditor::project::config::currentScenePath = fs::relative(pathScene, illusioneditor::project::config::projectPath).string();
 	}

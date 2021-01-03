@@ -7,9 +7,10 @@ namespace illusion::ecs::core {
 	struct Camera : public Component {
 		Camera(Scene* scene) : Component(scene) {
 			COMPONENT_PUBLIC(fov);
-			COMPONENT_PUBLIC(near);
-			COMPONENT_PUBLIC(far);
 			COMPONENT_PUBLIC(orthoMode);
+
+			COMPONENT_PUBLIC(yaw);
+			COMPONENT_PUBLIC(pitch);
 		}
 
 		COMPONENT_NAME("Camera");

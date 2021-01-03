@@ -141,17 +141,17 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Wrapper pour ajouter un element � un Array donn�
+		 * Wrapper pour ajouter un element à un Array donné
 		 */
 		template<typename T> inline void AddData(illusion::util::Array<T>& array, T data) {
 			array.push_back(data);
 		}
 
 		/**
-		 * Fonction pour savoir si une entit� est conforme aux d�pendances du System
-		 * Pour qu'une entit� soit conforme elle doit utiliser tous les components dont le System d�pend
-		 * @param	id l'id de l'entit�
-		 * @return	vrai si l'entit� est acceptable, faux sinon
+		 * Fonction pour savoir si une entité est conforme aux dépendances du System
+		 * Pour qu'une entité soit conforme elle doit utiliser tous les components dont le System dépend
+		 * @param	id l'id de l'entité
+		 * @return	vrai si l'entité est acceptable, faux sinon
 		 */
 		inline bool CanAcceptEntity(ecs::entity_id id) {
 			for (auto const& val : componentsDeps) {
@@ -161,8 +161,8 @@ namespace illusion::ecs {
 		}
 
 		/**
-		 * Fonction permettant d'ajouter les Components dont d�pend le System
-		 * Cette fonction doit �tre appel� lors de la fonction d'Initialisation du System
+		 * Fonction permettant d'ajouter les Components dont dépend le System
+		 * Cette fonction doit être appelé lors de la fonction d'Initialisation du System
 		 */
 		constexpr void SetDependencies() {}
 		template<typename Arg1, class... Args> inline void SetDependencies(Arg1 c1, Args... cNext) {

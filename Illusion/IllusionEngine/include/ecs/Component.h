@@ -126,7 +126,7 @@ namespace illusion::ecs {
 		 * @param	id l'identifiant de l'entité
 		 * @return	l'index des datas de l'entité dans le component
 		 */
-		inline entity_id getId(component_id index) {
+		inline entity_id getId(id::id_type index) {
 			return ToEntity[index];
 		}
 
@@ -178,6 +178,16 @@ namespace illusion::ecs {
 		 */
 		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
+		}
+
+		/**
+		 * Fonction permettant d'ajouter les Components dont dépend le System
+		 * Cette fonction doit être appelé lors de la fonction d'Initialisation du System
+		 */
+		constexpr void RemoveData(component_id index) {}
+		template<typename Arg1, class... Args> inline void RemoveData(component_id index, illusion::util::Array<Arg1>& c1, Args... cNext) {
+			util::EraseUnordered(c1, index);
+			RemoveData(index, cNext...);
 		}
 
 	public:

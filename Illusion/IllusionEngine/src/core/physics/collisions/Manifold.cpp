@@ -119,12 +119,12 @@ namespace illusion::core::physics::collisions {
 		util::Array<Plane> result;
 		result.resize(6);
 
-		result[0] = Plane(a[0], glm::dot(a[0], (c + a[0] * e.x)));
-		result[1] = Plane(a[0] * -1.0f, -glm::dot(a[0], (c - a[0] * e.x)));
-		result[2] = Plane(a[1], glm::dot(a[1], (c + a[1] * e.y)));
-		result[3] = Plane(a[1] * -1.0f, -glm::dot(a[1], (c - a[1] * e.y)));
-		result[4] = Plane(a[2], glm::dot(a[2], (c + a[2] * e.z)));
-		result[5] = Plane(a[2] * -1.0f, -glm::dot(a[2], (c - a[2] * e.z)));
+		result[0] = Plane( a[0], glm::dot(a[0], (c + a[0] * e.x)));
+		result[1] = Plane(-a[0],-glm::dot(a[0], (c - a[0] * e.x)));
+		result[2] = Plane( a[1], glm::dot(a[1], (c + a[1] * e.y)));
+		result[3] = Plane(-a[1],-glm::dot(a[1], (c - a[1] * e.y)));
+		result[4] = Plane( a[2], glm::dot(a[2], (c + a[2] * e.z)));
+		result[5] = Plane(-a[2],-glm::dot(a[2], (c - a[2] * e.z)));
 
 		return result;
 	}
@@ -141,6 +141,7 @@ namespace illusion::core::physics::collisions {
 			if (outPoint != 0) {
 				*outPoint = line.start + ab * t;
 			}
+
 			return true;
 		}
 
@@ -216,7 +217,7 @@ namespace illusion::core::physics::collisions {
 			if (depth <= 0.0f) return result;
 			else if (depth < result.depth) {
 				if (shouldFlip) {
-					test[i] = test[i] * -1.0f;
+					test[i] *= -1.0f;
 				}
 				result.depth = depth;
 				hitNormal = &test[i];
@@ -237,7 +238,7 @@ namespace illusion::core::physics::collisions {
 		float distance = (i.max - i.min) * 0.5f - result.depth * 0.5f;
 		Vec3 pointOnPlane = A.position + axis * distance;
 		for (int i = result.contacts.size() - 1; i >= 0; --i) {
-			Vec3 contact = result.contacts[i];
+			Vec3 &contact = result.contacts[i];
 			result.contacts[i] = contact + (axis * glm::dot(axis, pointOnPlane - contact));
 			for (int j = result.contacts.size() - 1; j > i; --j) {
 				if (glm::length2(result.contacts[j] - result.contacts[i]) < 0.0001f) {

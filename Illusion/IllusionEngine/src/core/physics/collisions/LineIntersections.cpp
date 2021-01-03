@@ -79,7 +79,7 @@ namespace illusion::core::physics::collisions {
 				if (-e[i] - size[i] > 0 || -e[i] + size[i] < 0) {
 					return -1;
 				}
-				f[i] = 0.00001f; // Avoid div by 0!
+				f[i] = 0.000001f; // Avoid div by 0!
 			}
 			t[i * 2 + 0] = (e[i] + size[i]) / f[i]; // min
 			t[i * 2 + 1] = (e[i] - size[i]) / f[i]; // max
@@ -274,5 +274,61 @@ namespace illusion::core::physics::collisions {
 			return true;
 		}
 		return false;
+	}
+
+	bool LineLineIntersect(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4, Vec3* pa, Vec3* pb, double* mua, double* mub) {
+		Vec3 p13, p43, p21;
+		f32 d1343, d4321, d1321, d4343, d2121;
+		f32 numer, denom;
+
+		p13.x = p1.x - p3.x;
+		p13.y = p1.y - p3.y;
+		p13.z = p1.z - p3.z;
+		p43.x = p4.x - p3.x;
+		p43.y = p4.y - p3.y;
+		p43.z = p4.z - p3.z;
+		if (abs(p43.x) < EPSILON && abs(p43.y) < EPSILON && abs(p43.z) < EPSILON) return false;
+		p21.x = p2.x - p1.x;
+		p21.y = p2.y - p1.y;
+		p21.z = p2.z - p1.z;
+		if (abs(p21.x) < EPSILON && abs(p21.y) < EPSILON && abs(p21.z) < EPSILON) return false;
+
+		d1343 = p13.x * p43.x + p13.y * p43.y + p13.z * p43.z;
+		d4321 = p43.x * p21.x + p43.y * p21.y + p43.z * p21.z;
+		d1321 = p13.x * p21.x + p13.y * p21.y + p13.z * p21.z;
+		d4343 = p43.x * p43.x + p43.y * p43.y + p43.z * p43.z;
+		d2121 = p21.x * p21.x + p21.y * p21.y + p21.z * p21.z;
+
+		denom = d2121 * d4343 - d4321 * d4321;
+		if (abs(denom) < EPSILON) return false;
+		numer = d1343 * d4321 - d1321 * d4343;
+
+		*mua = numer / denom;
+		*mub = (d1343 + d4321 * (*mua)) / d4343;
+
+		pa->x = p1.x + *mua * p21.x;
+		pa->y = p1.y + *mua * p21.y;
+		pa->z = p1.z + *mua * p21.z;
+		pb->x = p3.x + *mub * p43.x;
+		pb->y = p3.y + *mub * p43.y;
+		pb->z = p3.z + *mub * p43.z;
+
+		return true;
+	}
+
+	bool LineLineIntersect(const Line& A, const Line& B, Line* Result) {
+		Vec3 p1, p2;
+		f64 mua, mub;
+
+		bool result = LineLineIntersect(A.start, A.end, B.start, B.end, &p1, &p2, &mua, &mub);
+		if (!result) return false;
+
+		Result->start = p1;
+		Result->end = p2;
+		return true;
+	}
+
+	bool RayRayIntersect(const Ray& A, const Ray& B, Line* Result) {
+		return LineLineIntersect(Line(A.origin, A.origin + A.direction * 1000000000), Line(B.origin, B.origin + B.direction * 1000000000), Result);
 	}
 }

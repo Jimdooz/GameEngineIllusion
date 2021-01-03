@@ -38,13 +38,15 @@ namespace illusion::resources::assets {
 			size_t componentHash; sstream >> componentHash;
 
 			json componentElements = jsonDatas["Entity"]["Components"][componentHashS];
+			if (!scene.ComponentExist(componentHash)) continue;
 			ecs::Component* comp = scene.GetComponentSystem(componentHash);
 			for (auto& el : componentElements.items()) {
 				ecs::entity_id id = ecs::entity_id(std::stoi(el.key()));
 				if (componentHash != typeid(ecs::core::Transform).hash_code()) scene.EntityAddComponent(id, componentHash);
+				ecs::component_id componentId = comp->getIndex(id);
+				if (componentId == ecs::id::invalid_id) continue;
 				for (u32 j = 0; j < comp->publicDatas.size(); j++) {
-					ecs::component_id componentId = comp->getIndex(id);
-					if (componentId == ecs::id::invalid_id || componentElements[el.key()][comp->publicDatas[j].name].is_null()) continue;
+					if (componentElements[el.key()][comp->publicDatas[j].name].is_null()) continue;
 					resources::JsonConvertor::ImportFromJSONFromArray(componentElements[el.key()][comp->publicDatas[j].name], comp->publicDatas[j].data, comp->publicDatas[j].type, componentId);
 				}
 			}

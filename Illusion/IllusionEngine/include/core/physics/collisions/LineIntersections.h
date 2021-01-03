@@ -45,4 +45,11 @@ namespace illusion::core::physics::collisions {
 	bool Raycast(const AABB& aabb, const Ray& ray, RaycastResult* outResult);
 	bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult);
 	bool Raycast(const Plane& plane, const Ray& ray, RaycastResult* outResult);
+
+	/**
+	 * Line Intersections
+	 */
+	bool LineLineIntersect(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4, Vec3* pa, Vec3* pb, double* mua, double* mub);
+	bool LineLineIntersect(const Line& A, const Line& B, Line* Result);
+	bool RayRayIntersect(const Ray& A, const Ray& B, Line* Result);
 }

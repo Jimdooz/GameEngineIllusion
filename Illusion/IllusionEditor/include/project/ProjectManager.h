@@ -3,6 +3,8 @@
 #include "ecs/Ecs.h"
 #include "resources/assets/Scenes.h"
 
+#include "resources/assets/Levels.h"
+
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -72,6 +74,15 @@ namespace illusioneditor::project {
 			config::currentScenePath = jsonLoaded["currentScenePath"];
 
 			config::projectOpen = true;
+
+			return true;
+		}
+
+		bool SaveScene(illusion::ecs::Scene &scene) {
+			std::ofstream myfile;
+			myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+			myfile << illusion::resources::assets::ExportScene(scene).dump(4);
+			myfile.close();
 
 			return true;
 		}

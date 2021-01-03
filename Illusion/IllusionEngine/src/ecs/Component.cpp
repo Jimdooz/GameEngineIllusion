@@ -17,6 +17,7 @@ namespace illusion::ecs {
 	}
 
 	void Component::UseComponent(entity_id id) {
+		if (ToData[id::Index(id)] != ecs::id::invalid_id) return;
 		ToData[id::Index(id)] = component_id{ static_cast<u32>(ToEntity.size()) };
 		AddData(ToEntity, id);
 		AddDatas(id);
