@@ -447,8 +447,10 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Reload")) {
-				illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-				stepMode = false;
+				if (!illusioneditor::project::config::currentScenePath.empty()) {
+					illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+					stepMode = false;
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Next Step")) {
