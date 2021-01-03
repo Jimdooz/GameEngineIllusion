@@ -78,7 +78,7 @@ namespace illusioneditor::scene::editor {
 		}
 	}
 
-	bool CastBoxAxis(core::physics::primitives::OBB& box, Vec3& axis, core::physics::primitives::Ray& rayWord) {
+	bool CastBoxAxis(core::physics::primitives::OBB& box, const Vec3& axis, core::physics::primitives::Ray& rayWord) {
 		core::physics::primitives::Ray ray(box.position, axis);
 		core::physics::primitives::Ray rayI(box.position, -axis);
 		f32 cast = core::physics::collisions::Raycast(box, rayWord);
@@ -161,7 +161,7 @@ namespace illusioneditor::scene::editor {
 		}
 	}
 
-	void DrawArrow(Vec3& origin, Vec3& direction, f32 scale, Vec4& color) {
+	void DrawArrow(Vec3& origin, const Vec3& direction, f32 scale, const Vec4& color) {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
 		arrowShader->setVec4("color", color);
 		arrowShader->setMat4("model", model);
