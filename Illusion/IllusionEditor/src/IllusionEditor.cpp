@@ -40,8 +40,9 @@
 #include "imgui_impl_opengl3.h"
 
 //TEMP RENDERING
-#include "tmp/Shader.h"
-#include "Assimp_.h"
+#include "Shader.h"
+#include "Renderer.h"
+#include "Importer.h"
 
 using namespace std::chrono;
 using namespace illusion;
@@ -306,9 +307,9 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendCoreComponents();
 	illusion::ecs::Component::AppendComponents<RigidBodyComponent>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
-	illusion::ecs::Component::AppendComponents<CubeRenderer>();
-	illusion::ecs::Component::AppendComponents<MeshRenderer>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
+
+	//Systems
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
@@ -318,8 +319,6 @@ int main(int argc, char* argv[]) {
 
 	scene.UseComponent<RigidBodyComponent>();
 	scene.UseComponent<PlanetComponent>();
-	scene.UseComponent<CubeRenderer>();
-	scene.UseComponent<MeshRenderer>();
 	scene.UseSystem<PlanetSystem>();
 
 	//Create Camera
@@ -327,7 +326,9 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx",&scene);
+	Renderer renderer(scene);
+
+	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx",&renderer,&scene);
 
 	std::vector<float> fpsMesure;
 
@@ -489,7 +490,7 @@ int main(int argc, char* argv[]) {
 		RigidBodyComponent& rigibodies = *scene.GetComponent<RigidBodyComponent>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 		CubeRenderer& renderer = *scene.GetComponent<CubeRenderer>();
-		MeshRenderer& meshRenderer = *scene.GetComponent<MeshRenderer>();
+		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		//UPDATE
 		if(views::GameStats::StartChronoData("Update Loop", "Game")) {
@@ -523,74 +524,24 @@ int main(int argc, char* argv[]) {
 		}
 		views::GameStats::EndChronoData("Physics", "Game");
 
-
-		//DRAW RENDERING
-		if(views::GameStats::StartChronoData("Rendering", "Game") && camera.ToEntity.size() > 0) {
-			// activate shader
-			ourShader.use();
-			glEnable(GL_DEPTH_TEST);
-
-			//CAMERA MOVEMENT
-			{
-				camera.UpdateVectors(camera.ToEntity[0]);
-				if (Input::isMouse(1)) {
-					camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
-				}
-				else if (Input::isMouse(2)) {
-					glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-					transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
-															+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
-				}
-				if(!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
-					transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+		//CAMERA MOVEMENT
+		{
+			camera.UpdateVectors(camera.ToEntity[0]);
+			if (Input::isMouse(1)) {
+				camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
 			}
-
-
-			glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-			glm::mat4 projection = glm::mat4(1.0f);
-
-			float aspect = (float)Window::width / (float)Window::height;
-
-			// create transformations
-			projection = glm::perspective(camera.fov[0], aspect, camera.near[0], camera.far[0]);
-			view = glm::lookAt(transform.position[camera.ToEntity[0]], transform.position[camera.ToEntity[0]] + camera.front[0], camera.up[0]);
-
-
-			// pass transformation matrices to the shader
-			ourShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-			ourShader.setMat4("view", view);
-
-			Vec4 ray_eye = glm::inverse(projection) * ray_clip;
-			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-			Vec3 ray_wor = (glm::inverse(view) * ray_eye);
-			ray_wor = glm::normalize(ray_wor);
-			
-			for (u32 i = 0; i < meshRenderer.ToEntity.size(); i++) {
-				if(!meshRenderer.mesh[i].isSetup) continue;
-				ecs::component_id idTransform = (ecs::component_id)ecs::id::Index(meshRenderer.ToEntity[i]);
-				ourShader.setMat4("model", transform.modelTransform[idTransform]);
-				RenderMesh(meshRenderer.mesh[i]);
+			else if (Input::isMouse(2)) {
+				glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+				transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
+					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
 			}
-			// render boxes
-			glBindVertexArray(VAO);
+			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
+				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+		}
 
-			float nearSelected = -1;
-
-			illusioneditor::scene::editor::EditorTests(scene, ray_wor);
-
-			for (u32 i = 0; i < renderer.ToEntity.size(); i++) {
-				ecs::component_id index = transform.getIndex(renderer.ToEntity[i]);
-				ourShader.setBool("collision", false);
-				ourShader.setMat4("model", transform.modelTransform[index]);
-
-				illusioneditor::scene::editor::ClickedNearTest(scene, renderer.getId(i), ray_wor);
-				
-				if (views::GameHiearchy::selected == renderer.getId(i)) ourShader.setBool("collision", true);
-
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
-
-			illusioneditor::scene::editor::DrawArrowTranslate(scene, projection, view);
+		//RENDERING
+		if (views::GameStats::StartChronoData("Rendering", "Game")) {
+			//renderer.
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
 

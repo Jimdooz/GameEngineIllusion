@@ -2,12 +2,12 @@
 
 #include "ecs/Entity.h"
 #include "ecs/Component.h"
+#include "ecs/System.h"
 
 // Core Components
 #include "ecs/CoreComponents/Transform.h"
 
 namespace illusion::ecs {
-
 	// On déclare System sans inclure ses headers par question de double dépendances
 	struct System;
 
@@ -31,9 +31,8 @@ namespace illusion::ecs {
 		// ECS System
 		Entities entities;
 
-		// @Ask : peut être utiliser u32 ou u12 à la place de size_t qui est un long long pour plus de perfs ?
-		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs
-		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
+		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs ?
+		// @Todo : mettre un pointeur direct vers les core Components comme Camera et Transform
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
 		bool pause = false;
