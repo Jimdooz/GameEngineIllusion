@@ -44,7 +44,9 @@ namespace illusioneditor::views::GameHiearchy {
 					ecs::component_id indexComponentNewEntity = val->getIndex(newEntity);
 
 					ecs::component_id componentId = val->getIndex(id);
+
 					for (u32 j = 0; j < val->publicDatas.size(); j++) {
+						// @Todo : à Optimiser pour ne pas passer par JSON Convertor
 						resources::JsonConvertor::ImportFromJSONFromArray(
 							resources::JsonConvertor::ExportToJSONFromArray(val->publicDatas[j].data, val->publicDatas[j].type, indexComponentId),
 							val->publicDatas[j].data,
@@ -52,6 +54,8 @@ namespace illusioneditor::views::GameHiearchy {
 							indexComponentNewEntity
 						);
 					}
+					// @Todo : Callback pour une duplication
+					val->OnEntityDuplicate(newEntity);
 				}
 			}
 

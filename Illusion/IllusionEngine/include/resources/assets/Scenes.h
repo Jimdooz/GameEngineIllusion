@@ -51,6 +51,8 @@ namespace illusion::resources::assets {
 				}
 			}
 		}
+
+		scene.ReloadRenderer();
 	}
 
 	json ExportScene(illusion::ecs::Scene& scene) {

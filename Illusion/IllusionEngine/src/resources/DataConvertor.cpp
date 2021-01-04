@@ -18,7 +18,20 @@ namespace illusion::resources{
 	template<typename T> size_t hashOf() { return typeid(T).hash_code(); }
 
 	void JsonConvertor::Initialize() {
-		//String
+		//size_t
+		JsonConvertor::Create<size_t>(
+			JSON_EXPORT{
+				size_t& rdata = *((size_t*)data);
+				json value = rdata;
+				return value;
+			},
+			JSON_IMPORT{
+				size_t* rto = (size_t*)to;
+				*rto = data;
+			},
+			JSON_VECTOR_CONVERTOR(size_t)
+			);
+		//Boolean
 		JsonConvertor::Create<boolean>(
 			JSON_EXPORT{
 				boolean& rdata = *((boolean*)data);
@@ -117,7 +130,6 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
 		);
-
 		//f32
 		JsonConvertor::Create<f32>(
 			JSON_EXPORT{
@@ -131,7 +143,6 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(f32)
 		);
-
 		//f16
 		JsonConvertor::Create<f64>(
 			JSON_EXPORT{

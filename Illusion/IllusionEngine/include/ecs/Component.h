@@ -102,13 +102,17 @@ namespace illusion::ecs {
 		 * Evenements
 		 */
 
-		//Fonction appelé lorsqu'une entité de la scטne a été créé
+		//Fonction appelé lorsqu'une entité de la scène a été créé
 		//Elle a pour but d'augmenter la taille du tableau des entités (ToData) possible
 		void OnEntityCreate(entity_id id);
 
-		//Fonction appelé lorsqu'une entité de la scטne a été détruite
+		//Fonction appelé lorsqu'une entité de la scène a été détruite
 		//Elle a pour but de supprimer les données si elles existent de l'entité et de créer un espace vide
 		void OnEntityDestroy(entity_id id);
+
+		//Fonction appelé lorsqu'une entité à fini d'être dupliqué
+		//Elle disposera des mêmes valeurs public / protected de son prédécésseur
+		virtual void OnEntityDuplicate(entity_id id){}
 
 		/**
 		 * @brief	Permet de récupérer l'index d'une entité dans le component

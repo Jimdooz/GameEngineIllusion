@@ -10,7 +10,7 @@
 #include "imgui_impl_opengl3.h"
 
 //TEMP RENDERING
-#include "Shader.h"
+#include "core/rendering/Shader.h"
 
 #include "core/Time.h"
 

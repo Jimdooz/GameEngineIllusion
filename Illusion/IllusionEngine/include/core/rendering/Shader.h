@@ -10,14 +10,15 @@
 #include <sstream>
 #include <iostream>
 
+char DEFAULT_VERTEX_SHADER[];
+char DEFAULT_FRAGMENT_SHADER[];
+
 class Shader
 {
 public:
     unsigned int ID;
 
-    Shader(){
-        ERR("Invalid Shader");
-    }
+    Shader(){}
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(const std::string& vertexCode, const std::string& fragmentCode, const std::string& geometryCode = "")
@@ -125,6 +126,12 @@ public:
     {
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
+
+    static void Initialize() {
+        Shader::defaultShader = Shader(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
+    }
+
+    static Shader defaultShader;
 
 private:
     // utility function for checking shader compilation/linking errors.

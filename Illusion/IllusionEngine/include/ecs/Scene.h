@@ -7,6 +7,8 @@
 // Core Components
 #include "ecs/CoreComponents/Transform.h"
 
+#include "core/rendering/Renderer.h"
+
 namespace illusion::ecs {
 	// On déclare System sans inclure ses headers par question de double dépendances
 	struct System;
@@ -26,6 +28,12 @@ namespace illusion::ecs {
 
 		Scene() {
 			for (auto const& [key, val] : Component::AllComponents) this->UseComponent(key);
+			renderer = new Renderer(this);
+			renderer->AddShader(Shader::defaultShader, 0);
+		}
+
+		~Scene() {
+			delete renderer;
 		}
 
 		// ECS System
@@ -37,10 +45,18 @@ namespace illusion::ecs {
 		util::Map<size_t, System*> systems;
 		bool pause = false;
 
+		Renderer *renderer;
+
 		/**
 		 * Permet de réinitialiser une scène
 		 */
 		void Reset();
+
+		void ReloadRenderer() {
+			if(renderer != nullptr) delete renderer;
+			renderer = new Renderer(this);
+			renderer->AddShader(Shader::defaultShader, 0);
+		}
 
 		/**
 		 * >>> Entity Part
@@ -92,6 +108,7 @@ namespace illusion::ecs {
 		 * Permet de récupérer un Component
 		 */
 		template<typename C> Component* GetComponentSystem() {
+			//@Todo : Créer un système pour checker si le component existe en debug
 			return components[typeid(C).hash_code()];
 		}
 

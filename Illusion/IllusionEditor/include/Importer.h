@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer.h"
+#include "core/rendering/Renderer.h"
 #include "assimp/cimport.h"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
@@ -25,14 +25,15 @@ namespace illusion {
 
 	Mesh ConvertToMesh(const aiMesh* aimesh) {
 		Mesh mesh;
-		if (aimesh->HasNormals()) {
-			INFO("HasNormals");
-		}
-		if (aimesh->HasTextureCoords(0)) {
-			INFO("HasUvs");
-		}
+		//if (aimesh->HasNormals()) {
+		//	INFO("HasNormals");
+		//}
+		//if (aimesh->HasTextureCoords(0)) {
+		//	INFO("HasUvs");
+		//}
 		for (int i = 0;i < aimesh->mNumVertices; i++) {
 			auto current_Position = aimesh->mVertices[i];
+			current_Position *= 0.01f;
 			auto current_Normal = aimesh->mNormals[i];
 			auto current_Uv = aimesh->mTextureCoords[0][i];
 			Vertex vertex = {
@@ -40,12 +41,10 @@ namespace illusion {
 				,Vec3(current_Normal.x,current_Normal.y,current_Normal.z)
 				,Vec2(current_Uv.x,current_Uv.y)
 			};
-			INFO(vertex.position.x, ",", vertex.position.y, ",", vertex.position.z);
 			mesh.vertices.push_back(vertex);
 		}
 		for (int i = 0;i < aimesh->mNumFaces; i++) {
 			auto current = aimesh->mFaces[i];
-			INFO(aimesh->mFaces[i].mNumIndices);
 			//only triangles supported
 			mesh.indices.push_back(current.mIndices[0]);
 			mesh.indices.push_back(current.mIndices[1]);
@@ -53,9 +52,9 @@ namespace illusion {
 		}
 		return mesh;
 	}
-	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer* renderer, illusion::ecs::Scene* scene, ecs::entity_id parentId) {
-		illusion::ecs::entity_id id = scene->CreateEntity();
-		ecs::core::Transform* transform = scene->GetComponent<ecs::core::Transform>();
+	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::ecs::Scene& scene, ecs::entity_id parentId) {
+		illusion::ecs::entity_id id = scene.CreateEntity();
+		ecs::core::Transform* transform = scene.GetComponent<ecs::core::Transform>();
 		ecs::component_id transform_id = transform->getIndex(id);
 		transform->SetParent(id, parentId);
 		transform->name[transform_id] = node->mName.C_Str();
@@ -65,35 +64,40 @@ namespace illusion {
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
 		transform->position[transform_id] = position;
-		transform->rotation[transform_id] = glm::conjugate(rotation);
+		transform->rotation[transform_id] = glm::conjugate(rotation); // Conjugate rotation to apply the correct quaternion with decompose
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same node		
 		if (node->mNumMeshes > 0) {
-			MeshInstance* meshInstance = scene->GetComponent<MeshInstance>();
-			scene->EntityAddComponent<MeshInstance>(id);
+			MeshInstance& meshInstance = *(scene.GetComponent<MeshInstance>());
+			scene.EntityAddComponent<MeshInstance>(id);
 			INFO("num meshes : ", node->mNumMeshes);
 			unsigned int ai_meshid = node->mMeshes[0];
 			std::string relativePath = fs::relative(path, resources::project::projectPath + "/Assets/").string();
-			size_t id = std::hash<std::string>{}(relativePath);
-			//Set MeshInstance meshid
-			//if don't contains 
-				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid]);
-				//Add Mesh to Renderer
+			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
+			meshInstance.meshId[meshInstance.getIndex(id)] = mesh_id;
 			//get materialId hash 
 			//Set MeshInstance materialId
 			//if don't contains 
 				//Get Matrial from Assimp
 				//Add Material to Renderer
-			
+			if(!scene.renderer->ContainsMesh(mesh_id)){
+				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid]);				
+				mesh.Setup();
+				scene.renderer->AddMesh(mesh,mesh_id);
+			}
+				
+			//AddMeshInstance to Renderer
+			scene.renderer->AddMeshShader(0, mesh_id, id);
 		}
 		// then do the same for each of its children
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			processNode(path, node->mChildren[i], ai_scene, renderer ,scene, id);
+			processNode(path, node->mChildren[i], ai_scene, scene, id);
 		}
 	}
-	void import3DModel(const char* path, illusion::Renderer* renderer,illusion::ecs::Scene* scene)
+	void import3DModel(const char* path, illusion::ecs::Scene& scene)
 	{
+		illusion::Renderer* renderer = scene.renderer;
 		const aiScene* ai_scene = aiImportFile(path,
 			aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
@@ -105,7 +109,7 @@ namespace illusion {
 			ERR("ASSIMP : ", aiGetErrorString());
 			return;
 		}
-		processNode(path,ai_scene->mRootNode, ai_scene, renderer,scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
+		processNode(path,ai_scene->mRootNode, ai_scene, scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
 		aiReleaseImport(ai_scene);
 	}
 }

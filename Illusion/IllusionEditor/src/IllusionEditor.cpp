@@ -40,14 +40,16 @@
 #include "imgui_impl_opengl3.h"
 
 //TEMP RENDERING
-#include "Shader.h"
-#include "Renderer.h"
+#include "core/rendering/Shader.h"
+#include "core/rendering/Renderer.h"
 #include "Importer.h"
 
 //Scripting
 #include "scripting/CubeRenderer.h"
 #include "scripting/JumpBigCube.h"
 #include "scripting/Planet.h"
+
+#include "core/rendering/Renderer.h"
 
 using namespace std::chrono;
 using namespace illusion;
@@ -80,6 +82,7 @@ int main(int argc, char* argv[]) {
 	// Init Editor
 	//----------
 	illusioneditor::scene::editor::Initialize();
+	Shader::Initialize();
 
 	// Init ECS
 	//----------
@@ -88,6 +91,7 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendComponents<CubeRenderer>();
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
+	illusion::ecs::Component::AppendComponents<MeshInstance>();
 	//Systems
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
@@ -95,6 +99,13 @@ int main(int argc, char* argv[]) {
 	// Init Scene
 	//----------
 	ecs::Scene scene;
+	scene.UseComponent<CubeRenderer>();
+	scene.UseComponent<PlanetComponent>();
+	scene.UseComponent<JumpBigCube>();
+	scene.UseComponent<MeshInstance>();
+
+	scene.UseSystem<PlanetSystem>();
+	scene.UseSystem<JumpBigCubeSystem>();
 
 	//Load Project
 	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
@@ -104,9 +115,7 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	Renderer renderer(scene);
-
-	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", &renderer, &scene);
+	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", scene);
 
 	std::vector<float> fpsMesure;
 
@@ -176,7 +185,7 @@ int main(int argc, char* argv[]) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -313,7 +322,7 @@ int main(int argc, char* argv[]) {
 
 		//RENDERING
 		if (views::GameStats::StartChronoData("Rendering", "Game")) {
-			renderer.Render();
+			scene.renderer->Render();
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
 
