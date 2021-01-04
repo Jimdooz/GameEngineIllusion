@@ -101,7 +101,7 @@ namespace illusion{
 		if(aimesh->HasTextureCoords(0)){
 			INFO("HasUvs");
 		}
-		for(int i=0;i<aimesh->mNumVertices; i++){
+		for(unsigned int i=0; i < aimesh->mNumVertices; i++){
 			auto current_Position =aimesh->mVertices[i];
 			auto current_Normal =aimesh->mNormals[i];
 			auto current_Uv =aimesh->mTextureCoords[0][i];
@@ -113,7 +113,7 @@ namespace illusion{
 			INFO(vertex.position.x,",",vertex.position.y,",",vertex.position.z);
 			mesh.vertices.push_back(vertex);
 		}
-		for(int i=0;i<aimesh->mNumFaces; i++){
+		for(unsigned int i=0; i<aimesh->mNumFaces; i++){
 			auto current =aimesh->mFaces[i];
 			INFO(aimesh->mFaces[i].mNumIndices);
 			//only triangles supported

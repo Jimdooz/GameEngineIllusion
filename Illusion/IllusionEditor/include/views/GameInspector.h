@@ -18,12 +18,12 @@ namespace illusioneditor::views::GameInspector {
 	}
 
 	void GenerateInputString(std::string name, std::string& str) {
-		int n = str.length() + 64;
+		size_t n = str.length() + 64;
 		char* buf1 = new char[n];
 		strcpy(buf1, str.c_str());
 		ImGui::InputText(name.c_str(), buf1, n);
 		str = std::string(buf1);
-		delete buf1;
+		delete[] buf1;
 	}
 
 	void GenerateUiComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component *component) {
@@ -82,22 +82,22 @@ namespace illusioneditor::views::GameInspector {
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
 			//Position
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Position", "Position");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
 
 			//Rotation
 			Vec3 euler = glm::degrees(glm::eulerAngles(transform.rotation[indexTransform]));
 			if (abs(euler.x) >= 180) euler.x = 0;
 			if (abs(euler.y) >= 180) euler.y = 0;
 			if (abs(euler.z) >= 180) euler.z = 0;
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Rotation", "Rotation");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
 			if (abs(euler.x) >= 180) euler.x = 0;
 			if (abs(euler.y) >= 180) euler.y = 0;
 			if (abs(euler.z) >= 180) euler.z = 0;
@@ -105,11 +105,11 @@ namespace illusioneditor::views::GameInspector {
 			transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
 
 			//Scale
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Scale", "Scale");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SX", &transform.scale[indexTransform].x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SY", &transform.scale[indexTransform].y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SZ", &transform.scale[indexTransform].z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SX", &transform.scale[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SY", &transform.scale[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SZ", &transform.scale[indexTransform].z, 0.01f);
 
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
 			ImGui::Separator();

@@ -18,10 +18,10 @@ namespace illusion::core::physics::collisions {
 	 */
 
 	struct RaycastResult {
-		Vec3 point;
-		Vec3 normal;
-		f32 t;
-		bool hit;
+		Vec3 point{};
+		Vec3 normal{};
+		f32 t{};
+		bool hit{};
 	};
 
 	void ResetRaycastResult(RaycastResult* outResult);

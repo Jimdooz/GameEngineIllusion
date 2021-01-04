@@ -31,8 +31,8 @@ namespace illusion {
 			unscaledTime = 0.0f;
 			unscaledDeltaTime = 0.0f;
 
-			fixedDeltaTime = 1.0 / 50.0;
-			unscaledFixedDeltaTime = 1.0 / 50.0;
+			fixedDeltaTime = 1.0f / 50.0f;
+			unscaledFixedDeltaTime = 1.0f / 50.0f;
 
 			timeScale = 1.0f;
 			tick = 0;

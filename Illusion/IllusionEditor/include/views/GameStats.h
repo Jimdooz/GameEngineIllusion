@@ -51,7 +51,7 @@ namespace illusioneditor::views::GameStats {
 				ImGui::TextColored((ImVec4)ImColor(100, 100, 100), std::string(std::to_string(total) + "s").c_str());
 				ImGui::SameLine();
 				ImGui::TextColored((ImVec4)ImColor(100, 200, 100), std::string(std::to_string((int)round(1 / total)) + " fps").c_str());
-				ImGui::PlotLines("", datasGet, val.datas.size());
+				ImGui::PlotLines("", datasGet, static_cast<int>(val.datas.size()));
 
 				ImGui::BeginChild("##ProjectRegion");
 				ImGui::Columns(3);
@@ -94,7 +94,7 @@ namespace illusioneditor::views::GameStats {
 	void FillDatas(std::string name, double data, std::string parent = "") {
 		CreateStatElement(name, parent);
 
-		stats[name].datas.push_back(data);
+		stats[name].datas.push_back(static_cast<f32>(data));
 		if (stats[name].datas.size() >= maxStatDatas) stats[name].datas.erase(stats[name].datas.begin());
 	}
 

@@ -28,13 +28,13 @@ namespace illusioneditor::views::FileExplorer {
 			pathName = currentPath.path().string();
 		}
 		ImGui::SameLine();
-		int n = pathName.length() + 64;
+		size_t n = pathName.length() + 64;
 		char* buf1 = new char[n];
 		strcpy(buf1, pathName.c_str());
 		ImGui::InputText("###goto", buf1, n);
 
 		pathName = std::string(buf1);
-		delete buf1;
+		delete[] buf1;
 
 		ImGui::SameLine();
 		if (ImGui::Button("Go")) {
@@ -84,7 +84,7 @@ namespace illusioneditor::views::FileExplorer {
 		ImGui::InputText("Project Name###createProject", buf2, n);
 
 		projectName = std::string(buf2);
-		delete buf2;
+		delete[] buf2;
 
 		if (ImGui::Button("Create Project")) {
 			illusioneditor::project::tools::CreateProject(pathName, projectName);
