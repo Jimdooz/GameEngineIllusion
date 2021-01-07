@@ -89,8 +89,12 @@ namespace illusioneditor::views::GameInspector {
 
 	void RenderMeshInstance(const size_t componentKey, MeshInstance *meshInstance, ecs::entity_id selected) {
 		ecs::component_id index = meshInstance->getIndex(selected);
-		std::string titleMesh = currentScene->renderer->meshes.at(meshInstance->meshId[index]).name;
-		std::string titleMaterial = currentScene->renderer->materials.at(meshInstance->materialId[index]).name;
+		size_t indexMesh = meshInstance->meshId[index];
+		size_t indexMaterial = meshInstance->materialId[index];
+		if (!currentScene->renderer->ContainsMesh(indexMesh)) indexMesh = 0;
+		if (!currentScene->renderer->ContainsMaterial(indexMesh)) indexMaterial = 0;
+		std::string titleMesh = currentScene->renderer->meshes.at(indexMesh).name;
+		std::string titleMaterial = currentScene->renderer->materials.at(indexMaterial).name;
 
 		//MESH
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);

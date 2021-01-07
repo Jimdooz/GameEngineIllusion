@@ -123,6 +123,7 @@ namespace illusioneditor::views::MaterialEditor {
 		if (ImGui::Button("Close###CloseMaterialEditor")) {
 			currentMaterial = nullptr;
 		}
+		ImGui::SameLine();
 		if (ImGui::Button("Save###SaveMaterialEditor")) {
 			illusion::resources::assets::SaveMaterial(*currentMaterial);
 		}

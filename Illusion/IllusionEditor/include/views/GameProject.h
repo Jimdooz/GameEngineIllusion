@@ -5,6 +5,8 @@
 #include "project/ProjectManager.h"
 #include "resources/Project.h"
 
+#include "resources/assets/Materials.h"
+
 #include <string>
 
 #include "imgui.h"
@@ -48,6 +50,51 @@ namespace illusioneditor::views::GameProject {
 		}
 	}
 
+	void CreateScene() {
+		illusion::ecs::Scene scene;
+		std::ofstream mySceneFile;
+		mySceneFile.open(realPathSelected + "/newScene.scene");
+		mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);
+		mySceneFile.close();
+	}
+
+	void CreateMaterial() {
+		std::string pathMaterial = realPathSelected + "/newMaterial.material";
+
+
+		json materialDefault;
+		materialDefault["shader"] = 0;
+		materialDefault["uniforms"] = json::object();
+
+		INFO(pathMaterial, "->", materialDefault);
+
+		std::ofstream myMaterialFile;
+		myMaterialFile.open(pathMaterial);
+		myMaterialFile << materialDefault.dump(4);
+		myMaterialFile.close();
+	}
+
+	void LoadScene(std::string pathScene) {
+		illusioneditor::views::MaterialEditor::Close();
+		json jsonLoaded;
+		{
+			std::ifstream t(pathScene);
+			std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+			jsonLoaded = json::parse(str);
+		}
+
+		illusioneditor::views::GameHiearchy::SetSelected((ecs::entity_id)ecs::id::invalid_id);
+		resources::assets::LoadScene(*scene, jsonLoaded);
+		// /!\ [Romain Saclier] On va devoir faire un changement sur l'endroit où se trouve les données du projet courant
+		illusioneditor::project::config::currentScenePath = fs::relative(pathScene, illusioneditor::project::config::projectPath).string();
+		illusion::resources::CurrentProject().currentScenePath = illusioneditor::project::config::currentScenePath;
+	}
+
+	void ReloadCurrentScene() {
+		if(illusioneditor::project::config::projectPath != "")
+			LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+	}
+
 	void RenamePath(std::string path) {
 		needOpenPopupRename = true;
 		pathFromRename = std::filesystem::directory_entry(path).path().string();
@@ -65,29 +112,6 @@ namespace illusioneditor::views::GameProject {
 		realPathSelected = realPathSelected + "/New Folder";
 		pathSelected = "New Folder";
 		RenamePath(realPathSelected);
-	}
-
-	void CreateScene() {
-		illusion::ecs::Scene scene;
-		std::ofstream mySceneFile;
-		mySceneFile.open(realPathSelected + "/newScene.scene");
-		mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);
-		mySceneFile.close();
-	}
-
-	void LoadScene(std::string pathScene) {
-		json jsonLoaded;
-		{
-			std::ifstream t(pathScene);
-			std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-			jsonLoaded = json::parse(str);
-		}
-
-		illusioneditor::views::GameHiearchy::SetSelected((ecs::entity_id)ecs::id::invalid_id);
-		resources::assets::LoadScene(*scene, jsonLoaded);
-		// /!\ [Romain Saclier] On va devoir faire un changement sur l'endroit où se trouve les données du projet courant
-		illusioneditor::project::config::currentScenePath = fs::relative(pathScene, illusioneditor::project::config::projectPath).string();
-		illusion::resources::CurrentProject().currentScenePath = illusioneditor::project::config::currentScenePath;
 	}
 
 	void RecursiveTreeAssets(std::string path) {
@@ -175,6 +199,7 @@ namespace illusioneditor::views::GameProject {
 					{
 						if (ImGui::MenuItem("Folder")) CreateDirectory();
 						if (ImGui::MenuItem("Scene")) CreateScene();
+						if (ImGui::MenuItem("Material")) CreateMaterial();
 						ImGui::EndMenu();
 					}
 
@@ -290,6 +315,8 @@ namespace illusioneditor::views::GameProject {
 						if (itemScene) {
 							LoadScene(newPath);
 						}
+						
+						if (itemMaterial) ReloadCurrentScene();
 
 					}
 					ImGui::EndPopup();
