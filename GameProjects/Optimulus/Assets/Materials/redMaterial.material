@@ -1,6 +1,11 @@
 {
-    "shader" : "Shader/monShader.shader",
-    "uniforms" : {
-        "color" : [1,0,0,1]
+    "shader": "Shader\\monShader.shader",
+    "uniforms": {
+        "color": [
+            1.0,
+            0.0,
+            0.0,
+            1.0
+        ]
     }
 }

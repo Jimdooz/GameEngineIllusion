@@ -141,9 +141,9 @@ public:
             DEFAULT_VERTEX_SHADER,
             DEFAULT_FRAGMENT_SHADER,
             {
-                { "diffuse", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
-                { "specular", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
-                { "ambient", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
+                { "diffuse", {{ "type", "Color3" }, { "default", {1,1,1} }} },
+                { "specular", {{ "type", "Color3" }, { "default", {1,1,1} }} },
+                { "ambient", {{ "type", "Color3" }, { "default", {1,1,1} }} },
                 { "shininess", {{ "type", "f32" }, { "default", 32.0f }} },
             }
         };

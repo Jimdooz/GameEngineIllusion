@@ -20,6 +20,8 @@ namespace illusion::resources::assets {
 		std::string vertex;
 		std::string fragment;
 		json uniforms;
+		std::string name = "default shader";
+		std::string path = "";
 	};
 
 	static ShaderResource LoadShader(std::string shaderPath) {
@@ -48,6 +50,8 @@ namespace illusion::resources::assets {
 			strVertex,
 			strFragment,
 			uniforms,
+			jsonLoaded["name"].is_null() ? relativePath : jsonLoaded["vertex"],
+			relativePath
 		};
 	}
 

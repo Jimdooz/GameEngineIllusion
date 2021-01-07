@@ -6,6 +6,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "MaterialEditor.h"
+
 namespace illusioneditor::views::GameInspector {
 
 	using namespace illusion;
@@ -48,6 +50,8 @@ namespace illusioneditor::views::GameInspector {
 		} else if (data.type == typeid(illusion::util::Array<Vec4>).hash_code()) {
 			illusion::util::Array<Vec4>& vec4 = *(illusion::util::Array<Vec4>*)data.data;
 			ImVec4 vec4aGet(vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w);
+			ImGui::Text(data.name.c_str());
+			ImGui::SameLine();
 			if (ImGui::ColorButton(data.name.c_str(), vec4aGet)) {
 				ImGui::OpenPopup(("ColorPicker###ColorPickerComponent_" + data.name).c_str());
 			}

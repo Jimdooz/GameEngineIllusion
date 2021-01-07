@@ -24,6 +24,11 @@ namespace illusion::resources::assets {
 		json uniforms;
 	};
 
+	static size_t IdMaterialPath(std::string materialPath) {
+		if (CurrentProject().path == "") return 0; //If no project loaded
+		return std::hash<std::string>{}(fs::relative(materialPath, CurrentProject().path + "/Assets/").string());
+	}
+
 	static MaterialResource LoadMaterial(std::string materialPath) {
 		json jsonLoaded;
 
@@ -50,7 +55,7 @@ namespace illusion::resources::assets {
 		std::string relativePath = fs::relative(materialPath, CurrentProject().path + "/Assets/").string();
 
 		return {
-			std::hash<std::string>{}(relativePath),
+			IdMaterialPath(materialPath),
 			shaderId,
 			fs::path(relativePath).filename().string(),
 			relativePath,
@@ -86,4 +91,20 @@ namespace illusion::resources::assets {
 		return allMaterials;
 	}
 
+	static bool SaveMaterial(MaterialResource& material) {
+		json toSave;
+
+		if (material.relativeShaderPath == "") toSave["shader"] = material.shaderId;
+		else toSave["shader"] = material.relativeShaderPath;
+		toSave["uniforms"] = material.uniforms;
+
+		INFO(CurrentProject().path + "/Assets/" + material.relativePath);
+
+		std::ofstream myfile;
+		myfile.open(CurrentProject().path + "/Assets/" + material.relativePath);
+		myfile << toSave.dump(4);
+		myfile.close();
+
+		return true;
+	}
 }

@@ -13,6 +13,8 @@
 #include "views/EditorMenuBar.h"
 #include "views/FileExplorer.h"
 
+#include "views/MaterialEditor.h"
+
 #include "resources/DataConvertor.h"
 #include "resources/assets/Scenes.h"
 
@@ -199,6 +201,8 @@ int main(int argc, char* argv[]) {
 		views::GameProject::Show();
 
 		views::GameStats::Show();
+
+		views::MaterialEditor::Show();
 
 		//RENDER
 		//--------

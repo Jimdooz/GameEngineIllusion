@@ -201,8 +201,8 @@ namespace illusion {
 						std::string index = "material." + it.key();
 						if (typeV == "f32") { shader.setFloat(index, value); }
 						else if (typeV == "Vec2") { shader.setVec2(index, value[0], value[1]); }
-						else if (typeV == "Vec3") { shader.setVec3(index, value[0], value[1], value[2]); }
-						else if (typeV == "Vec4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
+						else if (typeV == "Vec3" || typeV == "Color3") { shader.setVec3(index, value[0], value[1], value[2]); }
+						else if (typeV == "Vec4" || typeV == "Color4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
 					}
 
 					// @Todo make instance rendering if instances >treshold

@@ -28,6 +28,7 @@ namespace illusioneditor::views::GameProject {
 
 		std::string itemSelected = "";
 		bool itemScene = false;
+		bool itemMaterial = false;
 
 		bool needOpenPopupRename = false;
 		std::string basePathFromRename = "";
@@ -166,6 +167,7 @@ namespace illusioneditor::views::GameProject {
 					ImGui::OpenPopup("Popup Project");
 					itemSelected = "";
 					itemScene = false;
+					itemMaterial = false;
 				}
 
 				if (ImGui::BeginPopup("Popup Project")) {
@@ -189,32 +191,42 @@ namespace illusioneditor::views::GameProject {
 					try {
 						for (auto& p : fs::directory_iterator(realPathSelected)) {
 							std::string fileName = p.path().filename().string();
-							if (!p.is_directory()) {
-								if (hasEnding(fileName, ".scene")) {
-									ImGui::TextColored((ImVec4)ImColor(100, 100, 255), fileName.c_str());
-									if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-										INTERNAL_INFO("LOAD SCENE");
-										LoadScene(p.path().string());
-									}
-
-									if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-										itemScene = true;
-									}
-								}
-								else {
-									ImGui::TextColored((ImVec4)ImColor(100, 100, 100), fileName.c_str());
-								}
-								
-								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-									itemSelected = p.path().string();
-								}
+							if (!p.is_directory()) continue;
+							ImGui::TextColored((ImVec4)ImColor(255, 255, 255), fileName.c_str());
+							if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+								pathSelected = p.path().filename().string();
+								realPathSelected = p.path().string();
 							}
-							else {
-								ImGui::TextColored((ImVec4)ImColor(255, 255, 255), fileName.c_str());
+						}
+						for (auto& p : fs::directory_iterator(realPathSelected)) {
+							std::string fileName = p.path().filename().string();
+							if (p.is_directory()) continue;
+							if (hasEnding(fileName, ".scene")) {
+								ImGui::TextColored((ImVec4)ImColor(100, 100, 255), fileName.c_str());
 								if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-									pathSelected = p.path().filename().string();
-									realPathSelected = p.path().string();
+									INTERNAL_INFO("LOAD SCENE");
+									LoadScene(p.path().string());
 								}
+
+								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+									itemScene = true;
+								}
+							}else if (hasEnding(fileName, ".material")) {
+								ImGui::TextColored((ImVec4)ImColor(247, 236, 89), fileName.c_str());
+
+								if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+									illusioneditor::views::MaterialEditor::EditMaterialPath(scene, p.path().string());
+								}
+
+								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+									itemMaterial = true;
+								}
+							} else {
+								ImGui::TextColored((ImVec4)ImColor(100, 100, 100), fileName.c_str());
+							}
+
+							if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+								itemSelected = p.path().string();
 							}
 						}
 					} catch (const std::exception&) {
