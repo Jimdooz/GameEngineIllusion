@@ -7,6 +7,8 @@
 #include "core/physics/components/BoxCollider.h"
 #include "core/physics/components/SphereCollider.h"
 
+#include "core/rendering/CoreComponents/directionalLight.h"
+
 using namespace illusion::core;
 
 namespace illusion::ecs {
@@ -70,5 +72,9 @@ namespace illusion::ecs {
 		Component::AppendComponents<physics::RigidBody>();
 		Component::AppendComponents<physics::BoxCollider>();
 		Component::AppendComponents<physics::SphereCollider>();
+
+		Component::AppendComponents<MeshInstance>();
+
+		Component::AppendComponents<rendering::DirectionalLight>();
 	}
 }

@@ -139,6 +139,11 @@ namespace illusion::ecs {
 		void EntityAddComponent(entity_id id, size_t componentHash);
 
 		/**
+		 * Permet d'annoncer l'ajout d'un component de la part de l'inspecteur au component
+		 */
+		void EmitComponentAdded(entity_id id, size_t componentHash);
+
+		/**
 		 * Permet de signaler qu'une Entit� ne va plus utiliser un Component donn�
 		 * @param	id l'id de l'entit�
 		 */

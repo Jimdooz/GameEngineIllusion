@@ -114,6 +114,12 @@ namespace illusion::ecs {
 		//Elle disposera des mêmes valeurs public / protected de son prédécésseur
 		virtual void OnEntityDuplicate(entity_id id){}
 
+		//Fonction appelé lorsqu'une entité à fini d'être chargé
+		virtual void OnEntityLoaded(entity_id id) {}
+
+		//Fonction appelé lorsque le component a été ajouté depuis l'inspecteur
+		virtual void OnComponentAddInspector(entity_id id) {}
+
 		/**
 		 * @brief	Permet de récupérer l'index d'une entité dans le component
 		 *

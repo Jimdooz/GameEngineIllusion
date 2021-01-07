@@ -18,18 +18,21 @@ namespace illusion {
 		Vec3 normal;
 		Vec2 uv;
 	};
+
 	struct Mesh {
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		GLuint VAO, VBO, EBO;
 		bool isSetup;
-		Mesh() {
+		std::string name;
+		Mesh(std::string name = "unamed mesh") {
 			vertices = std::vector<Vertex>();
 			indices = std::vector<unsigned int>();
 			VAO = 0;
 			VBO = 0;
 			EBO = 0;
 			isSetup = false;
+			this->name = name;
 		}
 		void Setup() {
 			if (isSetup) return;
@@ -72,18 +75,23 @@ namespace illusion {
 		void Bind() {
 			glBindVertexArray(VAO);
 		}
+		void Render() {
+			glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+		}
 	};
+
 	struct Material {
 		size_t shaderId;
 	};
+
 	struct MeshInstance : public ecs::Component {
 		// Declare component name
 		COMPONENT_NAME("Mesh Instance");
 		COMPONENT_REGISTER(MeshInstance);
 		// Declare constructor
 		MeshInstance(ecs::Scene* scene) : Component(scene) {
-			COMPONENT_PROTECTED(meshId);
-			COMPONENT_PROTECTED(materialId);
+			COMPONENT_PUBLIC(meshId);
+			COMPONENT_PUBLIC(materialId);
 		}
 
 		// Declare datas
@@ -91,26 +99,27 @@ namespace illusion {
 		COMPONENT_DATA(size_t, materialId);
 		COMPONENT_DATA(boolean, initialized);
 
+		void SetMesh(ecs::component_id index, size_t meshId);
+
 		virtual void OnEntityDuplicate(ecs::entity_id id) override;
+		virtual void OnEntityLoaded(ecs::entity_id id) override;
+		virtual void OnComponentAddInspector(ecs::entity_id id) override;
 
 		// On Data added
-		virtual void AddDatas(ecs::entity_id id) override {
-			AddData(meshId, size_t(0));
-			AddData(materialId, size_t(0));
-			AddData<boolean>(initialized, false);
-		}
+		virtual void AddDatas(ecs::entity_id id) override;
 
 		// On Data removed
-		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override {
-			RemoveData(index, meshId, materialId);
-		}
+		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;
 	};
-	struct Renderer
-	{
+
+	struct Renderer {
 		ecs::Scene* scene;
 		ecs::core::Camera* camera;
 		ecs::core::Transform* transform;
 		MeshInstance* meshInstance;
+
+		Mat4x4 projection;
+		Mat4x4 view;
 
 		util::UnorderedMap<size_t,Shader> shaders;
 		util::UnorderedMap<size_t, Mesh> meshes;
@@ -178,34 +187,38 @@ namespace illusion {
 
 		void RemoveMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
 
+		Shader& defaultShader() {
+			return shaders[0];
+		}
+
 		/**
 		 * Permet de rendre la scène
 		 */
 		void Render() {//@Todo register draw calls and num entities rendered per frame
 			if (camera->size() < 1) {
-				INTERNAL_ERR("No Camera, the scene can't be rendered");
+				//INTERNAL_ERR("No Camera, the scene can't be rendered");
 				return;
 			}
 			//for each shader
-			for (auto const& [shaderKey, meshMap] : instancesByMeshByShader)
-			{
+			for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
 				Shader& shader = shaders[shaderKey];
 				shader.use();
 
 				//@Todo change projection only if one of these values are changed
 				float aspect = (float)Window::width / (float)Window::height;
-				Mat4x4 projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-
-				Mat4x4 view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
+				projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
+				view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
 
 
 				//set view and projection matrices
 				shader.setMat4("view", view);
 				shader.setMat4("projection", projection);
 
+				shader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+				shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
 				//for each Mesh using this shader
-				for (auto const& [meshKey, entitiesArray] : meshMap)
-				{
+				for (auto const& [meshKey, entitiesArray] : meshMap) {
 					Mesh& mesh = meshes[meshKey];
 					if (!mesh.isSetup) continue;
 					mesh.Bind();
@@ -215,8 +228,7 @@ namespace illusion {
 					for (size_t i = 0;i< numInstances;i++) {
 						ecs::entity_id instance_id = entitiesArray[i];
 						ecs::component_id idTransform = transform->getIndex(instance_id);
-						transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
-						Mat4x4 modelMatrix = transform->modelTransform[instance_id];
+						Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
 						// @Todo get Material
 
 						// @Todo make instance rendering if instances >treshold

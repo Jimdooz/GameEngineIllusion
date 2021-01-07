@@ -14,8 +14,8 @@ uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0f);
-    fTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    fTexCoord = aTexCoord;
     fNormal = aNormal;
 }
 )";
@@ -27,8 +27,19 @@ out vec4 FragColor;
 in vec3 fNormal;
 in vec2 fTexCoord;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+uniform vec3 objectColor;
+uniform vec3 lightColor;
+
 void main() {
-    FragColor = vec4(fNormal, 1.0);
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+    vec3 result = ambient * objectColor;
+    FragColor = vec4(result, 1.0);
 }
 )";
 

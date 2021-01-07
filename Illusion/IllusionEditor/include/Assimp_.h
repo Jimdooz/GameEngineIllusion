@@ -135,7 +135,7 @@ namespace illusion{
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
 		transform->position[transform_id] = position;
-		transform->rotation[transform_id] = rotation;
+		transform->rotation[transform_id] = glm::conjugate(rotation);
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same node		
 		if(node->mNumMeshes>0){

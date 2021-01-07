@@ -70,6 +70,11 @@ namespace illusion::ecs {
 		}
 	}
 
+	void Scene::EmitComponentAdded(entity_id id, size_t componentHash) {
+		if (!entities.IsAlive(id)) return;
+		components[componentHash]->OnComponentAddInspector(id);
+	}
+
 	void Scene::EntityRemoveComponent(entity_id id, size_t componentHash) {
 		if (!entities.IsAlive(id)) return;
 		components[componentHash]->RemoveComponent(id);

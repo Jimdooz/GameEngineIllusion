@@ -35,7 +35,13 @@ namespace illusion {
 			auto current_Position = aimesh->mVertices[i];
 			current_Position *= 0.01f;
 			auto current_Normal = aimesh->mNormals[i];
-			auto current_Uv = aimesh->mTextureCoords[0][i];
+			aiVector3D current_Uv;
+			if (aimesh->HasTextureCoords(0)) {
+				current_Uv = aimesh->mTextureCoords[0][i];
+			}
+			else {
+				current_Uv = aiVector3D(0, 0, 0);
+			}
 			Vertex vertex = {
 				Vec3(current_Position.x,current_Position.y,current_Position.z)
 				,Vec3(current_Normal.x,current_Normal.y,current_Normal.z)
@@ -74,7 +80,7 @@ namespace illusion {
 			unsigned int ai_meshid = node->mMeshes[0];
 			std::string relativePath = fs::relative(path, resources::project::projectPath + "/Assets/").string();
 			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
-			meshInstance.meshId[meshInstance.getIndex(id)] = mesh_id;
+			meshInstance.SetMesh(meshInstance.getIndex(id), mesh_id);
 			//get materialId hash 
 			//Set MeshInstance materialId
 			//if don't contains 

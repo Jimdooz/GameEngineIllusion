@@ -59,7 +59,44 @@ namespace illusioneditor::views::GameInspector {
 			illusion::util::Array<std::string>& val = *(illusion::util::Array<std::string>*)data.data;
 			std::string& value = val[componentId];
 			GenerateInputString(data.name, value);
+		} else if (data.type == typeid(illusion::util::Array<size_t>).hash_code()) {
+			illusion::util::Array<size_t>& val = *(illusion::util::Array<size_t>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::InputInt(data.name.c_str(), &floatValue, 0.01f);
+			val[componentId] = floatValue;
 		}
+	}
+
+	void RenderMeshInstance(const size_t componentKey, MeshInstance *meshInstance, ecs::entity_id selected) {
+		ecs::component_id index = meshInstance->getIndex(selected);
+		std::string title = currentScene->renderer->meshes.at(meshInstance->meshId[index]).name;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(title.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Mesh###changeMesh")) {
+			ImGui::OpenPopup("MeshInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("MeshInstanceChoice")) {
+			for (auto const& [key, val] : currentScene->renderer->meshes) {
+				if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
+					meshInstance->SetMesh(index, key);
+				}
+			}
+			ImGui::EndPopup();
+		}
+		
 	}
 	
 	void Show() {
@@ -84,9 +121,9 @@ namespace illusioneditor::views::GameInspector {
 			//Position
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Position", "Position");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.5f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.5f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.5f);
 
 			//Rotation
 			Vec3 euler = glm::degrees(glm::eulerAngles(transform.rotation[indexTransform]));
@@ -117,12 +154,16 @@ namespace illusioneditor::views::GameInspector {
 
 			for (auto const& [key, val] : currentScene->components) {
 				if (val->getName() == "Transform") continue;
+
 				std::string title = val->getName() + "###" + std::to_string(key);
 				if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 				if (ImGui::TreeNode(title.c_str())) {
-					for (u32 i = 0; i < val->publicDatas.size(); i++) {
-						if(val->publicDatas[i].visible)
-							GenerateUiComponent(val->publicDatas[i], val);
+					if (val->getName() == "Mesh Instance") RenderMeshInstance(key, static_cast<MeshInstance*>(val), currentSelected);
+					else {
+						for (u32 i = 0; i < val->publicDatas.size(); i++) {
+							if (val->publicDatas[i].visible)
+								GenerateUiComponent(val->publicDatas[i], val);
+						}
 					}
 					ImGui::TreePop();
 				}
@@ -168,7 +209,7 @@ namespace illusioneditor::views::GameInspector {
 						std::string name = "+ " + val->getName();
 						if (ImGui::Button(name.c_str())) {
 							currentScene->EntityAddComponent(currentSelected, key);
-							INFO("Added ",name);
+							currentScene->EmitComponentAdded(currentSelected, key);
 						}
 					}
 				}

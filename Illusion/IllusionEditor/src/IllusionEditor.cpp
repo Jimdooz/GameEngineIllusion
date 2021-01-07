@@ -29,6 +29,8 @@
 
 #include "project/ProjectManager.h"
 
+#include "core/rendering/shapes/defaultShapes.h"
+
 #include <iostream>
 #include <vector>
 #include <bitset>
@@ -45,7 +47,6 @@
 #include "Importer.h"
 
 //Scripting
-#include "scripting/CubeRenderer.h"
 #include "scripting/JumpBigCube.h"
 #include "scripting/Planet.h"
 
@@ -78,6 +79,7 @@ int main(int argc, char* argv[]) {
 	//----------
 	illusion::resources::JsonConvertor::Initialize();
 	illusion::Time::Init();
+	illusion::defaultshape::Initialize();
 
 	// Init Editor
 	//----------
@@ -87,11 +89,9 @@ int main(int argc, char* argv[]) {
 	// Init ECS
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
-	//Components
-	illusion::ecs::Component::AppendComponents<CubeRenderer>();
+
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
-	illusion::ecs::Component::AppendComponents<MeshInstance>();
 	//Systems
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
@@ -99,7 +99,6 @@ int main(int argc, char* argv[]) {
 	// Init Scene
 	//----------
 	ecs::Scene scene;
-	scene.UseComponent<CubeRenderer>();
 	scene.UseComponent<PlanetComponent>();
 	scene.UseComponent<JumpBigCube>();
 	scene.UseComponent<MeshInstance>();
@@ -115,75 +114,13 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", scene);
+	//illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\Sphere.fbx", scene);
 
 	std::vector<float> fpsMesure;
 
 	std::filesystem::directory_entry currentPath("..\\GameProjects\\Optimulus");
 	std::string pathName = currentPath.path().string();
 	std::string projectName = "";
-
-	// Temp rendering
-	//---------
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-	};
-
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// texture coord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
 	
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -274,19 +211,19 @@ int main(int argc, char* argv[]) {
 
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
-		CubeRenderer& cubeRenderer = *scene.GetComponent<CubeRenderer>();
 		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		//UPDATE
+		//--------
 		if(views::GameStats::StartChronoData("Update Loop", "Game")) {
 			scene.Update();
 		}
 		views::GameStats::EndChronoData("Update Loop", "Game");
 
 		//COMPUTE MODELS POSITION
+		//--------
 		if (views::GameStats::StartChronoData("Compute Models", "Game")) {
 			for (u32 i = 0; i < transform.ToEntity.size(); i++) {
-				// calculate the model matrix for each object and pass it to shader before drawing
 				transform.ComputeModel((ecs::component_id)i);
 			}
 
@@ -294,6 +231,7 @@ int main(int argc, char* argv[]) {
 		views::GameStats::EndChronoData("Compute Models", "Game");
 
 		//PHYSICS
+		//--------
 		if (views::GameStats::StartChronoData("Physics", "Game")) {
 			physicsTime += Time::unscaledDeltaTime;
 			while (physicsTime >= Time::unscaledFixedDeltaTime) {
@@ -308,7 +246,8 @@ int main(int argc, char* argv[]) {
 		views::GameStats::EndChronoData("Physics", "Game");
 
 		//CAMERA MOVEMENT
-		{
+		//--------
+		if (camera.size() > 0)  {
 			camera.UpdateVectors(camera.ToEntity[0]);
 			if (Input::isMouse(1)) {
 				camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
@@ -323,10 +262,25 @@ int main(int argc, char* argv[]) {
 		}
 
 		//RENDERING
+		//--------
 		if (views::GameStats::StartChronoData("Rendering", "Game")) {
 			scene.renderer->Render();
 		}
 		views::GameStats::EndChronoData("Rendering", "Game");
+
+		//EDITOR SELECTION
+		//--------
+		if (camera.size() > 0) {
+			Vec4 ray_eye = glm::inverse(scene.renderer->projection) * ray_clip;
+			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+			Vec3 ray_wor = (glm::inverse(scene.renderer->view) * ray_eye);
+			ray_wor = glm::normalize(ray_wor);
+			illusioneditor::scene::editor::EditorTests(scene, ray_wor);
+			for (u32 i = 0; i < meshInstance.size(); i++) {
+				illusioneditor::scene::editor::ClickedNearTest(scene, meshInstance.getId(i), ray_wor);
+			}
+			illusioneditor::scene::editor::DrawArrowTranslate(scene, scene.renderer->projection, scene.renderer->view);
+		}
 
 		//DRAW IMGUI
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

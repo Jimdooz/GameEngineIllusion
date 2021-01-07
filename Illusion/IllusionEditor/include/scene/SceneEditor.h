@@ -12,6 +12,8 @@
 //TEMP RENDERING
 #include "core/rendering/Shader.h"
 
+#include "core/rendering/shapes/defaultShapes.h"
+
 #include "core/Time.h"
 
 namespace illusioneditor::scene::editor {
@@ -20,7 +22,7 @@ namespace illusioneditor::scene::editor {
 
 	namespace {
 		ecs::Scene *scene;
-		//Shader *arrowShader;
+		Shader *arrowShader;
 
 		f32 nearItem = -1;
 
@@ -35,8 +37,41 @@ namespace illusioneditor::scene::editor {
 	}
 
 	void Initialize() {
-		/*arrowShader = new Shader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
-							"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentArrow.glsl");*/
+		arrowShader = new Shader(R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+
+out vec3 fNormal;
+out vec2 fTexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    fTexCoord = aTexCoord;
+    fNormal = aNormal;
+}
+)", R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec3 fNormal;
+in vec2 fTexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+uniform vec4 color;
+
+void main() {
+    FragColor = color;
+}
+)");
 	}
 
 	inline bool CanChangeItem() {
@@ -161,11 +196,11 @@ namespace illusioneditor::scene::editor {
 		}
 	}
 
-	void DrawArrow(Vec3& origin, const Vec3& direction, f32 scale, const Vec4& color) {
+	void DrawArrow(ecs::Scene& scene, Vec3& origin, const Vec3& direction, f32 scale, const Vec4& color) {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
-		//arrowShader->setVec4("color", color);
-		//arrowShader->setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		arrowShader->setVec4("color", color);
+		arrowShader->setMat4("model", model);
+		illusion::defaultshape::Cube().Render();
 	}
 
 	void DrawArrowTranslate(ecs::Scene& scene, Mat4x4& projection, Mat4x4& view) {
@@ -174,7 +209,7 @@ namespace illusioneditor::scene::editor {
 			ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 
 			glDisable(GL_DEPTH_TEST);
-			//arrowShader->use();
+			arrowShader->use();
 			ecs::component_id idTransform = transform.getIndex((ecs::entity_id)ecs::id::Index(views::GameHiearchy::selected));
 
 			glm::vec3 scale;
@@ -186,14 +221,16 @@ namespace illusioneditor::scene::editor {
 
 			Vec3 CameraPosition = transform.position[transform.getIndex(camera.ToEntity[0])];
 
-			//arrowShader->setMat4("projection", projection);
-			//arrowShader->setMat4("view", view);
+			arrowShader->setMat4("projection", projection);
+			arrowShader->setMat4("view", view);
 
 			f32 factor = glm::distance(translation, CameraPosition) * 0.1f;
 
-			DrawArrow(translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
-			DrawArrow(translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
-			DrawArrow(translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			illusion::defaultshape::Cube().Bind();
+			DrawArrow(scene, translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			glEnable(GL_DEPTH_TEST);
 		}
 	}
 }
