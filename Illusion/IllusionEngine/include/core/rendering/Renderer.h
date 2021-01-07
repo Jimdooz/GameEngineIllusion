@@ -8,6 +8,9 @@
 #include "ecs/CoreComponents/Camera.h"
 
 #include "core/rendering/CoreComponents/directionalLight.h"
+#include "resources/assets/Materials.h"
+
+using Material = illusion::resources::assets::MaterialResource;
 
 namespace illusion::ecs {
 	struct Scene;
@@ -82,10 +85,6 @@ namespace illusion {
 		}
 	};
 
-	struct Material {
-		size_t shaderId;
-	};
-
 	struct MeshInstance : public ecs::Component {
 		// Declare component name
 		COMPONENT_NAME("Mesh Instance");
@@ -102,6 +101,8 @@ namespace illusion {
 		COMPONENT_DATA(boolean, initialized);
 
 		void SetMesh(ecs::component_id index, size_t meshId);
+		void SetMaterial(ecs::component_id index, size_t materialId);
+		void SetMeshMaterial(ecs::component_id index, size_t newMeshId, size_t newMaterialId);
 
 		virtual void OnEntityDuplicate(ecs::entity_id id) override;
 		virtual void OnEntityLoaded(ecs::entity_id id) override;
@@ -185,8 +186,10 @@ namespace illusion {
 			return instancesByMeshByShader[idShader].find(idMesh) != instancesByMeshByShader[idShader].end();
 		}
 
-		void AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
+		void AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity);
+		void RemoveMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity);
 
+		void AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
 		void RemoveMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
 
 		Shader& defaultShader() {

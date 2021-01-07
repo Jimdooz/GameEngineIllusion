@@ -9,7 +9,6 @@ namespace fs = std::filesystem;
 
 #include "resources/Project.h"
 
-#include "ecs/Scene.h"
 #include "resources/DataConvertor.h"
 #include "resources/system/Json.h"
 using json = illusion::json;
@@ -23,7 +22,7 @@ namespace illusion::resources::assets {
 		json uniforms;
 	};
 
-	ShaderResource LoadShader(std::string shaderPath) {
+	static ShaderResource LoadShader(std::string shaderPath) {
 		json jsonLoaded;
 
 		{
@@ -36,13 +35,13 @@ namespace illusion::resources::assets {
 		std::string fragmentPath = jsonLoaded["fragment"];
 		json uniforms = jsonLoaded["uniforms"];
 
-		std::ifstream tVertex(project::projectPath + "/Assets/" + vertexPath);
+		std::ifstream tVertex(CurrentProject().path + "/Assets/" + vertexPath);
 		std::string strVertex((std::istreambuf_iterator<char>(tVertex)), std::istreambuf_iterator<char>());
 
-		std::ifstream tFragment(project::projectPath + "/Assets/" + fragmentPath);
+		std::ifstream tFragment(CurrentProject().path + "/Assets/" + fragmentPath);
 		std::string strFragment((std::istreambuf_iterator<char>(tFragment)), std::istreambuf_iterator<char>());
 
-		std::string relativePath = fs::relative(shaderPath, project::projectPath + "/Assets/").string();
+		std::string relativePath = fs::relative(shaderPath, CurrentProject().path + "/Assets/").string();
 
 		return {
 			std::hash<std::string>{}(relativePath),
@@ -52,7 +51,7 @@ namespace illusion::resources::assets {
 		};
 	}
 
-	util::Array<ShaderResource> LoadAllShaders(std::string path = project::projectPath + "/Assets/") {
+	static util::Array<ShaderResource> LoadAllShaders(std::string path = CurrentProject().path + "/Assets") {
 		util::Array<ShaderResource> allShaders;
 
 		for (auto& p : fs::directory_iterator(path)) {
@@ -64,7 +63,8 @@ namespace illusion::resources::assets {
 					allShaders.push_back(recursiveShader[i]);
 				}
 
-			}else if(currPath.find(".shader") != std::string::npos){
+			}
+			else if (currPath.find(".shader") != std::string::npos) {
 				//LOAD SHADER
 				try {
 					allShaders.push_back(LoadShader(path + "/" + currPath));

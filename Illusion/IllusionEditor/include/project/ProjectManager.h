@@ -2,8 +2,6 @@
 
 #include "ecs/Ecs.h"
 #include "resources/assets/Scenes.h"
-#include "resources/assets/Shaders.h"
-#include "resources/assets/Materials.h"
 
 #include "resources/assets/Levels.h"
 
@@ -79,14 +77,12 @@ namespace illusioneditor::project {
 
 			config::projectOpen = true;
 
-			illusion::resources::project::projectPath = config::projectPath;
-			illusion::resources::project::projectName = config::projectName;
-			illusion::resources::project::currentScenePath = config::currentScenePath;
-			illusion::resources::project::projectOpen = config::projectOpen;
+			illusion::resources::CurrentProject().path = config::projectPath;
+			illusion::resources::CurrentProject().name = config::projectName;
+			illusion::resources::CurrentProject().currentScenePath = config::currentScenePath;
+			illusion::resources::CurrentProject().open = config::projectOpen;
 
-			illusion::resources::assets::LoadAllShaders();
-			illusion::resources::assets::LoadAllMaterials();
-
+			INFO("LOAD PROJECT : ", illusion::resources::CurrentProject().path);
 
 			return true;
 		}

@@ -4,6 +4,12 @@ out vec4 FragColor;
 in vec3 fNormal;
 in vec2 fTexCoord;
 
+struct Material {
+    vec4 color;
+}; 
+  
+uniform Material material;
+
 void main() {
-    FragColor = vec4(1,0,0,1);
+    FragColor = material.color;
 }

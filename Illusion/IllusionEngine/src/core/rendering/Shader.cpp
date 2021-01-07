@@ -77,4 +77,5 @@ void main() {
 }
 )";
 
+illusion::resources::assets::ShaderResource Shader::defaultShaderResource;
 Shader Shader::defaultShader;

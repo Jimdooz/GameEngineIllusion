@@ -10,6 +10,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "resources/assets/Shaders.h"
+
 char DEFAULT_VERTEX_SHADER[];
 char DEFAULT_FRAGMENT_SHADER[];
 
@@ -17,6 +19,7 @@ class Shader
 {
 public:
     unsigned int ID;
+    illusion::resources::assets::ShaderResource resource;
 
     Shader(){}
     // constructor generates the shader on the fly
@@ -62,6 +65,11 @@ public:
             glDeleteShader(geometry);
 
     }
+
+    Shader(const illusion::resources::assets::ShaderResource resource) : Shader(resource.vertex, resource.fragment) {
+        this->resource = resource;
+    }
+
     // activate the shader
     // ------------------------------------------------------------------------
     void use()
@@ -128,9 +136,21 @@ public:
     }
 
     static void Initialize() {
-        Shader::defaultShader = Shader(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
+        Shader::defaultShaderResource = {
+            0,
+            DEFAULT_VERTEX_SHADER,
+            DEFAULT_FRAGMENT_SHADER,
+            {
+                { "diffuse", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
+                { "specular", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
+                { "ambient", {{ "type", "Vec3" }, { "default", {1,1,1} }} },
+                { "shininess", {{ "type", "f32" }, { "default", 32.0f }} },
+            }
+        };
+        Shader::defaultShader = Shader(Shader::defaultShaderResource);
     }
 
+    static illusion::resources::assets::ShaderResource defaultShaderResource;
     static Shader defaultShader;
 
 private:

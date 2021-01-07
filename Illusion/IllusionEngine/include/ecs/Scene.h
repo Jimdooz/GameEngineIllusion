@@ -29,7 +29,6 @@ namespace illusion::ecs {
 		Scene() {
 			for (auto const& [key, val] : Component::AllComponents) this->UseComponent(key);
 			renderer = new Renderer(this);
-			renderer->AddShader(Shader::defaultShader, 0);
 		}
 
 		~Scene() {
@@ -55,7 +54,6 @@ namespace illusion::ecs {
 		void ReloadRenderer() {
 			if(renderer != nullptr) delete renderer;
 			renderer = new Renderer(this);
-			renderer->AddShader(Shader::defaultShader, 0);
 		}
 
 		/**

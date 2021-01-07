@@ -49,9 +49,9 @@ namespace illusioneditor::views::GameInspector {
 			illusion::util::Array<Vec4>& vec4 = *(illusion::util::Array<Vec4>*)data.data;
 			ImVec4 vec4aGet(vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w);
 			if (ImGui::ColorButton(data.name.c_str(), vec4aGet)) {
-				ImGui::OpenPopup("ColorPicker###ColorPickerComponent");
+				ImGui::OpenPopup(("ColorPicker###ColorPickerComponent_" + data.name).c_str());
 			}
-			if (ImGui::BeginPopup("ColorPicker###ColorPickerComponent")) {
+			if (ImGui::BeginPopup(("ColorPicker###ColorPickerComponent_" + data.name).c_str())) {
 				float vec4a[4] = { vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w };
 				ImGui::ColorPicker4(data.name.c_str(), vec4a);
 				vec4[componentId].x = vec4a[0];
@@ -85,14 +85,16 @@ namespace illusioneditor::views::GameInspector {
 
 	void RenderMeshInstance(const size_t componentKey, MeshInstance *meshInstance, ecs::entity_id selected) {
 		ecs::component_id index = meshInstance->getIndex(selected);
-		std::string title = currentScene->renderer->meshes.at(meshInstance->meshId[index]).name;
+		std::string titleMesh = currentScene->renderer->meshes.at(meshInstance->meshId[index]).name;
+		std::string titleMaterial = currentScene->renderer->materials.at(meshInstance->materialId[index]).name;
 
+		//MESH
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
-		ImGui::Button(title.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f, 0.0f));
+		ImGui::Button(titleMesh.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor(4);
 
@@ -108,6 +110,34 @@ namespace illusioneditor::views::GameInspector {
 			for (auto const& [key, val] : currentScene->renderer->meshes) {
 				if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
 					meshInstance->SetMesh(index, key);
+				}
+			}
+			ImGui::EndPopup();
+		}
+
+		//MATERIAL
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(titleMaterial.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Material###changeMaterial")) {
+			ImGui::OpenPopup("MaterialInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("MaterialInstanceChoice")) {
+			ImGui::Text("Material");
+			for (auto const& [key, val] : currentScene->renderer->materials) {
+				if (ImGui::Button((val.name + "###materialid_" + std::to_string(key)).c_str())) {
+					meshInstance->SetMaterial(index, key);
 				}
 			}
 			ImGui::EndPopup();
@@ -155,9 +185,6 @@ namespace illusioneditor::views::GameInspector {
 				transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
 				transform.needUpdateEuler[indexTransform] = false;
 			}
-			/*if (abs(euler.x) >= 180) euler.x = -179.9; else if (abs(euler.x) <= -180) euler.x = 179.9;
-			if (abs(euler.y) >= 180) euler.y = -179.9; else if (abs(euler.y) <= -180) euler.y = 179.9;
-			if (abs(euler.z) >= 180) euler.z = -179.9; else if (abs(euler.z) <= -180) euler.z = 179.9;*/
 
 			//Scale
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));

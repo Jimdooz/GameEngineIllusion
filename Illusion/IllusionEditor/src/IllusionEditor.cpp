@@ -96,6 +96,9 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
+	//Load Project
+	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
+
 	// Init Scene
 	//----------
 	ecs::Scene scene;
@@ -105,9 +108,6 @@ int main(int argc, char* argv[]) {
 
 	scene.UseSystem<PlanetSystem>();
 	scene.UseSystem<JumpBigCubeSystem>();
-
-	//Load Project
-	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
 
 	//Create Camera
 	ecs::entity_id entity = scene.CreateEntity();

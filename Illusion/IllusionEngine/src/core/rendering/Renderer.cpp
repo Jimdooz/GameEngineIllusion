@@ -3,6 +3,9 @@
 #include "ecs/Scene.h"
 #include <glm/gtx/matrix_decompose.hpp>
 
+#include "resources/assets/Shaders.h"
+#include "resources/assets/Materials.h"
+
 namespace illusion {
 	void MeshInstance::OnEntityDuplicate(ecs::entity_id id){
 		ecs::component_id index = getIndex(id);
@@ -26,15 +29,30 @@ namespace illusion {
 	}
 
 	void MeshInstance::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		scene->renderer->RemoveMeshShader(0, meshId[index], id);
+		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
 		RemoveData(index, meshId, materialId);
 	}
 
 	void MeshInstance::SetMesh(ecs::component_id index, size_t newMeshId) {
 		ecs::entity_id id = getId(index);
-		scene->renderer->RemoveMeshShader(0, meshId[index], id);
+		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
 		meshId[index] = newMeshId;
-		scene->renderer->AddMeshShader(0, meshId[index], id);
+		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
+	}
+
+	void MeshInstance::SetMaterial(ecs::component_id index, size_t newMaterialId) {
+		ecs::entity_id id = getId(index);
+		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
+		materialId[index] = newMaterialId;
+		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
+	}
+
+	void MeshInstance::SetMeshMaterial(ecs::component_id index, size_t newMeshId, size_t newMaterialId) {
+		ecs::entity_id id = getId(index);
+		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
+		meshId[index] = newMeshId;
+		materialId[index] = newMaterialId;
+		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
 	}
 
 	Renderer::Renderer(ecs::Scene* _scene) :
@@ -44,8 +62,42 @@ namespace illusion {
 		meshInstance(scene->GetComponent<MeshInstance>()),
 		instanceRenderingThreshold(3)
 	{
+		//Default Shader
+		AddShader(Shader::defaultShader, 0);
+		AddMaterial({ 0, 0, "default material", "", "", {
+			{ "ambient", {1.0f,1.0f,1.0f,1.0f} },
+			{ "diffuse", {1.0f,1.0f,1.0f,1.0f} },
+			{ "specular", {1.0f,1.0f,1.0f,1.0f} },
+			{ "shininess", 32.0 }
+		} }, 0);
+
+		//Default Mesh
 		AddMesh(illusion::defaultshape::Cube(), 0);
 		AddMesh(illusion::defaultshape::IcoSphere(), 1);
+
+		if (illusion::resources::CurrentProject().path == "") return;
+
+		//All Assets
+		auto shaders = illusion::resources::assets::LoadAllShaders();
+		auto materials = illusion::resources::assets::LoadAllMaterials();
+
+		for (auto const& shader : shaders) {
+			AddShader(Shader(shader), shader.id);
+		}
+
+		for (auto const& material : materials) {
+			AddMaterial(material, material.id);
+		}
+	}
+
+	void Renderer::AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
+		if (!ContainsMaterial(idMaterial) || !ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
+		AddMeshShader(materials[idMaterial].shaderId, idMesh, entity);
+	}
+
+	void Renderer::RemoveMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
+		if (!ContainsMaterial(idMaterial) || !ContainsMesh(idMesh)) return;
+		RemoveMeshShader(materials[idMaterial].shaderId, idMesh, entity);
 	}
 
 	void Renderer::AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity) {
@@ -74,7 +126,7 @@ namespace illusion {
 			}
 		}
 
-		INFO("GET : ", instancesByMeshByShader[idShader][idMesh].size());
+		//INFO("GET : ", instancesByMeshByShader[idShader][idMesh].size());
 
 		if (instancesByMeshByShader[idShader][idMesh].size() == 0) instancesByMeshByShader[idShader].erase(instancesByMeshByShader[idShader].find(idMesh));
 
@@ -111,24 +163,19 @@ namespace illusion {
 				glm::vec3 skew; glm::vec4 perspective;
 				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
 
-				shader.setVec3("light.specular", lights->color[0]);
-				shader.setVec3("light.diffuse", lights->color[0]);
+				shader.setVec3("light.specular", lights->specular[0]);
+				shader.setVec3("light.diffuse", lights->diffuse[0]);
+				shader.setVec3("light.ambient", lights->ambiant[0]);
 				shader.setVec3("light.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0,1.0,0.0,1.0)) );
 			}
 			else {
 				shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 				shader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 				shader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+				shader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 			}
 
-			shader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-
 			shader.setVec3("viewPos", cameraWorldPos);
-
-			shader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-			shader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-			shader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-			shader.setFloat("material.shininess", 32.0f);
 
 			//for each Mesh using this shader
 			for (auto const& [meshKey, entitiesArray] : meshMap) {
@@ -141,8 +188,22 @@ namespace illusion {
 				for (size_t i = 0; i < numInstances; i++) {
 					ecs::entity_id instance_id = entitiesArray[i];
 					ecs::component_id idTransform = transform->getIndex(instance_id);
+					ecs::component_id idMesh = meshInstance->getIndex(instance_id);
 					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
+
 					// @Todo get Material
+					Material& material = materials[meshInstance->materialId[idMesh]];
+
+					for (json::iterator it = shader.resource.uniforms.begin(); it != shader.resource.uniforms.end(); ++it) {
+						json value = material.uniforms[it.key()];
+						const std::string typeV = it.value()["type"];
+						if (value.is_null()) value = it.value()["default"];
+						std::string index = "material." + it.key();
+						if (typeV == "f32") { shader.setFloat(index, value); }
+						else if (typeV == "Vec2") { shader.setVec2(index, value[0], value[1]); }
+						else if (typeV == "Vec3") { shader.setVec3(index, value[0], value[1], value[2]); }
+						else if (typeV == "Vec4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
+					}
 
 					// @Todo make instance rendering if instances >treshold
 					shader.setMat4("model", modelMatrix);

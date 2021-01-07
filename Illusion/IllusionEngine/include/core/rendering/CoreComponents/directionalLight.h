@@ -8,13 +8,17 @@ namespace illusion::core::rendering {
 
 	struct DirectionalLight : public Component {
 		DirectionalLight(Scene* scene) : Component(scene) {
-			COMPONENT_PUBLIC(color);
+			COMPONENT_PUBLIC(specular);
+			COMPONENT_PUBLIC(diffuse);
+			COMPONENT_PUBLIC(ambiant);
 		}
 
 		COMPONENT_NAME("Directional Light");
 		COMPONENT_REGISTER(DirectionalLight);
 
-		COMPONENT_DATA(Vec4, color);
+		COMPONENT_DATA(Vec4, specular);
+		COMPONENT_DATA(Vec4, ambiant);
+		COMPONENT_DATA(Vec4, diffuse);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;

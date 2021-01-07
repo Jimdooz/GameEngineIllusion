@@ -78,7 +78,7 @@ namespace illusion {
 			scene.EntityAddComponent<MeshInstance>(id);
 			INFO("num meshes : ", node->mNumMeshes);
 			unsigned int ai_meshid = node->mMeshes[0];
-			std::string relativePath = fs::relative(path, resources::project::projectPath + "/Assets/").string();
+			std::string relativePath = fs::relative(path, resources::CurrentProject().path + "/Assets/").string();
 			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
 			meshInstance.SetMesh(meshInstance.getIndex(id), mesh_id);
 			//get materialId hash 
