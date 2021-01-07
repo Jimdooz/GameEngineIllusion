@@ -6,6 +6,8 @@
 #include "resources/assets/Shaders.h"
 #include "resources/assets/Materials.h"
 
+#include "core/rendering/CoreComponents/pointLight.h"
+
 namespace illusion {
 	void MeshInstance::OnEntityDuplicate(ecs::entity_id id){
 		ecs::component_id index = getIndex(id);
@@ -155,6 +157,7 @@ namespace illusion {
 			shader.setMat4("projection", projection);
 
 			core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
+			core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();
 
 			if (lights->size() > 0) {
 				ecs::entity_id idLight = lights->getId(0);
@@ -163,16 +166,37 @@ namespace illusion {
 				glm::vec3 skew; glm::vec4 perspective;
 				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
 
-				shader.setVec3("light.specular", lights->specular[0]);
-				shader.setVec3("light.diffuse", lights->diffuse[0]);
-				shader.setVec3("light.ambient", lights->ambiant[0]);
-				shader.setVec3("light.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0,1.0,0.0,1.0)) );
+				shader.setVec3("dirLight.specular", lights->specular[0]);
+				shader.setVec3("dirLight.diffuse", lights->diffuse[0]);
+				shader.setVec3("dirLight.ambient", lights->ambient[0]);
+				shader.setVec3("dirLight.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0,1.0,0.0,1.0)) );
 			}
 			else {
-				shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-				shader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-				shader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
-				shader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+				shader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+				shader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+				shader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+				shader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+			}
+
+			size_t pointNumbers = pointLights->size();
+			shader.setFloat("nbPointLights", pointNumbers);
+
+			for (u32 i = 0; i < pointNumbers; i++) {
+				ecs::entity_id idLight = pointLights->getId(i);
+
+				glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
+				glm::vec3 skew; glm::vec4 perspective;
+				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
+
+				std::string start = "pointLights[" + std::to_string(i) + "].";
+				shader.setVec3(start + "position", translation);
+				shader.setFloat(start + "constant", pointLights->constant[i]);
+				shader.setFloat(start + "linear", pointLights->linear[i]);
+				shader.setFloat(start + "quadratic", pointLights->quadratic[i]);
+
+				shader.setVec3(start + "ambient", pointLights->ambient[i]);
+				shader.setVec3(start + "diffuse", pointLights->diffuse[i]);
+				shader.setVec3(start + "specular", pointLights->specular[i]);
 			}
 
 			shader.setVec3("viewPos", cameraWorldPos);

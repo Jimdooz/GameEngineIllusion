@@ -6,15 +6,23 @@ namespace illusion::core::rendering {
 
 	using namespace illusion::ecs;
 
-	struct DirectionalLight : public Component {
-		DirectionalLight(Scene* scene) : Component(scene) {
+	struct PointLight : public Component {
+		PointLight(Scene* scene) : Component(scene) {
 			COMPONENT_PUBLIC(specular);
 			COMPONENT_PUBLIC(diffuse);
 			COMPONENT_PUBLIC(ambient);
+
+			COMPONENT_PUBLIC(constant);
+			COMPONENT_PUBLIC(linear);
+			COMPONENT_PUBLIC(quadratic);
 		}
 
-		COMPONENT_NAME("Directional Light");
-		COMPONENT_REGISTER(DirectionalLight);
+		COMPONENT_NAME("Point Light");
+		COMPONENT_REGISTER(PointLight);
+
+		COMPONENT_DATA(f32, constant);
+		COMPONENT_DATA(f32, linear);
+		COMPONENT_DATA(f32, quadratic);
 
 		COMPONENT_DATA(Vec4, specular);
 		COMPONENT_DATA(Vec4, ambient);

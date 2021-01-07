@@ -88,6 +88,8 @@ void main() {
 			}
 		}
 
+		if (ImGui::IsAnyItemHovered() || ImGui::IsAnyWindowHovered()) return;
+
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 

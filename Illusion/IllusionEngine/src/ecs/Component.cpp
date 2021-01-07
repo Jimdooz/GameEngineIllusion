@@ -8,6 +8,7 @@
 #include "core/physics/components/SphereCollider.h"
 
 #include "core/rendering/CoreComponents/directionalLight.h"
+#include "core/rendering/CoreComponents/pointLight.h"
 
 using namespace illusion::core;
 
@@ -76,5 +77,6 @@ namespace illusion::ecs {
 		Component::AppendComponents<MeshInstance>();
 
 		Component::AppendComponents<rendering::DirectionalLight>();
+		Component::AppendComponents<rendering::PointLight>();
 	}
 }

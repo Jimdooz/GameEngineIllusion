@@ -92,7 +92,7 @@ namespace illusioneditor::views::GameInspector {
 		size_t indexMesh = meshInstance->meshId[index];
 		size_t indexMaterial = meshInstance->materialId[index];
 		if (!currentScene->renderer->ContainsMesh(indexMesh)) indexMesh = 0;
-		if (!currentScene->renderer->ContainsMaterial(indexMesh)) indexMaterial = 0;
+		if (!currentScene->renderer->ContainsMaterial(indexMaterial)) indexMaterial = 0;
 		std::string titleMesh = currentScene->renderer->meshes.at(indexMesh).name;
 		std::string titleMaterial = currentScene->renderer->materials.at(indexMaterial).name;
 
@@ -144,9 +144,14 @@ namespace illusioneditor::views::GameInspector {
 		if (ImGui::BeginPopup("MaterialInstanceChoice")) {
 			ImGui::Text("Material");
 			for (auto const& [key, val] : currentScene->renderer->materials) {
+
+				if (key == indexMaterial) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+
 				if (ImGui::Button((val.name + "###materialid_" + std::to_string(key)).c_str())) {
 					meshInstance->SetMaterial(index, key);
 				}
+
+				if (key == indexMaterial) ImGui::PopStyleColor();
 			}
 			ImGui::EndPopup();
 		}

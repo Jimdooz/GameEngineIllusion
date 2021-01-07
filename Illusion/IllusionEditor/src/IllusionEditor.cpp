@@ -132,6 +132,8 @@ int main(int argc, char* argv[]) {
 
 	bool stepMode = false;
 
+	bool ActiveGUI = true;
+
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
@@ -153,69 +155,77 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		{
-			ImGui::Begin("Scene Options###SceneOptions");
-			if (scene.pause) {
-				if (ImGui::Button("Play")) {
-					stepMode = false;
+		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_B)) ActiveGUI = !ActiveGUI;
+
+		if (ActiveGUI) {
+			{
+				ImGui::Begin("Scene Options###SceneOptions");
+				if (scene.pause) {
+					if (ImGui::Button("Play")) {
+						stepMode = false;
+						scene.pause = false;
+					}
+				}
+				else {
+					if (ImGui::Button("Pause")) {
+						stepMode = false;
+						scene.pause = true;
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Reload")) {
+					if (!illusioneditor::project::config::currentScenePath.empty()) {
+						illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
+						stepMode = false;
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Next Step")) {
+					stepMode = true;
 					scene.pause = false;
 				}
-			} else {
-				if (ImGui::Button("Pause")) {
-					stepMode = false;
-					scene.pause = true;
-				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Reload")) {
-				if (!illusioneditor::project::config::currentScenePath.empty()) {
-					illusioneditor::views::GameProject::LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-					stepMode = false;
-				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Next Step")) {
-				stepMode = true;
-				scene.pause = false;
-			}
-			
-			ImGui::SliderFloat("ScaleTime", &Time::timeScale, 0, 2);
 
-			ImGui::End();
+				ImGui::SliderFloat("ScaleTime", &Time::timeScale, 0, 2);
+
+				ImGui::End();
+			}
+
+			views::EditorMenuBar::SetScene(scene);
+			views::EditorMenuBar::Show();
+
+			views::FileExplorer::Show();
+
+			views::GameHiearchy::SetScene(scene);
+			views::GameHiearchy::Show();
+
+			views::GameInspector::SetScene(scene);
+			views::GameInspector::SetSelected(views::GameHiearchy::selected);
+			views::GameInspector::Show();
+
+			views::GameProject::SetScene(scene);
+			views::GameProject::Show();
+
+			views::GameStats::Show();
+
+			views::MaterialEditor::Show();
 		}
-
-
-		views::EditorMenuBar::SetScene(scene);
-		views::EditorMenuBar::Show();
-
-		views::FileExplorer::Show();
-
-		views::GameHiearchy::SetScene(scene);
-		views::GameHiearchy::Show();
-
-		views::GameInspector::SetScene(scene);
-		views::GameInspector::SetSelected(views::GameHiearchy::selected);
-		views::GameInspector::Show();
-
-		views::GameProject::SetScene(scene);
-		views::GameProject::Show();
-
-		views::GameStats::Show();
-
-		views::MaterialEditor::Show();
 
 		//RENDER
 		//--------
+		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
+		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
+
 		ImGui::Render();
 		int display_w, display_h;
 		glfwGetFramebufferSize(Window::glfwWindow, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
-		glClearColor(0.25f, 0.25f, 0.5f, 1.0);
+		
+		if (camera.size() > 0) {
+			Vec4 background = camera.background[0];
+			glClearColor(background.x, background.y, background.z, background.w);
+		} else glClearColor(0.25f, 0.25f, 0.5f, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
-		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
-		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		//UPDATE
 		//--------
