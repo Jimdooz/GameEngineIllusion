@@ -45,6 +45,22 @@ namespace illusioneditor::views::GameInspector {
 			vec4[componentId].y = vec4a[1];
 			vec4[componentId].z = vec4a[2];
 			vec4[componentId].w = vec4a[3];
+		} else if (data.type == typeid(illusion::util::Array<Vec4>).hash_code()) {
+			illusion::util::Array<Vec4>& vec4 = *(illusion::util::Array<Vec4>*)data.data;
+			ImVec4 vec4aGet(vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w);
+			if (ImGui::ColorButton(data.name.c_str(), vec4aGet)) {
+				ImGui::OpenPopup("ColorPicker###ColorPickerComponent");
+			}
+			if (ImGui::BeginPopup("ColorPicker###ColorPickerComponent")) {
+				float vec4a[4] = { vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w };
+				ImGui::ColorPicker4(data.name.c_str(), vec4a);
+				vec4[componentId].x = vec4a[0];
+				vec4[componentId].y = vec4a[1];
+				vec4[componentId].z = vec4a[2];
+				vec4[componentId].w = vec4a[3];
+				ImGui::EndPopup();
+			}
+			
 		} else if (data.type == typeid(illusion::util::Array<f32>).hash_code()) {
 			illusion::util::Array<f32>& val = *(illusion::util::Array<f32>*)data.data;
 			f32 floatValue = val[componentId];
@@ -121,25 +137,27 @@ namespace illusioneditor::views::GameInspector {
 			//Position
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Position", "Position");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.5f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.5f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.5f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
 
 			//Rotation
-			Vec3 euler = glm::degrees(glm::eulerAngles(transform.rotation[indexTransform]));
-			if (abs(euler.x) >= 180) euler.x = 0;
-			if (abs(euler.y) >= 180) euler.y = 0;
-			if (abs(euler.z) >= 180) euler.z = 0;
+			Vec3 &realEuler = transform.rotationEuler[indexTransform];
+			Vec3 euler = transform.rotationEuler[indexTransform];
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Rotation", "Rotation");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
-			if (abs(euler.x) >= 180) euler.x = 0;
-			if (abs(euler.y) >= 180) euler.y = 0;
-			if (abs(euler.z) >= 180) euler.z = 0;
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RX", &euler.x, 0.1f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RY", &euler.y, 0.1f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RZ", &euler.z, 0.1f);
 
-			transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
+			if (realEuler != euler) {
+				realEuler = euler;
+				transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
+				transform.needUpdateEuler[indexTransform] = false;
+			}
+			/*if (abs(euler.x) >= 180) euler.x = -179.9; else if (abs(euler.x) <= -180) euler.x = 179.9;
+			if (abs(euler.y) >= 180) euler.y = -179.9; else if (abs(euler.y) <= -180) euler.y = 179.9;
+			if (abs(euler.z) >= 180) euler.z = -179.9; else if (abs(euler.z) <= -180) euler.z = 179.9;*/
 
 			//Scale
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));

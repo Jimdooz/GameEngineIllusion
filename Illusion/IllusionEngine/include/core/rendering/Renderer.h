@@ -7,6 +7,8 @@
 #include "ecs/CoreComponents/Transform.h"
 #include "ecs/CoreComponents/Camera.h"
 
+#include "core/rendering/CoreComponents/directionalLight.h"
+
 namespace illusion::ecs {
 	struct Scene;
 }
@@ -194,50 +196,7 @@ namespace illusion {
 		/**
 		 * Permet de rendre la scène
 		 */
-		void Render() {//@Todo register draw calls and num entities rendered per frame
-			if (camera->size() < 1) {
-				//INTERNAL_ERR("No Camera, the scene can't be rendered");
-				return;
-			}
-			//for each shader
-			for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
-				Shader& shader = shaders[shaderKey];
-				shader.use();
-
-				//@Todo change projection only if one of these values are changed
-				float aspect = (float)Window::width / (float)Window::height;
-				projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-				view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
-
-
-				//set view and projection matrices
-				shader.setMat4("view", view);
-				shader.setMat4("projection", projection);
-
-				shader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-				shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-
-				//for each Mesh using this shader
-				for (auto const& [meshKey, entitiesArray] : meshMap) {
-					Mesh& mesh = meshes[meshKey];
-					if (!mesh.isSetup) continue;
-					mesh.Bind();
-
-					//for each instance
-					size_t numInstances = entitiesArray.size();
-					for (size_t i = 0;i< numInstances;i++) {
-						ecs::entity_id instance_id = entitiesArray[i];
-						ecs::component_id idTransform = transform->getIndex(instance_id);
-						Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
-						// @Todo get Material
-
-						// @Todo make instance rendering if instances >treshold
-						shader.setMat4("model",modelMatrix);
-						//Render
-						glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-					}
-				}
-			}
-		}
+		void Render();//@Todo register draw calls and num entities rendered per frame
+		
 	};
 }

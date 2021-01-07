@@ -26,6 +26,9 @@ namespace illusion::ecs::core {
 		COMPONENT_DATA(Quaternion, rotation);
 		COMPONENT_DATA(Vec3, scale);
 
+		COMPONENT_DATA(Vec3, rotationEuler);
+		COMPONENT_DATA(boolean, needUpdateEuler);
+
 		//Copy Datas for optimisation
 		COMPONENT_DATA(Vec3, s_position);
 		COMPONENT_DATA(Quaternion, s_rotation);
