@@ -1,5 +1,5 @@
 {
-    "shader": "Shader\\monShader.shader",
+    "shader": 0,
     "uniforms": {
         "ambient": [
             0.945652186870575,
