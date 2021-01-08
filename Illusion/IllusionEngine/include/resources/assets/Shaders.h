@@ -21,7 +21,7 @@ namespace illusion::resources::assets {
 		std::string fragment;
 		json uniforms;
 		std::string name = "default shader";
-		std::string path = "";
+		std::string relativePath = "";
 	};
 
 	static ShaderResource LoadShader(std::string shaderPath) {

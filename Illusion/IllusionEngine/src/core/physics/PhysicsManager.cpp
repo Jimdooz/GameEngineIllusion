@@ -9,11 +9,14 @@ namespace illusion::core::physics {
 	using namespace illusion::core::physics::collisions;
 	using namespace illusion::core::physics::primitives;
 
-	void ComputePhysics(ecs::Scene& scene) {
-		util::Array<ecs::entity_id> colliders1;
-		util::Array<ecs::entity_id> colliders2;
-		util::Array<CollisionManifold> results;
+	util::Array<ecs::entity_id> colliders1;
+	util::Array<ecs::entity_id> colliders2;
+	util::Array<CollisionManifold> results;
 
+	void ComputePhysics(ecs::Scene& scene) {
+		colliders1.clear();
+		colliders2.clear();
+		results.clear();
 		f32 LinearProjectionPercent = 0.8f;
 		f32 PenetrationSlack = 0.01f;
 		int ImpulseIteration = 7;
@@ -22,8 +25,11 @@ namespace illusion::core::physics {
 		BoxCollider* boxColliders = scene.GetComponent<BoxCollider>();
 		SphereCollider* sphereColliders = scene.GetComponent<SphereCollider>();
 
-		colliders1.reserve((boxColliders->ToEntity.size() - 1) * (boxColliders->ToEntity.size() - 1));
-		colliders2.reserve((boxColliders->ToEntity.size() - 1) * (boxColliders->ToEntity.size() - 1));
+		size_t toReserve = (boxColliders->ToEntity.size() - 1) * (boxColliders->ToEntity.size() - 1);
+
+		colliders1.reserve(toReserve);
+		colliders2.reserve(toReserve);
+		results.reserve(toReserve);
 
 		for (int i = 0, size = boxColliders->size(); i < size; ++i) {
 			for (int j = i + 1; j < size; ++j) {
@@ -53,7 +59,7 @@ namespace illusion::core::physics {
 			rigidbodies->collisions[i].clear();
 		}
 
-		glPointSize(10);
+		//glPointSize(10);
 		for (int k = 0; k < ImpulseIteration; ++k) {
 			for (size_t i = 0; i < results.size(); ++i) {
 				size_t jSize = results[i].contacts.size();

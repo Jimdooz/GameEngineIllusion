@@ -115,6 +115,7 @@ int main(int argc, char* argv[]) {
 	//Create Camera
 	ecs::entity_id entity = scene.CreateEntity();
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
+	scene.GetComponent<ecs::core::Transform>()->position[entity] = Vec3(0,0,3);
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
 	//illusion::load3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\PLOP.fbx", scene);

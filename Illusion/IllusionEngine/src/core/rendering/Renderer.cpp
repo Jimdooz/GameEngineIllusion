@@ -1,5 +1,4 @@
 #include "core/rendering/Renderer.h"
-#include "core/rendering/shapes/defaultShapes.h"
 #include "ecs/Scene.h"
 #include <glm/gtx/matrix_decompose.hpp>
 
@@ -9,8 +8,11 @@
 
 #include "core/rendering/CoreComponents/pointLight.h"
 
+#include "core/rendering/shapes/defaultShapes.h"
+#include "core/rendering/Importer.h"
+
 namespace illusion {
-	void MeshInstance::OnEntityDuplicate(ecs::entity_id id){
+	void MeshInstance::OnEntityDuplicate(ecs::entity_id id) {
 		ecs::component_id index = getIndex(id);
 		SetMesh(getIndex(id), meshId[index]);
 	}
@@ -57,8 +59,8 @@ namespace illusion {
 		materialId[index] = newMaterialId;
 		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
 	}
-	Renderer::~Renderer(){
-		for (auto& [ meshId, mesh ]: meshes) {
+	Renderer::~Renderer() {
+		for (auto& [meshId, mesh] : meshes) {
 			mesh.ClearOnGPU();
 		}
 	}
@@ -70,33 +72,11 @@ namespace illusion {
 		meshInstance(scene->GetComponent<MeshInstance>()),
 		instanceRenderingThreshold(3)
 	{
-		//Default Shader
-		AddShader(Shader::defaultShader, 0);
-		AddMaterial({ 0, 0, "default material", "", "", {
-			{ "ambient", {1.0f,1.0f,1.0f,1.0f} },
-			{ "diffuse", {1.0f,1.0f,1.0f,1.0f} },
-			{ "specular", {1.0f,1.0f,1.0f,1.0f} },
-			{ "shininess", 32.0 }
-		} }, 0);
 
-		//Default Mesh
-		AddMesh(illusion::defaultshape::Cube(), 0);
-		AddMesh(illusion::defaultshape::IcoSphere(), 1);
+		GenerateShaders();
+		GenerateMaterials();
+		GenerateMeshes();
 
-		if (illusion::resources::CurrentProject().path == "") return;
-
-		//All Assets
-		auto shaders = illusion::resources::assets::LoadAllShaders();
-		auto materials = illusion::resources::assets::LoadAllMaterials();
-		illusion::resources::assets::LoadAllMeshes(*this);
-
-		for (auto const& shader : shaders) {
-			AddShader(Shader(shader), shader.id);
-		}
-
-		for (auto const& material : materials) {
-			AddMaterial(material, material.id);
-		}
 	}
 
 	void Renderer::AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
@@ -140,6 +120,43 @@ namespace illusion {
 		if (instancesByMeshByShader[idShader][idMesh].size() == 0) instancesByMeshByShader[idShader].erase(instancesByMeshByShader[idShader].find(idMesh));
 
 	}
+	void Renderer::GenerateMaterials() {
+		materials.clear();
+
+		AddMaterial({ 0, 0, "default material", "", "", {
+		{ "ambient", {1.0f,1.0f,1.0f,1.0f} },
+		{ "diffuse", {1.0f,1.0f,1.0f,1.0f} },
+		{ "specular", {1.0f,1.0f,1.0f,1.0f} },
+		{ "shininess", 32.0 }
+		} }, 0);
+
+		if (illusion::resources::CurrentProject().path == "") return;
+
+		auto materials = illusion::resources::assets::LoadAllMaterials();
+		for (auto const& material : materials) {
+			AddMaterial(material, material.id);
+		}
+	}
+	void Renderer::GenerateShaders() {
+		shaders.clear();
+
+		AddShader(Shader::defaultShader, 0);
+
+		if (illusion::resources::CurrentProject().path == "") return;
+
+		auto shaders = illusion::resources::assets::LoadAllShaders();
+		for (auto const& shader : shaders) {
+			AddShader(Shader(shader), shader.id);
+		}
+	}
+	void Renderer::GenerateMeshes() {
+		//Default Mesh
+		AddMesh(illusion::defaultshape::Cube(), 0);
+		AddMesh(illusion::defaultshape::IcoSphere(), 1);
+
+		if (illusion::resources::CurrentProject().path == "") return;
+		illusion::resources::assets::LoadAllMeshes(*this);
+	}
 
 	void Renderer::Render() {//@Todo register draw calls and num entities rendered per frame
 		if (camera->size() < 1) {
@@ -178,7 +195,7 @@ namespace illusion {
 				shader.setVec3("dirLight.specular", lights->specular[0]);
 				shader.setVec3("dirLight.diffuse", lights->diffuse[0]);
 				shader.setVec3("dirLight.ambient", lights->ambient[0]);
-				shader.setVec3("dirLight.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0,1.0,0.0,1.0)) );
+				shader.setVec3("dirLight.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0)));
 			}
 			else {
 				shader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);

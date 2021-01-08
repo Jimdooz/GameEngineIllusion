@@ -46,6 +46,9 @@ namespace illusioneditor::views::MaterialEditor {
 			for (auto const& [key, val] : currentScene->renderer->shaders) {
 				if (ImGui::Button((val.resource.name + "###shaderid_" + std::to_string(key)).c_str())) {
 					material->shaderId = key;
+					material->relativeShaderPath = currentScene->renderer->shaders[key].resource.relativePath;
+					illusion::resources::assets::SaveMaterial(*material);
+					scene->renderer->ReGenerateMeshByShader();
 				}
 			}
 			ImGui::EndPopup();
@@ -55,6 +58,8 @@ namespace illusioneditor::views::MaterialEditor {
 	static void GenerateUiMaterial(illusion::ecs::Scene* scene, illusion::resources::assets::MaterialResource* material) {
 		if (!scene->renderer->ContainsShader(material->shaderId)) return;
 		Shader &shader = scene->renderer->shaders[material->shaderId];
+
+		bool needToSave = false;
 
 		for (json::iterator it = shader.resource.uniforms.begin(); it != shader.resource.uniforms.end(); ++it) {
 			std::string key = it.key();
@@ -67,14 +72,17 @@ namespace illusioneditor::views::MaterialEditor {
 			if (typeV == "Vec2") {
 				float v[] = { value[0], value[1] };
 				ImGui::DragFloat3(title.c_str(), v, 0.01f);
+				if (value[0] != v[0] || value[1] != v[1]) needToSave = true;
 				value[0] = v[0]; value[1] = v[1];
 			} else if (typeV == "Vec3") {
 				float v[] = { value[0], value[1], value[2] };
 				ImGui::DragFloat3(title.c_str(), v, 0.01f);
+				if (value[0] != v[0] || value[1] != v[1] || value[2] != v[2]) needToSave = true;
 				value[0] = v[0]; value[1] = v[1]; value[2] = v[2];
 			} else if (typeV == "Vec4") {
 				float v[] = { value[0], value[1], value[2], value[3] };
 				ImGui::DragFloat4(title.c_str(), v, 0.01f);
+				if (value[0] != v[0] || value[1] != v[1] || value[2] != v[2] || value[3] != v[3]) needToSave = true;
 				value[0] = v[0]; value[1] = v[1]; value[2] = v[2]; value[3] = v[3];
 			} else if (typeV == "Color3") {
 				ImVec4 v(value[0], value[1], value[2], 1.0);
@@ -84,6 +92,7 @@ namespace illusioneditor::views::MaterialEditor {
 				if (ImGui::BeginPopup(("ColorPicker###ColorPickerComponent_" + key + typeV).c_str())) {
 					float vec4a[4] = { value[0], value[1], value[2], 1.0 };
 					ImGui::ColorPicker4((title + "picker").c_str(), vec4a);
+					if (value[0] != vec4a[0] || value[1] != vec4a[1] || value[2] != vec4a[2]) needToSave = true;
 					value[0] = vec4a[0];
 					value[1] = vec4a[1];
 					value[2] = vec4a[2];
@@ -97,6 +106,7 @@ namespace illusioneditor::views::MaterialEditor {
 				if (ImGui::BeginPopup(("ColorPicker###ColorPickerComponent_" + key + typeV).c_str())) {
 					float vec4a[4] = { value[0], value[1], value[2], value[3] };
 					ImGui::ColorPicker4((title + "picker").c_str(), vec4a);
+					if (value[0] != vec4a[0] || value[1] != vec4a[1] || value[2] != vec4a[2] || value[3] != vec4a[3]) needToSave = true;
 					value[0] = vec4a[0];
 					value[1] = vec4a[1];
 					value[2] = vec4a[2];
@@ -105,6 +115,8 @@ namespace illusioneditor::views::MaterialEditor {
 				}
 			}
 		}
+
+		if(needToSave) illusion::resources::assets::SaveMaterial(*material);
 	}
 
 	static void Show() {
@@ -122,10 +134,6 @@ namespace illusioneditor::views::MaterialEditor {
 
 		if (ImGui::Button("Close###CloseMaterialEditor")) {
 			currentMaterial = nullptr;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Save###SaveMaterialEditor")) {
-			illusion::resources::assets::SaveMaterial(*currentMaterial);
 		}
 
 		ImGui::End();

@@ -91,7 +91,7 @@ namespace illusioneditor::views::GameProject {
 	}
 
 	void ReloadCurrentScene() {
-		if(illusioneditor::project::config::projectPath != "")
+		if(illusioneditor::project::config::projectPath != "" && illusioneditor::project::config::currentScenePath != "")
 			LoadScene(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
 	}
 
@@ -318,6 +318,7 @@ namespace illusioneditor::views::GameProject {
 
 					if (ImGui::Button("Close")) ImGui::CloseCurrentPopup();
 					ImGui::SameLine();
+					//@Todo change rename to modify
 					if (ImGui::Button("Rename")) {
 						std::string newPath = basePathFromRename + "/" + pathToRename;
 						fs::rename(pathFromRename, newPath);
@@ -326,8 +327,11 @@ namespace illusioneditor::views::GameProject {
 						if (itemScene) {
 							LoadScene(newPath);
 						}
-						
-						if (itemMaterial) ReloadCurrentScene();
+						//@todo changer la fonction pour uniquement modifier le tableau meshbyshader
+						if (itemMaterial) {
+							scene->renderer->GenerateMaterials();
+							scene->renderer->ReGenerateMeshByShader();
+						}
 
 					}
 					ImGui::EndPopup();

@@ -98,8 +98,6 @@ namespace illusion::resources::assets {
 		else toSave["shader"] = material.relativeShaderPath;
 		toSave["uniforms"] = material.uniforms;
 
-		INFO(CurrentProject().path + "/Assets/" + material.relativePath);
-
 		std::ofstream myfile;
 		myfile.open(CurrentProject().path + "/Assets/" + material.relativePath);
 		myfile << toSave.dump(4);

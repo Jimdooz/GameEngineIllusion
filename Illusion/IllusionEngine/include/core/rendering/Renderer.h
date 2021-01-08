@@ -10,6 +10,7 @@
 #include "core/rendering/CoreComponents/directionalLight.h"
 #include "resources/assets/Materials.h"
 
+
 using Material = illusion::resources::assets::MaterialResource;
 
 namespace illusion::ecs {
@@ -77,18 +78,20 @@ namespace illusion {
 			glBindVertexArray(0);
 			isSetupOnGPU = true;
 		}
-		void Bind() {
+		inline void Bind() {
 			glBindVertexArray(VAO);
 		}
 		void Render() {
-			glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+			Bind();
+			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		}
-		void ClearOnGPU() {
+		inline void ClearOnGPU() {
 			if (!isSetupOnGPU) return;
-
-			
-//void glDeleteBuffers(	GLsizei n,
-// 	const GLuint * buffers);
+			glBindVertexArray(0);
+			glDeleteVertexArrays(1,&VAO);
+			glDeleteBuffers(1,&VBO);
+			glDeleteBuffers(1,&EBO);
+			isSetupOnGPU = false;
 
 		}
 	};
@@ -201,6 +204,17 @@ namespace illusion {
 
 		void AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
 		void RemoveMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity);
+
+		void ReGenerateMeshByShader(){
+			instancesByMeshByShader.clear();
+			for (size_t i = 0, size =meshInstance->size(); i < size; i++) {
+				AddMeshMaterial(meshInstance->materialId[i], meshInstance->meshId[i], meshInstance->getId(i));
+			}
+		}
+
+		void GenerateMaterials();
+		void GenerateMeshes();
+		void GenerateShaders();
 
 		Shader& defaultShader() {
 			return shaders[0];
