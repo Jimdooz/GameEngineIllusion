@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	//illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\Sphere.fbx", scene);
+	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", scene);
 
 	std::vector<float> fpsMesure;
 

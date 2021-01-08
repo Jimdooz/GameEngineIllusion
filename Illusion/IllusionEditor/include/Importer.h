@@ -56,6 +56,9 @@ namespace illusion {
 			mesh.indices.push_back(current.mIndices[1]);
 			mesh.indices.push_back(current.mIndices[2]);
 		}
+
+		mesh.name = aimesh->mName.C_Str();
+
 		return mesh;
 	}
 	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::ecs::Scene& scene, ecs::entity_id parentId) {
