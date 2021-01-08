@@ -7,6 +7,8 @@
 
 #include "resources/assets/Materials.h"
 
+#include "core/rendering/Importer.h"
+
 #include <string>
 
 #include "imgui.h"
@@ -31,6 +33,7 @@ namespace illusioneditor::views::GameProject {
 		std::string itemSelected = "";
 		bool itemScene = false;
 		bool itemMaterial = false;
+		bool itemModel = false;
 
 		bool needOpenPopupRename = false;
 		std::string basePathFromRename = "";
@@ -39,6 +42,12 @@ namespace illusioneditor::views::GameProject {
 
 		bool needOpenPopupDelete = false;
 		std::string pathToDelete = "";
+	}
+
+	void ResetItemIs() {
+		itemScene = false;
+		itemMaterial = false;
+		itemModel = false;
 	}
 
 	bool hasEnding(std::string const& fullString, std::string const& ending) {
@@ -190,8 +199,7 @@ namespace illusioneditor::views::GameProject {
 				if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(1)) {
 					ImGui::OpenPopup("Popup Project");
 					itemSelected = "";
-					itemScene = false;
-					itemMaterial = false;
+					ResetItemIs();
 				}
 
 				if (ImGui::BeginPopup("Popup Project")) {
@@ -201,6 +209,11 @@ namespace illusioneditor::views::GameProject {
 						if (ImGui::MenuItem("Scene")) CreateScene();
 						if (ImGui::MenuItem("Material")) CreateMaterial();
 						ImGui::EndMenu();
+					}
+
+					if (itemModel) {
+						ImGui::Separator();
+						if (ImGui::MenuItem("Import model")) illusion::import3DModel(itemSelected.c_str(), *scene);
 					}
 
 					if (itemSelected != "") {
@@ -247,14 +260,14 @@ namespace illusioneditor::views::GameProject {
 									itemMaterial = true;
 								}
 							} else if (hasEnding(fileName, ".fbx") || hasEnding(fileName, ".obj") || hasEnding(fileName, ".dae")) {
-								ImGui::TextColored((ImVec4)ImColor(127, 124, 175), fileName.c_str());
+								ImGui::TextColored((ImVec4)ImColor(203, 174, 186), fileName.c_str());
 
 								if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
 									//illusioneditor::views::MaterialEditor::EditMaterialPath(scene, p.path().string());
 								}
 
 								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-									//itemMaterial = true;
+									itemModel = true;
 								}
 							}
 							else {
