@@ -103,6 +103,12 @@ namespace illusion::ecs::core {
 			elementTransform[component] = glm::translate(position[component]) * glm::toMat4(rotation[component]) * glm::scale(scale[component]);
 			model = elementTransform[component];
 
+			if (needUpdateEuler[component]) {
+				Quaternion diff(glm::inverse(rotation[component]) * s_rotation[component]);
+				rotationEuler[component] -= glm::degrees(glm::eulerAngles(diff));
+			}
+			needUpdateEuler[component] = true;
+
 			s_position[component] = position[component];
 			s_rotation[component] = rotation[component];
 			s_scale[component] = scale[component];
@@ -127,6 +133,9 @@ namespace illusion::ecs::core {
 		AddData(position, Vec3(0, 0, 0));
 		AddData(rotation, Quaternion(1,0,0,0));
 		AddData(scale, Vec3(1, 1, 1));
+
+		AddData(rotationEuler, Vec3(0, 0, 0));
+		AddData<boolean>(needUpdateEuler, false);
 
 		AddData(s_position, Vec3(0, 0, 0));
 		AddData(s_rotation, Quaternion(1, 0, 0, 0));
@@ -159,6 +168,9 @@ namespace illusion::ecs::core {
 		RemoveData(position, index);
 		RemoveData(rotation, index);
 		RemoveData(scale, index);
+
+		RemoveData(rotationEuler, index);
+		RemoveData(needUpdateEuler, index);
 
 		RemoveData(s_position, index);
 		RemoveData(s_rotation, index);

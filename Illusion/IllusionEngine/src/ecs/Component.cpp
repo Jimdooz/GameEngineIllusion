@@ -7,6 +7,9 @@
 #include "core/physics/components/BoxCollider.h"
 #include "core/physics/components/SphereCollider.h"
 
+#include "core/rendering/CoreComponents/directionalLight.h"
+#include "core/rendering/CoreComponents/pointLight.h"
+
 using namespace illusion::core;
 
 namespace illusion::ecs {
@@ -53,7 +56,7 @@ namespace illusion::ecs {
 
 	void Component::OnEntityCreate(entity_id id) {
 		id::id_type index = id::Index(id);
-		if (index >= ToData.size()) ToData.resize(index + 1);
+		if (index >= ToData.size()) ToData.resize(static_cast<size_t>(index) + 1);
 		ToData[index] = component_id{ id::invalid_id };
 	}
 
@@ -70,5 +73,10 @@ namespace illusion::ecs {
 		Component::AppendComponents<physics::RigidBody>();
 		Component::AppendComponents<physics::BoxCollider>();
 		Component::AppendComponents<physics::SphereCollider>();
+
+		Component::AppendComponents<MeshInstance>();
+
+		Component::AppendComponents<rendering::DirectionalLight>();
+		Component::AppendComponents<rendering::PointLight>();
 	}
 }

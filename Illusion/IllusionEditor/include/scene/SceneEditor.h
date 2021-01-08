@@ -10,7 +10,9 @@
 #include "imgui_impl_opengl3.h"
 
 //TEMP RENDERING
-#include "tmp/Shader.h"
+#include "core/rendering/Shader.h"
+
+#include "core/rendering/shapes/defaultShapes.h"
 
 #include "core/Time.h"
 
@@ -35,8 +37,41 @@ namespace illusioneditor::scene::editor {
 	}
 
 	void Initialize() {
-		arrowShader = new Shader("..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\vertexShader.glsl",
-							"..\\..\\..\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Shader\\fragmentArrow.glsl");
+		arrowShader = new Shader(R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+
+out vec3 fNormal;
+out vec2 fTexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    fTexCoord = aTexCoord;
+    fNormal = aNormal;
+}
+)", R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec3 fNormal;
+in vec2 fTexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+uniform vec4 color;
+
+void main() {
+    FragColor = color;
+}
+)");
 	}
 
 	inline bool CanChangeItem() {
@@ -52,6 +87,8 @@ namespace illusioneditor::scene::editor {
 				views::GameHiearchy::selected = (ecs::entity_id)ecs::id::invalid_id;
 			}
 		}
+
+		if (ImGui::IsAnyItemHovered() || ImGui::IsAnyWindowHovered()) return;
 
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
 		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
@@ -78,7 +115,7 @@ namespace illusioneditor::scene::editor {
 		}
 	}
 
-	bool CastBoxAxis(core::physics::primitives::OBB& box, Vec3& axis, core::physics::primitives::Ray& rayWord) {
+	bool CastBoxAxis(core::physics::primitives::OBB& box, const Vec3& axis, core::physics::primitives::Ray& rayWord) {
 		core::physics::primitives::Ray ray(box.position, axis);
 		core::physics::primitives::Ray rayI(box.position, -axis);
 		f32 cast = core::physics::collisions::Raycast(box, rayWord);
@@ -142,7 +179,7 @@ namespace illusioneditor::scene::editor {
 			}
 			else {
 				f32 distanceObj = glm::distance(translation, CameraPosition);
-				f32 factor = distanceObj * 0.1;
+				f32 factor = distanceObj * 0.1f;
 
 				core::physics::primitives::OBB obbX(translation + (Vec3(0.7, 0, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(1, 0.3, 0.3) * factor);
 				core::physics::primitives::OBB obbY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 1, 0.3) * factor);
@@ -161,11 +198,11 @@ namespace illusioneditor::scene::editor {
 		}
 	}
 
-	void DrawArrow(Vec3& origin, Vec3& direction, f32 scale, Vec4& color) {
+	void DrawArrow(ecs::Scene& scene, Vec3& origin, const Vec3& direction, f32 scale, const Vec4& color) {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
 		arrowShader->setVec4("color", color);
 		arrowShader->setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		scene.renderer->meshes[0].Render();
 	}
 
 	void DrawArrowTranslate(ecs::Scene& scene, Mat4x4& projection, Mat4x4& view) {
@@ -189,11 +226,13 @@ namespace illusioneditor::scene::editor {
 			arrowShader->setMat4("projection", projection);
 			arrowShader->setMat4("view", view);
 
-			f32 factor = glm::distance(translation, CameraPosition) * 0.1;
+			f32 factor = glm::distance(translation, CameraPosition) * 0.1f;
 
-			DrawArrow(translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
-			DrawArrow(translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
-			DrawArrow(translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			illusion::defaultshape::Cube().Bind();
+			DrawArrow(scene, translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			glEnable(GL_DEPTH_TEST);
 		}
 	}
 }

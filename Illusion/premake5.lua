@@ -74,11 +74,7 @@ project "IllusionEngine"
 		links
 		{
 			"Glad",
-			"glfw3.lib",
-			"IrrXMLd.lib",
-			"zlibstaticd.lib",
-			"assimp-vc142-mtd.lib"
-
+			"glfw3.lib"
 		}
 
 		postbuildcommands
@@ -86,6 +82,20 @@ project "IllusionEngine"
 			("{COPY} %{cfg.buildtarget.relpath} \"../build/" .. outputdir .. "/IllusionEditor/\"")
 		}
 
+	filter{ "configurations:Debug", "system:windows" }
+		links
+		{
+			"IrrXMLd.lib",
+			"zlibstaticd.lib",
+			"assimp-vc142-mtd.lib"
+		}
+	filter{ "configurations:Release", "system:windows" }
+		links
+		{
+			"IrrXML.lib",
+			"zlibstatic.lib",
+			"assimp-vc142-mt.lib"
+		}
 	filter "configurations:Debug"
 		defines {
 			"ILSENGINE_DEBUG",

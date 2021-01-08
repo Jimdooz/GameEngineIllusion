@@ -6,6 +6,8 @@ namespace illusion::ecs::core {
 
 	struct Camera : public Component {
 		Camera(Scene* scene) : Component(scene) {
+			COMPONENT_PUBLIC(background);
+
 			COMPONENT_PUBLIC(fov);
 			COMPONENT_PUBLIC(orthoMode);
 
@@ -23,6 +25,8 @@ namespace illusion::ecs::core {
 
 		COMPONENT_DATA(Mat4x4, view);
 		COMPONENT_DATA(Mat4x4, projection);
+
+		COMPONENT_DATA(Vec4, background);
 
 		//Attributes
 		COMPONENT_DATA(Vec3, front);

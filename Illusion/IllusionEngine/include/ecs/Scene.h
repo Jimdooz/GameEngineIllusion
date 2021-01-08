@@ -2,12 +2,14 @@
 
 #include "ecs/Entity.h"
 #include "ecs/Component.h"
+#include "ecs/System.h"
 
 // Core Components
 #include "ecs/CoreComponents/Transform.h"
 
-namespace illusion::ecs {
+#include "core/rendering/Renderer.h"
 
+namespace illusion::ecs {
 	// On déclare System sans inclure ses headers par question de double dépendances
 	struct System;
 
@@ -26,22 +28,33 @@ namespace illusion::ecs {
 
 		Scene() {
 			for (auto const& [key, val] : Component::AllComponents) this->UseComponent(key);
+			renderer = new Renderer(this);
+		}
+
+		~Scene() {
+			delete renderer;
 		}
 
 		// ECS System
 		Entities entities;
 
-		// @Ask : peut être utiliser u32 ou u12 à la place de size_t qui est un long long pour plus de perfs ?
-		// @Ask : peut être directement stoquer des Components ou System à la place de pointeurs
-		//		  puisque une même instance de Component ne peut apartenir qu'à une scène
+		// @Todo : peut être directement stoquer des Components ou System à la place de pointeurs ?
+		// @Todo : mettre un pointeur direct vers les core Components comme Camera et Transform ?
 		util::Map<size_t, Component*> components;
 		util::Map<size_t, System*> systems;
 		bool pause = false;
+
+		Renderer *renderer;
 
 		/**
 		 * Permet de réinitialiser une scène
 		 */
 		void Reset();
+
+		void ReloadRenderer() {
+			if(renderer != nullptr) delete renderer;
+			renderer = new Renderer(this);
+		}
 
 		/**
 		 * >>> Entity Part
@@ -63,7 +76,7 @@ namespace illusion::ecs {
 		 * >>> Component Part
 		 */
 
-		// @Ask : peut être assert si le type C hérite bien de Component en Debug ?
+		// @Todo : peut être assert si le typename C hérite bien de Component en Debug ?
 		// car rien n'oblige avec le C++ il me semble
 		/**
 		 * Fonction signalant à la scène qu'il doit utiliser un type de Component donné
@@ -93,6 +106,7 @@ namespace illusion::ecs {
 		 * Permet de récupérer un Component
 		 */
 		template<typename C> Component* GetComponentSystem() {
+			//@Todo : Créer un système pour checker si le component existe en debug
 			return components[typeid(C).hash_code()];
 		}
 
@@ -121,6 +135,11 @@ namespace illusion::ecs {
 		 * @param	componentHash le hash du component
 		 */
 		void EntityAddComponent(entity_id id, size_t componentHash);
+
+		/**
+		 * Permet d'annoncer l'ajout d'un component de la part de l'inspecteur au component
+		 */
+		void EmitComponentAdded(entity_id id, size_t componentHash);
 
 		/**
 		 * Permet de signaler qu'une Entit� ne va plus utiliser un Component donn�

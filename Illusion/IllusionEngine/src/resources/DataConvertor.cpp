@@ -18,7 +18,20 @@ namespace illusion::resources{
 	template<typename T> size_t hashOf() { return typeid(T).hash_code(); }
 
 	void JsonConvertor::Initialize() {
-		//String
+		//size_t
+		JsonConvertor::Create<size_t>(
+			JSON_EXPORT{
+				size_t& rdata = *((size_t*)data);
+				json value = rdata;
+				return value;
+			},
+			JSON_IMPORT{
+				size_t* rto = (size_t*)to;
+				*rto = data;
+			},
+			JSON_VECTOR_CONVERTOR(size_t)
+			);
+		//Boolean
 		JsonConvertor::Create<boolean>(
 			JSON_EXPORT{
 				boolean& rdata = *((boolean*)data);
@@ -44,6 +57,22 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(std::string)
 			);
+		//Vector4
+		JsonConvertor::Create<Vec2>(
+			JSON_EXPORT{
+				Vec2& rdata = *((Vec2*)data);
+				json array = json::array();
+				array.push_back(rdata.x);
+				array.push_back(rdata.y);
+				return array;
+			},
+			JSON_IMPORT{
+				Vec2* rto = (Vec2*)to;
+				rto->x = data[0];
+				rto->y = data[1];
+			},
+			JSON_VECTOR_CONVERTOR(Vec2)
+			);
 		//Vector3
 		JsonConvertor::Create<Vec3>(
 			JSON_EXPORT {
@@ -62,6 +91,26 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(Vec3)
 		);
+		//Vector4
+		JsonConvertor::Create<Vec4>(
+			JSON_EXPORT{
+				Vec4& rdata = *((Vec4*)data);
+				json array = json::array();
+				array.push_back(rdata.x);
+				array.push_back(rdata.y);
+				array.push_back(rdata.z);
+				array.push_back(rdata.w);
+				return array;
+			},
+			JSON_IMPORT{
+				Vec4* rto = (Vec4*)to;
+				rto->x = data[0];
+				rto->y = data[1];
+				rto->z = data[2];
+				rto->w = data[3];
+			},
+			JSON_VECTOR_CONVERTOR(Vec4)
+			);
 		//Quaternion
 		JsonConvertor::Create<Quaternion>(
 			JSON_EXPORT{
@@ -117,7 +166,6 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
 		);
-
 		//f32
 		JsonConvertor::Create<f32>(
 			JSON_EXPORT{
@@ -131,7 +179,6 @@ namespace illusion::resources{
 			},
 			JSON_VECTOR_CONVERTOR(f32)
 		);
-
 		//f16
 		JsonConvertor::Create<f64>(
 			JSON_EXPORT{

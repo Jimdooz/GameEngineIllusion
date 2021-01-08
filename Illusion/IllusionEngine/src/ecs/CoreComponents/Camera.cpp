@@ -36,6 +36,8 @@ namespace illusion::ecs::core {
 		AddData(far, f32(1000.0f));
 		AddData(orthoMode, false);
 
+		AddData(background, Vec4(0.25f, 0.25f, 0.5f, 1.0));
+
 		AddData(view, Mat4x4(1.0));
 		AddData(projection, Mat4x4(1.0));
 
@@ -57,6 +59,8 @@ namespace illusion::ecs::core {
 		RemoveData(near, index);
 		RemoveData(far, index);
 		RemoveData(orthoMode, index);
+
+		RemoveData(background, index);
 
 		RemoveData(view, index);
 		RemoveData(projection, index);

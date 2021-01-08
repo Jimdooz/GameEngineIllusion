@@ -31,6 +31,10 @@ namespace illusion::resources::assets {
 		for (u32 i = 0; i < jsonDatas["Entity"]["id"].size(); i++) {
 			scene.CreateEntity(jsonDatas["Entity"]["id"][i]);
 		}
+
+
+		scene.ReloadRenderer();
+
 		//Load Components Datas
 		for (u32 i = 0; i < jsonDatas["Components"].size(); i++) {
 			std::string componentHashS = jsonDatas["Components"][i];
@@ -49,8 +53,10 @@ namespace illusion::resources::assets {
 					if (componentElements[el.key()][comp->publicDatas[j].name].is_null()) continue;
 					resources::JsonConvertor::ImportFromJSONFromArray(componentElements[el.key()][comp->publicDatas[j].name], comp->publicDatas[j].data, comp->publicDatas[j].type, componentId);
 				}
+				comp->OnEntityLoaded(id);
 			}
 		}
+
 	}
 
 	json ExportScene(illusion::ecs::Scene& scene) {

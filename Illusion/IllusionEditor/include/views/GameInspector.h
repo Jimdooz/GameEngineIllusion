@@ -6,6 +6,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "MaterialEditor.h"
+
 namespace illusioneditor::views::GameInspector {
 
 	using namespace illusion;
@@ -15,15 +17,17 @@ namespace illusioneditor::views::GameInspector {
 		illusion::ecs::entity_id currentSelected;
 
 		std::string searchComponent = "";
+		std::string searchMesh = "";
+		std::string searchMaterial = "";
 	}
 
 	void GenerateInputString(std::string name, std::string& str) {
-		int n = str.length() + 64;
+		size_t n = str.length() + 64;
 		char* buf1 = new char[n];
 		strcpy(buf1, str.c_str());
 		ImGui::InputText(name.c_str(), buf1, n);
 		str = std::string(buf1);
-		delete buf1;
+		delete[] buf1;
 	}
 
 	void GenerateUiComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component *component) {
@@ -45,6 +49,24 @@ namespace illusioneditor::views::GameInspector {
 			vec4[componentId].y = vec4a[1];
 			vec4[componentId].z = vec4a[2];
 			vec4[componentId].w = vec4a[3];
+		} else if (data.type == typeid(illusion::util::Array<Vec4>).hash_code()) {
+			illusion::util::Array<Vec4>& vec4 = *(illusion::util::Array<Vec4>*)data.data;
+			ImVec4 vec4aGet(vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w);
+			ImGui::Text(data.name.c_str());
+			ImGui::SameLine();
+			if (ImGui::ColorButton(data.name.c_str(), vec4aGet)) {
+				ImGui::OpenPopup(("ColorPicker###ColorPickerComponent_" + data.name).c_str());
+			}
+			if (ImGui::BeginPopup(("ColorPicker###ColorPickerComponent_" + data.name).c_str())) {
+				float vec4a[4] = { vec4[componentId].x, vec4[componentId].y, vec4[componentId].z, vec4[componentId].w };
+				ImGui::ColorPicker4(data.name.c_str(), vec4a);
+				vec4[componentId].x = vec4a[0];
+				vec4[componentId].y = vec4a[1];
+				vec4[componentId].z = vec4a[2];
+				vec4[componentId].w = vec4a[3];
+				ImGui::EndPopup();
+			}
+			
 		} else if (data.type == typeid(illusion::util::Array<f32>).hash_code()) {
 			illusion::util::Array<f32>& val = *(illusion::util::Array<f32>*)data.data;
 			f32 floatValue = val[componentId];
@@ -59,11 +81,149 @@ namespace illusioneditor::views::GameInspector {
 			illusion::util::Array<std::string>& val = *(illusion::util::Array<std::string>*)data.data;
 			std::string& value = val[componentId];
 			GenerateInputString(data.name, value);
+		} else if (data.type == typeid(illusion::util::Array<size_t>).hash_code()) {
+			illusion::util::Array<size_t>& val = *(illusion::util::Array<size_t>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::InputInt(data.name.c_str(), &floatValue, 0.01f);
+			val[componentId] = floatValue;
 		}
+	}
+
+	void RenderMeshInstance(const size_t componentKey, MeshInstance *meshInstance, ecs::entity_id selected) {
+		ecs::component_id index = meshInstance->getIndex(selected);
+		size_t indexMesh = meshInstance->meshId[index];
+		size_t indexMaterial = meshInstance->materialId[index];
+		if (!currentScene->renderer->ContainsMesh(indexMesh)) indexMesh = 0;
+		if (!currentScene->renderer->ContainsMaterial(indexMaterial)) indexMaterial = 0;
+		std::string titleMesh = currentScene->renderer->meshes.at(indexMesh).name;
+		std::string titleMaterial = currentScene->renderer->materials.at(indexMaterial).name;
+
+		//MESH
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(titleMesh.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Mesh###changeMesh")) {
+			ImGui::OpenPopup("MeshInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("MeshInstanceChoice")) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchMesh", searchMesh);
+			ImGui::Separator();
+
+			util::Array<std::string> groupNames;
+			util::Array<int> groupNumbers;
+			for (auto const& [key, val] : currentScene->renderer->meshes) {
+				if (val.group == "") {
+					if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+					if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+					if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
+						meshInstance->SetMesh(index, key);
+					}
+					if (key == indexMesh) ImGui::PopStyleColor();
+				}
+				else {
+					std::vector<std::string>::iterator it = std::find(groupNames.begin(), groupNames.end(), val.group);
+					if (it == groupNames.end()) {
+						groupNames.push_back(val.group);
+						groupNumbers.push_back(1);
+					}
+					else {
+						size_t index = std::distance(groupNames.begin(), it);
+						groupNumbers[index]++;
+					}
+				}
+			}
+			for (size_t i = 0; i < groupNames.size(); i++) {
+				auto const& groupName = groupNames[i];
+
+				if (groupNumbers[i] > 1) {
+					//Case when the file contain more than one shape
+					if (ImGui::TreeNode((groupName + "###GroupMesh_" + groupName).c_str())) {
+						for (auto const& [key, val] : currentScene->renderer->meshes) {
+							if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+							if (val.group == groupName) {
+								if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+								if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
+									meshInstance->SetMesh(index, key);
+								}
+								if (key == indexMesh) ImGui::PopStyleColor();
+							}
+						}
+						ImGui::TreePop();
+					}
+				}
+				else {
+					//Case when the file contain only one shape
+					for (auto const& [key, val] : currentScene->renderer->meshes) {
+						if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+						if (val.group == groupName) {
+							if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+							if (ImGui::Button((groupName + "###meshid_" + std::to_string(key)).c_str())) {
+								meshInstance->SetMesh(index, key);
+							}
+							if (key == indexMesh) ImGui::PopStyleColor();
+							break; //Found the only one element
+						}
+					}
+				}
+
+			}
+			ImGui::EndPopup();
+		}
+
+		//MATERIAL
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(titleMaterial.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Material###changeMaterial")) {
+			ImGui::OpenPopup("MaterialInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("MaterialInstanceChoice")) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchMaterial", searchMaterial);
+			ImGui::Separator();
+
+			for (auto const& [key, val] : currentScene->renderer->materials) {
+				if (searchMaterial != "" && val.name.find(searchMaterial) == std::string::npos) continue;
+				if (key == indexMaterial) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+
+				if (ImGui::Button((val.name + "###materialid_" + std::to_string(key)).c_str())) {
+					meshInstance->SetMaterial(index, key);
+				}
+
+				if (key == indexMaterial) ImGui::PopStyleColor();
+			}
+			ImGui::EndPopup();
+		}
+		
 	}
 	
 	void Show() {
-		ImGui::Begin("Inspector [DEV]");
+		ImGui::Begin("Inspector");
 
 		if (currentSelected != ecs::id::invalid_id && currentScene != nullptr) {
 
@@ -82,34 +242,33 @@ namespace illusioneditor::views::GameInspector {
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
 			//Position
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Position", "Position");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PX", &transform.position[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PY", &transform.position[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###PZ", &transform.position[indexTransform].z, 0.01f);
 
 			//Rotation
-			Vec3 euler = glm::degrees(glm::eulerAngles(transform.rotation[indexTransform]));
-			if (abs(euler.x) >= 180) euler.x = 0;
-			if (abs(euler.y) >= 180) euler.y = 0;
-			if (abs(euler.z) >= 180) euler.z = 0;
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			Vec3 &realEuler = transform.rotationEuler[indexTransform];
+			Vec3 euler = transform.rotationEuler[indexTransform];
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Rotation", "Rotation");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RX", &euler.x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RY", &euler.y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###RZ", &euler.z, 0.01f);
-			if (abs(euler.x) >= 180) euler.x = 0;
-			if (abs(euler.y) >= 180) euler.y = 0;
-			if (abs(euler.z) >= 180) euler.z = 0;
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RX", &euler.x, 0.1f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RY", &euler.y, 0.1f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###RZ", &euler.z, 0.1f);
 
-			transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
+			if (realEuler != euler) {
+				realEuler = euler;
+				transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
+				transform.needUpdateEuler[indexTransform] = false;
+			}
 
 			//Scale
-			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4 - 25));
+			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Scale", "Scale");
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SX", &transform.scale[indexTransform].x, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SY", &transform.scale[indexTransform].y, 0.01f);
-			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2)); ImGui::DragFloat("###SZ", &transform.scale[indexTransform].z, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SX", &transform.scale[indexTransform].x, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SY", &transform.scale[indexTransform].y, 0.01f);
+			ImGui::SameLine(); ImGui::SetNextItemWidth(fmaxf(50, ImGui::GetWindowContentRegionWidth() * 0.2f)); ImGui::DragFloat("###SZ", &transform.scale[indexTransform].z, 0.01f);
 
 			ImGui::Dummy(ImVec2(0.0f, 5.0f));
 			ImGui::Separator();
@@ -117,12 +276,16 @@ namespace illusioneditor::views::GameInspector {
 
 			for (auto const& [key, val] : currentScene->components) {
 				if (val->getName() == "Transform") continue;
+
 				std::string title = val->getName() + "###" + std::to_string(key);
 				if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 				if (ImGui::TreeNode(title.c_str())) {
-					for (u32 i = 0; i < val->publicDatas.size(); i++) {
-						if(val->publicDatas[i].visible)
-							GenerateUiComponent(val->publicDatas[i], val);
+					if (val->getName() == "Mesh Instance") RenderMeshInstance(key, static_cast<MeshInstance*>(val), currentSelected);
+					else {
+						for (u32 i = 0; i < val->publicDatas.size(); i++) {
+							if (val->publicDatas[i].visible)
+								GenerateUiComponent(val->publicDatas[i], val);
+						}
 					}
 					ImGui::TreePop();
 				}
@@ -168,7 +331,7 @@ namespace illusioneditor::views::GameInspector {
 						std::string name = "+ " + val->getName();
 						if (ImGui::Button(name.c_str())) {
 							currentScene->EntityAddComponent(currentSelected, key);
-							INFO("Added ",name);
+							currentScene->EmitComponentAdded(currentSelected, key);
 						}
 					}
 				}

@@ -15,6 +15,7 @@
 using json = illusion::json;
 
 #include <string>
+#include "resources/Project.h"
 
 namespace illusioneditor::project {
 	
@@ -69,11 +70,19 @@ namespace illusioneditor::project {
 				return false;
 			}
 
+			// /!\ [Romain Saclier] To change
 			config::projectPath = projectPath;
 			config::projectName = jsonLoaded["projectName"];
 			config::currentScenePath = jsonLoaded["currentScenePath"];
 
 			config::projectOpen = true;
+
+			illusion::resources::CurrentProject().path = config::projectPath;
+			illusion::resources::CurrentProject().name = config::projectName;
+			illusion::resources::CurrentProject().currentScenePath = config::currentScenePath;
+			illusion::resources::CurrentProject().open = config::projectOpen;
+
+			INFO("LOAD PROJECT : ", illusion::resources::CurrentProject().path);
 
 			return true;
 		}
