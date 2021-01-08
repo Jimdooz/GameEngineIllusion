@@ -72,11 +72,9 @@ namespace illusion {
 		meshInstance(scene->GetComponent<MeshInstance>()),
 		instanceRenderingThreshold(3)
 	{
-
 		GenerateShaders();
 		GenerateMaterials();
 		GenerateMeshes();
-
 	}
 
 	void Renderer::AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
@@ -256,6 +254,8 @@ namespace illusion {
 						else if (typeV == "Vec4" || typeV == "Color4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
 					}
 
+					//get all model matrices and put them in a BufferObject
+					//set the Buffer object to instance
 					// @Todo make instance rendering if instances >treshold
 					shader.setMat4("model", modelMatrix);
 					//Render

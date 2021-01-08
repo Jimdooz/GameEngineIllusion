@@ -74,7 +74,7 @@ namespace illusion {
 		Quaternion rotation;
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
-		transform->position[transform_id] = position;
+		transform->position[transform_id] = position * 0.01f;
 		transform->rotation[transform_id] = glm::conjugate(rotation); // Conjugate rotation to apply the correct quaternion with decompose
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same node		
