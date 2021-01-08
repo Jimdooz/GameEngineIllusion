@@ -17,6 +17,8 @@ namespace illusioneditor::views::GameInspector {
 		illusion::ecs::entity_id currentSelected;
 
 		std::string searchComponent = "";
+		std::string searchMesh = "";
+		std::string searchMaterial = "";
 	}
 
 	void GenerateInputString(std::string name, std::string& str) {
@@ -115,10 +117,68 @@ namespace illusioneditor::views::GameInspector {
 
 		//All shapes
 		if (ImGui::BeginPopup("MeshInstanceChoice")) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchMesh", searchMesh);
+			ImGui::Separator();
+
+			util::Array<std::string> groupNames;
+			util::Array<int> groupNumbers;
 			for (auto const& [key, val] : currentScene->renderer->meshes) {
-				if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
-					meshInstance->SetMesh(index, key);
+				if (val.group == "") {
+					if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+					if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+					if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
+						meshInstance->SetMesh(index, key);
+					}
+					if (key == indexMesh) ImGui::PopStyleColor();
 				}
+				else {
+					std::vector<std::string>::iterator it = std::find(groupNames.begin(), groupNames.end(), val.group);
+					if (it == groupNames.end()) {
+						groupNames.push_back(val.group);
+						groupNumbers.push_back(1);
+					}
+					else {
+						size_t index = std::distance(groupNames.begin(), it);
+						groupNumbers[index]++;
+					}
+				}
+			}
+			for (size_t i = 0; i < groupNames.size(); i++) {
+				auto const& groupName = groupNames[i];
+
+				if (groupNumbers[i] > 1) {
+					//Case when the file contain more than one shape
+					if (ImGui::TreeNode((groupName + "###GroupMesh_" + groupName).c_str())) {
+						for (auto const& [key, val] : currentScene->renderer->meshes) {
+							if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+							if (val.group == groupName) {
+								if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+								if (ImGui::Button((val.name + "###meshid_" + std::to_string(key)).c_str())) {
+									meshInstance->SetMesh(index, key);
+								}
+								if (key == indexMesh) ImGui::PopStyleColor();
+							}
+						}
+						ImGui::TreePop();
+					}
+				}
+				else {
+					//Case when the file contain only one shape
+					for (auto const& [key, val] : currentScene->renderer->meshes) {
+						if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
+						if (val.group == groupName) {
+							if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+							if (ImGui::Button((groupName + "###meshid_" + std::to_string(key)).c_str())) {
+								meshInstance->SetMesh(index, key);
+							}
+							if (key == indexMesh) ImGui::PopStyleColor();
+							break; //Found the only one element
+						}
+					}
+				}
+
 			}
 			ImGui::EndPopup();
 		}
@@ -142,9 +202,13 @@ namespace illusioneditor::views::GameInspector {
 
 		//All shapes
 		if (ImGui::BeginPopup("MaterialInstanceChoice")) {
-			ImGui::Text("Material");
-			for (auto const& [key, val] : currentScene->renderer->materials) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchMaterial", searchMaterial);
+			ImGui::Separator();
 
+			for (auto const& [key, val] : currentScene->renderer->materials) {
+				if (searchMaterial != "" && val.name.find(searchMaterial) == std::string::npos) continue;
 				if (key == indexMaterial) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
 
 				if (ImGui::Button((val.name + "###materialid_" + std::to_string(key)).c_str())) {
@@ -159,7 +223,7 @@ namespace illusioneditor::views::GameInspector {
 	}
 	
 	void Show() {
-		ImGui::Begin("Inspector [DEV]");
+		ImGui::Begin("Inspector");
 
 		if (currentSelected != ecs::id::invalid_id && currentScene != nullptr) {
 

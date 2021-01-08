@@ -46,7 +46,7 @@
 //TEMP RENDERING
 #include "core/rendering/Shader.h"
 #include "core/rendering/Renderer.h"
-#include "Importer.h"
+//#include "core/rendering/Importer.h"
 
 //Scripting
 #include "scripting/JumpBigCube.h"
@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	ImGui_ImplGlfw_InitForOpenGL(Window::glfwWindow, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 	views::theme::InitTheme();
@@ -116,7 +117,7 @@ int main(int argc, char* argv[]) {
 	scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
 	scene.EntityAddComponent<ecs::core::Camera>(entity);
 
-	illusion::import3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\basicCharacter_anim.fbx", scene);
+	//illusion::load3DModel("..\\..\\GameProjects\\Optimulus\\Assets\\Meshes\\PLOP.fbx", scene);
 
 	std::vector<float> fpsMesure;
 

@@ -23,7 +23,7 @@ namespace illusion {
 	static inline glm::mat4 mat4_convert(const aiMatrix3x3& m) { return glm::transpose(glm::make_mat3(&m.a1)); }
 
 
-	Mesh ConvertToMesh(const aiMesh* aimesh) {
+	Mesh ConvertToMesh(const aiMesh* aimesh, std::string& name, std::string& group) {
 		Mesh mesh;
 		//if (aimesh->HasNormals()) {
 		//	INFO("HasNormals");
@@ -57,10 +57,12 @@ namespace illusion {
 			mesh.indices.push_back(current.mIndices[2]);
 		}
 
-		mesh.name = aimesh->mName.C_Str();
+		mesh.name = name;
+		mesh.group = group;
 
 		return mesh;
 	}
+	//Generate ECS hierarchy without adding Meshes to renderer
 	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::ecs::Scene& scene, ecs::entity_id parentId) {
 		illusion::ecs::entity_id id = scene.CreateEntity();
 		ecs::core::Transform* transform = scene.GetComponent<ecs::core::Transform>();
@@ -83,18 +85,8 @@ namespace illusion {
 			unsigned int ai_meshid = node->mMeshes[0];
 			std::string relativePath = fs::relative(path, resources::CurrentProject().path + "/Assets/").string();
 			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
-			meshInstance.SetMesh(meshInstance.getIndex(id), mesh_id);
-			//get materialId hash 
-			//Set MeshInstance materialId
-			//if don't contains 
-				//Get Matrial from Assimp
-				//Add Material to Renderer
-			if(!scene.renderer->ContainsMesh(mesh_id)){
-				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid]);				
-				mesh.Setup();
-				scene.renderer->AddMesh(mesh,mesh_id);
-			}
-				
+			//Set mesh reference
+			meshInstance.SetMesh(meshInstance.getIndex(id), mesh_id);				
 			//AddMeshInstance to Renderer
 			scene.renderer->AddMeshShader(0, mesh_id, id);
 		}
@@ -102,6 +94,32 @@ namespace illusion {
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
 			processNode(path, node->mChildren[i], ai_scene, scene, id);
+		}
+	}
+	//Load meshes in the renderer
+	void loadNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer& renderer) {
+		// @Todo : support multiples meshes on the same node		
+		if (node->mNumMeshes > 0) {
+			unsigned int ai_meshid = node->mMeshes[0];
+			std::string relativePath = fs::relative(path, resources::CurrentProject().path + "/Assets/").string();
+			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
+			std::string group =fs::path(relativePath).filename().string();
+			//get materialId hash 
+			//Set MeshInstance materialId
+			//if don't contains 
+				//Get Matrial from Assimp
+				//Add Material to Renderer
+			if(!renderer.ContainsMesh(mesh_id)){
+				std::string meshName = node->mName.C_Str();
+				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid],meshName,group);
+				//Add Mesh to renderer
+				renderer.AddMesh(mesh,mesh_id);
+			}
+		}
+		// then do the same for each of its children
+		for (unsigned int i = 0; i < node->mNumChildren; i++)
+		{
+			loadNode(path, node->mChildren[i], ai_scene, renderer);
 		}
 	}
 	void import3DModel(const char* path, illusion::ecs::Scene& scene)
@@ -118,7 +136,24 @@ namespace illusion {
 			ERR("ASSIMP : ", aiGetErrorString());
 			return;
 		}
+		loadNode(path,ai_scene->mRootNode, ai_scene, *(scene.renderer));
 		processNode(path,ai_scene->mRootNode, ai_scene, scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
+		aiReleaseImport(ai_scene);
+	}
+	void load3DModel(const char* path, illusion::Renderer& renderer)
+	{
+		const aiScene* ai_scene = aiImportFile(path,
+			aiProcess_CalcTangentSpace |
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType);
+
+		if (!ai_scene || ai_scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !ai_scene->mRootNode)
+		{
+			ERR("ASSIMP : ", aiGetErrorString());
+			return;
+		}
+		loadNode(path,ai_scene->mRootNode, ai_scene, renderer);
 		aiReleaseImport(ai_scene);
 	}
 }

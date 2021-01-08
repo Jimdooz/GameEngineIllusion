@@ -58,7 +58,7 @@ namespace illusion::defaultshape {
 		cube.vertices = vertices;
 		cube.indices = indices;
 
-		cube.Setup();
+		cube.SetupOnGPU();
 	}
 
 	void InitializeIcoSphere() {
@@ -83,7 +83,7 @@ namespace illusion::defaultshape {
 		icoSphere.vertices = vertices;
 		icoSphere.indices = indices;
 
-		icoSphere.Setup();
+		icoSphere.SetupOnGPU();
 	}
 
 	void Initialize() {

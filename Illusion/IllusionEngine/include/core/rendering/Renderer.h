@@ -28,20 +28,21 @@ namespace illusion {
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		GLuint VAO, VBO, EBO;
-		bool isSetup;
+		bool isSetupOnGPU;
 		std::string name;
+		std::string group = "";
+
 		Mesh(std::string name = "unamed mesh") {
 			vertices = std::vector<Vertex>();
 			indices = std::vector<unsigned int>();
 			VAO = 0;
 			VBO = 0;
 			EBO = 0;
-			isSetup = false;
+			isSetupOnGPU = false;
 			this->name = name;
 		}
-		void Setup() {
-			if (isSetup) return;
-			INFO("Setup Mesh");
+		void SetupOnGPU() {
+			if (isSetupOnGPU) return;
 			glGenVertexArrays(1, &VAO);
 			glGenBuffers(1, &VBO);
 			glGenBuffers(1, &EBO);
@@ -74,14 +75,21 @@ namespace illusion {
 			// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
 			// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
 			glBindVertexArray(0);
-			isSetup = true;
-			INFO("End Setup Mesh");
+			isSetupOnGPU = true;
 		}
 		void Bind() {
 			glBindVertexArray(VAO);
 		}
 		void Render() {
 			glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+		}
+		void ClearOnGPU() {
+			if (!isSetupOnGPU) return;
+
+			
+//void glDeleteBuffers(	GLsizei n,
+// 	const GLuint * buffers);
+
 		}
 	};
 
@@ -133,12 +141,14 @@ namespace illusion {
 		size_t instanceRenderingThreshold;
 
 		Renderer(ecs::Scene* _scene);
+		~Renderer();
 
 		/**
 		 * Permet d'ajouter un mesh par son id
 		 */
 		inline void AddMesh(Mesh mesh, size_t idMesh) {
 			meshes[idMesh] = mesh;
+			meshes[idMesh].SetupOnGPU();
 		}
 
 		/**

@@ -246,7 +246,18 @@ namespace illusioneditor::views::GameProject {
 								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
 									itemMaterial = true;
 								}
-							} else {
+							} else if (hasEnding(fileName, ".fbx") || hasEnding(fileName, ".obj") || hasEnding(fileName, ".dae")) {
+								ImGui::TextColored((ImVec4)ImColor(127, 124, 175), fileName.c_str());
+
+								if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+									//illusioneditor::views::MaterialEditor::EditMaterialPath(scene, p.path().string());
+								}
+
+								if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+									//itemMaterial = true;
+								}
+							}
+							else {
 								ImGui::TextColored((ImVec4)ImColor(100, 100, 100), fileName.c_str());
 							}
 

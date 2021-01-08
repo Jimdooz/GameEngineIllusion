@@ -5,6 +5,7 @@
 
 #include "resources/assets/Shaders.h"
 #include "resources/assets/Materials.h"
+#include "resources/assets/Meshes.h"
 
 #include "core/rendering/CoreComponents/pointLight.h"
 
@@ -56,6 +57,11 @@ namespace illusion {
 		materialId[index] = newMaterialId;
 		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
 	}
+	Renderer::~Renderer(){
+		for (auto& [ meshId, mesh ]: meshes) {
+			mesh.ClearOnGPU();
+		}
+	}
 
 	Renderer::Renderer(ecs::Scene* _scene) :
 		scene(_scene),
@@ -82,6 +88,7 @@ namespace illusion {
 		//All Assets
 		auto shaders = illusion::resources::assets::LoadAllShaders();
 		auto materials = illusion::resources::assets::LoadAllMaterials();
+		illusion::resources::assets::LoadAllMeshes(*this);
 
 		for (auto const& shader : shaders) {
 			AddShader(Shader(shader), shader.id);
@@ -139,18 +146,20 @@ namespace illusion {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
 		}
+
+		//@Todo change projection only if one of these values are changed
+		float aspect = (float)Window::width / (float)Window::height;
+		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
+		view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
+
+		//Compute Camera Position
+		Mat4x4 modelCamera = transform->ComputeModel(transform->getIndex(camera->getId(0)));
+		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
+
 		//for each shader
 		for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
 			Shader& shader = shaders[shaderKey];
 			shader.use();
-
-			//@Todo change projection only if one of these values are changed
-			float aspect = (float)Window::width / (float)Window::height;
-			projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-			view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
-
-			Mat4x4 modelCamera = transform->ComputeModel(transform->getIndex(camera->getId(0)));
-			Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
 			//set view and projection matrices
 			shader.setMat4("view", view);
@@ -204,7 +213,8 @@ namespace illusion {
 			//for each Mesh using this shader
 			for (auto const& [meshKey, entitiesArray] : meshMap) {
 				Mesh& mesh = meshes[meshKey];
-				if (!mesh.isSetup) continue;
+				// @Todo : que faire quand le mesh n'est pas setup sur le GPU ? le setup ou juste ignorer ? afficher une erreur  ?
+				if (!mesh.isSetupOnGPU) continue;
 				mesh.Bind();
 
 				//for each instance
