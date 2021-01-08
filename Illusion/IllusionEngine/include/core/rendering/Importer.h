@@ -23,7 +23,7 @@ namespace illusion {
 	static inline glm::mat4 mat4_convert(const aiMatrix3x3& m) { return glm::transpose(glm::make_mat3(&m.a1)); }
 
 
-	Mesh ConvertToMesh(const aiMesh* aimesh, std::string& name, std::string& group) {
+	static Mesh ConvertToMesh(const aiMesh* aimesh, std::string& name, std::string& group) {
 		Mesh mesh;
 		//if (aimesh->HasNormals()) {
 		//	INFO("HasNormals");
@@ -63,7 +63,7 @@ namespace illusion {
 		return mesh;
 	}
 	//Generate ECS hierarchy without adding Meshes to renderer
-	void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::ecs::Scene& scene, ecs::entity_id parentId) {
+	static void processNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::ecs::Scene& scene, ecs::entity_id parentId) {
 		illusion::ecs::entity_id id = scene.CreateEntity();
 		ecs::core::Transform* transform = scene.GetComponent<ecs::core::Transform>();
 		ecs::component_id transform_id = transform->getIndex(id);
@@ -97,7 +97,7 @@ namespace illusion {
 		}
 	}
 	//Load meshes in the renderer
-	void loadNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer& renderer) {
+	static void loadNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer& renderer) {
 		// @Todo : support multiples meshes on the same node		
 		if (node->mNumMeshes > 0) {
 			unsigned int ai_meshid = node->mMeshes[0];
@@ -122,7 +122,7 @@ namespace illusion {
 			loadNode(path, node->mChildren[i], ai_scene, renderer);
 		}
 	}
-	void import3DModel(const char* path, illusion::ecs::Scene& scene)
+	static void import3DModel(const char* path, illusion::ecs::Scene& scene)
 	{
 		illusion::Renderer* renderer = scene.renderer;
 		const aiScene* ai_scene = aiImportFile(path,
@@ -140,7 +140,7 @@ namespace illusion {
 		processNode(path,ai_scene->mRootNode, ai_scene, scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
 		aiReleaseImport(ai_scene);
 	}
-	void load3DModel(const char* path, illusion::Renderer& renderer)
+	static void load3DModel(const char* path, illusion::Renderer& renderer)
 	{
 		const aiScene* ai_scene = aiImportFile(path,
 			aiProcess_CalcTangentSpace |
