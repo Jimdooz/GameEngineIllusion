@@ -6,8 +6,6 @@
 #include "resources/assets/Materials.h"
 #include "resources/assets/Meshes.h"
 
-#include "core/rendering/CoreComponents/pointLight.h"
-
 #include "core/rendering/shapes/defaultShapes.h"
 #include "core/rendering/Importer.h"
 
@@ -71,6 +69,8 @@ namespace illusion {
 	FrameBuffer Renderer::FBAA;
 	FrameBuffer Renderer::FBFeature;
 
+	FrameBuffer Renderer::FBBloomPingPong[2];
+
 	void Renderer::InitializeBuffers() {
 		if (Renderer::frameBufferInitialized) return; //Already Initialized
 
@@ -82,6 +82,13 @@ namespace illusion {
 		Renderer::FBFeature.Reserve();
 		Renderer::FBFeature.GenerateTexture(2);
 		Renderer::FBFeature.Complete();
+
+		//Bloom Frame Buffers
+		for (u32 i = 0; i < 2; i++) {
+			Renderer::FBBloomPingPong[i].Reserve();
+			Renderer::FBBloomPingPong[i].GenerateTexture(1);
+			Renderer::FBBloomPingPong[i].Complete();
+		}
 
 		Renderer::frameBufferInitialized = true;
 	}
@@ -208,17 +215,24 @@ namespace illusion {
 		 *	- etc...
 		 */
 
+		core::rendering::PostProcess& postProcess = *scene->GetComponent<core::rendering::PostProcess>();
+		bool usePostProcess = postProcess.size() > 0;
+		bool useBloom = false;
+		if (usePostProcess) {
+			useBloom = postProcess.bloomEffect[0];
+		}
+
 		// AA first pass & Render Main Scene
 		glEnable(GL_DEPTH_TEST);
 		Renderer::FBAA.Bind();
 		Renderer::FBAA.Clear();
 		Renderer::RenderScene();
 
-		// Post Processing Pass
+		// 1. Post Processing Pass
 		glDisable(GL_DEPTH_TEST);
 		scene->renderer->meshes[2].Bind(); //Bind Main Quad
 
-		// Feature extractions
+		// 2. Feature extractions
 		Shader::featureShader.use();
 		Shader::featureShader.setVec2("screenSize", Vec2(Window::width, Window::height));
 
@@ -228,15 +242,18 @@ namespace illusion {
 		Renderer::FBAA.BindMSTexture(0);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //DRAW QUAD
 
+		// POST PROCESS EFFECT
+		u32 pingPongValue = 0;
+		if(useBloom) pingPongValue = BloomEffect(postProcess);
+
 		// FINAL RENDER
 		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		Shader::screenShader.use();
-		for (u32 i = 0; i < Renderer::FBFeature.nbTextures; i++) {
-			Renderer::FBFeature.BindTexture(i, i);
-		}
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //DRAW QUAD
+		Renderer::FBFeature.BindTexture(0, 0);						//Main Scene
+		if (useBloom) Renderer::FBBloomPingPong[pingPongValue].BindTexture(0, 1); //Bloom result
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);		//DRAW QUAD
 
 		glEnable(GL_DEPTH_TEST);
 	}
@@ -365,5 +382,25 @@ namespace illusion {
 				}
 			}
 		}
+	}
+
+	u32 Renderer::BloomEffect(core::rendering::PostProcess& postProcess) {
+		bool horizontal = true, first_iteration = true;
+		int amount = postProcess.bloomIntensity[0] < 0 ? 0 : postProcess.bloomIntensity[0];
+		Shader::blurShader.use();
+
+		for (unsigned int i = 0; i < amount; i++) {
+			Renderer::FBBloomPingPong[horizontal].Bind();
+			Shader::blurShader.setInt("horizontal", horizontal);
+
+			if(first_iteration) Renderer::FBFeature.BindTexture(1, 0);		// Set Bloom Feature
+			else Renderer::FBBloomPingPong[!horizontal].BindTexture(0, 0);	// Set PingPong Bloom
+
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //DRAW QUAD
+			horizontal = !horizontal;
+			if (first_iteration) first_iteration = false;
+		}
+
+		return horizontal ? 1 : 0;
 	}
 }
