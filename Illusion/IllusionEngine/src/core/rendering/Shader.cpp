@@ -181,11 +181,54 @@ char DEFAULT_FRAGMENT_SCREEN_SHADER[] = R"(
 out vec4 FragColor;
   
 in vec2 TexCoords;
-uniform sampler2D screenTexture;
+uniform sampler2D scene;
 uniform sampler2D bloomBlur;
 
 void main() { 
-    FragColor = texture2D(screenTexture, TexCoords);
+    const float gamma = 2.2;
+    const float exposure = 2.0;
+    vec3 hdrColor = texture2D(scene, TexCoords).rgb;
+    vec3 bloomColor = texture(bloomBlur, TexCoords).rgb;
+    hdrColor += bloomColor; // additive blending
+    // Tone mapping
+    vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
+    // Gamma correction
+    //result = pow(result, vec3(1.0 / gamma));
+    FragColor = vec4(result, 1.0);
+}
+)";
+
+/**
+ * Fragment Shader Bloom
+ */
+char DEFAULT_FRAGMENT_BLUR_SHADER[] = R"(
+#version 330 core
+out vec4 FragColor;
+  
+in vec2 TexCoords;
+
+uniform sampler2D image;
+  
+uniform bool horizontal;
+uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+
+void main() {             
+    vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
+    vec3 result = texture(image, TexCoords).rgb * weight[0]; // current fragment's contribution
+    //tex_offset *= 2.0;
+    if(horizontal) {
+        for(int i = 1; i < 5; ++i) {
+            result += texture(image, TexCoords + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+            result += texture(image, TexCoords - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+        }
+    }
+    else {
+        for(int i = 1; i < 5; ++i) {
+            result += texture(image, TexCoords + vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+            result += texture(image, TexCoords - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+        }
+    }
+    FragColor = vec4(result, 1.0);
 }
 )";
 
@@ -193,3 +236,5 @@ illusion::resources::assets::ShaderResource Shader::defaultShaderResource;
 Shader Shader::defaultShader;
 Shader Shader::featureShader;
 Shader Shader::screenShader;
+
+Shader Shader::blurShader;

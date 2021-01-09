@@ -8,6 +8,8 @@
 #include "ecs/CoreComponents/Camera.h"
 
 #include "core/rendering/CoreComponents/directionalLight.h"
+#include "core/rendering/CoreComponents/PostProcess.h"
+#include "core/rendering/CoreComponents/pointLight.h"
 #include "resources/assets/Materials.h"
 
 #include "core/animation/Bone.h"
@@ -373,6 +375,8 @@ namespace illusion {
 		void Render();//@Todo register draw calls and num entities rendered per frame
 		void RenderScene();
 
+		u32 BloomEffect(core::rendering::PostProcess& postProcess); //Return the ping pong value FB
+
 		/*********************************************/
 		/* STATIC SYSTEM							 */
 		/*********************************************/
@@ -381,6 +385,9 @@ namespace illusion {
 
 		static FrameBuffer FBAA; //Frame buffer anti aliasing
 		static FrameBuffer FBFeature; //Frame buffer Features
+
+		// Post Process Buffer
+		static FrameBuffer FBBloomPingPong[];
 
 		static void InitializeBuffers();
 	};

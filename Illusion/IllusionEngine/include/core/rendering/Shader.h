@@ -18,6 +18,8 @@ char DEFAULT_VERTEX_QUAD_SHADER[];
 char DEFAULT_FRAGMENT_FEATURE_SHADER[];
 char DEFAULT_FRAGMENT_SCREEN_SHADER[];
 
+char DEFAULT_FRAGMENT_BLUR_SHADER[];
+
 class Shader
 {
 public:
@@ -160,14 +162,20 @@ public:
         Shader::screenShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_SCREEN_SHADER);
 
         screenShader.use();
-        screenShader.setInt("screenTexture", 0);
+        screenShader.setInt("scene", 0);
         screenShader.setInt("bloomBlur", 1);
+
+        Shader::blurShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_BLUR_SHADER);
+        blurShader.use();
+        blurShader.setInt("image", 0);
     }
 
     static illusion::resources::assets::ShaderResource defaultShaderResource;
     static Shader defaultShader;
     static Shader featureShader;
     static Shader screenShader;
+
+    static Shader blurShader;
 
 private:
     // utility function for checking shader compilation/linking errors.
