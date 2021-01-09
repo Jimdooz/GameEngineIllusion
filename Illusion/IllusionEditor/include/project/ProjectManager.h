@@ -90,7 +90,7 @@ namespace illusioneditor::project {
 		bool SaveScene(illusion::ecs::Scene &scene) {
 			std::ofstream myfile;
 			myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-			myfile << illusion::resources::assets::ExportScene(scene).dump(4);
+			myfile << illusion::resources::assets::ExportScene(scene).dump();
 			myfile.close();
 
 			return true;
