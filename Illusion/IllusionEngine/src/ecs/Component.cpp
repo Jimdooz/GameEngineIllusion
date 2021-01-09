@@ -10,6 +10,8 @@
 #include "core/rendering/CoreComponents/directionalLight.h"
 #include "core/rendering/CoreComponents/pointLight.h"
 
+#include "core/animation/CoreComponents/Animator.h"
+
 using namespace illusion::core;
 
 namespace illusion::ecs {
@@ -78,5 +80,7 @@ namespace illusion::ecs {
 
 		Component::AppendComponents<rendering::DirectionalLight>();
 		Component::AppendComponents<rendering::PointLight>();
+
+		Component::AppendComponents<animation::Animator>();
 	}
 }

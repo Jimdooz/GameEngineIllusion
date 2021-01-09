@@ -54,7 +54,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexChildId)) return;
 
-		// Si childId n'a pas d�j� le parent en id
+		// Si childId n'a pas déjà le parent en id
 		util::Array<ecs::entity_id>& childsId = childs[indexId];
 		if(parent[indexChildId] != id){
 			childsId.push_back(childId);
@@ -124,6 +124,33 @@ namespace illusion::ecs::core {
 		currentTick[component] = Time::tick;
 
 		return model;
+	}
+
+	ecs::entity_id Transform::FindByName(ecs::entity_id parent, std::string path) {
+		if (!id::IsValid(parent) || !scene->entities.IsAlive(parent)) return (ecs::entity_id)id::invalid_id;
+		ecs::entity_id currentIdFound = parent;
+		
+		std::stringstream test(path);
+		std::string segment;
+		std::vector<std::string> segname;
+
+		while (std::getline(test, segment, '/')) segname.push_back(segment);
+
+
+		for (size_t i = 1, size = segname.size(); i < size; i++) {
+			util::Array<ecs::entity_id>& childsElement = childs[getIndex(currentIdFound)];
+			bool found = false;
+			for (size_t j = 0; j < childsElement.size(); j++) {
+				if (name[getIndex(childsElement[j])] == segname[i]) {
+					currentIdFound = childsElement[j];
+					found = true;
+					break;
+				}
+			}
+			if(!found) return (ecs::entity_id)id::invalid_id;
+		}
+
+		return currentIdFound;
 	}
 
 	void Transform::AddDatas(ecs::entity_id id) {

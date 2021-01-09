@@ -62,7 +62,7 @@ using namespace illusion::core::physics;
 int main(int argc, char* argv[]) {
 	// Create Window
 	//--------
-	Window::Create(1280,720,"MyGame");
+	Window::Create(1792, 1008,"Illusion Engine");
 
 	// Test [Romain Saclier]
 	//--------
@@ -95,6 +95,8 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
 	//Systems
+	illusion::ecs::System::AppendCoreSystems();
+
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
@@ -250,7 +252,12 @@ int main(int argc, char* argv[]) {
 			while (physicsTime >= Time::unscaledFixedDeltaTime) {
 				physicsTime -= Time::unscaledFixedDeltaTime;
 
-				if (scene.pause) continue;
+				//FIXED UPDATE
+				//--------
+				if (views::GameStats::StartChronoData("FixedUpdate Loop", "Game")) {
+					scene.FixedUpdate();
+				}
+				views::GameStats::EndChronoData("FixedUpdate Loop", "Game");
 				
 				ComputePhysics(scene);
 				if (stepMode) scene.pause = true;
@@ -273,6 +280,13 @@ int main(int argc, char* argv[]) {
 			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
 				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
 		}
+
+		//LATE UPDATE
+		//--------
+		if (views::GameStats::StartChronoData("LateUpdate Loop", "Game")) {
+			scene.LateUpdate();
+		}
+		views::GameStats::EndChronoData("LateUpdate Loop", "Game");
 
 		//RENDERING
 		//--------

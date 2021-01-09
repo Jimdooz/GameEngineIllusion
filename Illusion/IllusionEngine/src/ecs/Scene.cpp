@@ -62,6 +62,21 @@ namespace illusion::ecs {
 			val->Update();
 		}
 	}
+
+	void Scene::LateUpdate() {
+		if (pause) return;
+		for (auto const& [key, val] : systems) {
+			val->LateUpdate();
+		}
+	}
+
+	void Scene::FixedUpdate() {
+		if (pause) return;
+		for (auto const& [key, val] : systems) {
+			val->FixedUpdate();
+		}
+	}
+
 	void Scene::EntityAddComponent(entity_id id, size_t componentHash) {
 		if (!entities.IsAlive(id)) return;
 		components[componentHash]->UseComponent(id);

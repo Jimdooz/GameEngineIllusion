@@ -13,6 +13,16 @@
 	u32 size = static_cast<u32>(ToEntity.size()); \
 	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
 
+#define SYSTEM_LATE_UPDATE_LOOP(BEHAVIOUR) \
+	virtual void LateUpdate() override { \
+	u32 size = static_cast<u32>(ToEntity.size()); \
+	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
+
+#define SYSTEM_FIXED_UPDATE_LOOP(BEHAVIOUR) \
+	virtual void FixedUpdate() override { \
+	u32 size = static_cast<u32>(ToEntity.size()); \
+	for (currIndex = 0; currIndex < size; currIndex++) { BEHAVIOUR }}
+
  /**
   * Macro permettant d'automatiser la d�claration de fonctions inline pour obtenir des donn�es de components
   * Cette macro pourra �tre utilis� pour permettre d'obtenir facilement les donn�e de l'entit� actuelle dans les diff�rentes boucles [Update, FixedUpdate, LateUpdate]
