@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<PlanetComponent>();
 	scene.UseComponent<JumpBigCube>();
 	scene.UseComponent<MeshInstance>();
+	scene.UseComponent<animation::Skeleton>();
 
 	scene.UseSystem<PlanetSystem>();
 	scene.UseSystem<JumpBigCubeSystem>();

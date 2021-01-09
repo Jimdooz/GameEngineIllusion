@@ -277,6 +277,7 @@ namespace illusion {
 		ecs::core::Camera* camera;
 		ecs::core::Transform* transform;
 		MeshInstance* meshInstance;
+		animation::Skeleton* skeleton;
 
 		Mat4x4 projection;
 		Mat4x4 view;

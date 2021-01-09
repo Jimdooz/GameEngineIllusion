@@ -92,6 +92,7 @@ namespace illusion {
 		camera(scene->GetComponent<ecs::core::Camera>()),
 		transform(scene->GetComponent<ecs::core::Transform>()),
 		meshInstance(scene->GetComponent<MeshInstance>()),
+		skeleton(scene->GetComponent<animation::Skeleton>()),
 		instanceRenderingThreshold(3)
 	{
 		Renderer::InitializeBuffers();
@@ -334,23 +335,26 @@ namespace illusion {
 					}
 					//set Skelletons uniforms if it has one
 					//@Todo get skeletonComponent
-					//if(mesh.HasSkeleton()){
-					//	if(!skeleton.idsComputed){
-					//		//compute ids
-					//		//for (animation::Bone& bone : skeleton.bones) {
-					//		//	bone.id = transform->FindByName(instance_id,bone.relativePath);
-					//		//}
-					//		skeleton.idsComputed=true;
-					//	}
+					if(mesh.HasSkeleton()){
+						ecs::component_id skeletonId = skeleton->getIndex(instance_id);
+						if (ecs::id::IsValid(skeletonId)) { //@Todo isvalid
+							if (!skeleton->idsComputed[skeletonId]) {
+								//compute ids
+								for (animation::Bone& bone : skeleton->bones[skeletonId]) {
+									bone.id = transform->FindByName(instance_id,bone.relativePath);
+								}
+								skeleton->idsComputed[skeletonId]= true;
+							}
 
-						// get transformation of the entity representing the bone
-						//Mat4x4 bonesMatrices[NUM_BONES_PER_MESH];
-						//for(animation::Bone& bone : mesh.skeleton.bones){
-						//	ecs::component_id idTransform =transform->getIndex(bone.id);
-						//}
-						//	set bone transformation uniforms
-					//	shader.setMat4("bones",bonesMatrices[0],NUM_BONES_PER_MESH);
-					//}
+							//get transformation of the entity representing the bone
+							Mat4x4 bonesMatrices[NUM_BONES_PER_MESH];
+							for (animation::Bone& bone : skeleton->bones[skeletonId]) {
+								ecs::component_id idTransform = transform->getIndex(bone.id);
+							}
+							//set bone transformation uniforms
+							shader.setMat4("bones", bonesMatrices[0], NUM_BONES_PER_MESH);
+						}
+					}
 
 					//get all model matrices and put them in a BufferObject
 					//set the Buffer object to instance
