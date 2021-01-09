@@ -44,6 +44,13 @@ namespace illusioneditor::project {
 			configFile.close();
 
 			illusion::ecs::Scene scene;
+
+			//Create Camera
+			illusion::ecs::entity_id entity = scene.CreateEntity();
+			scene.GetComponent<illusion::ecs::core::Transform>()->name[entity] = "Camera";
+			scene.GetComponent<illusion::ecs::core::Transform>()->position[entity] = Vec3(0, 0, 3);
+			scene.EntityAddComponent<illusion::ecs::core::Camera>(entity);
+
 			std::ofstream mySceneFile;
 			mySceneFile.open(realProjectPath + "\\Assets\\Scenes\\default.scene");
 			mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);

@@ -11,6 +11,7 @@
 #include "core/rendering/shapes/defaultShapes.h"
 #include "core/rendering/Importer.h"
 
+
 namespace illusion {
 	void MeshInstance::OnEntityDuplicate(ecs::entity_id id) {
 		ecs::component_id index = getIndex(id);
@@ -59,12 +60,33 @@ namespace illusion {
 		materialId[index] = newMaterialId;
 		scene->renderer->AddMeshMaterial(materialId[index], meshId[index], id);
 	}
-	Renderer::~Renderer() {
-		for (auto& [meshId, mesh] : meshes) {
-			mesh.ClearOnGPU();
-		}
+
+	/**
+	 * Renderer Part
+	 */
+
+	// STATIC PART
+	bool Renderer::frameBufferInitialized = false;
+
+	FrameBuffer Renderer::FBAA;
+	FrameBuffer Renderer::FBFeature;
+
+	void Renderer::InitializeBuffers() {
+		if (Renderer::frameBufferInitialized) return; //Already Initialized
+
+		Renderer::FBAA.Reserve();
+		Renderer::FBAA.GenerateMSTexture(1, 4);
+		Renderer::FBAA.GenerateDepthStencil(4);
+		Renderer::FBAA.Complete();
+
+		Renderer::FBFeature.Reserve();
+		Renderer::FBFeature.GenerateTexture(2);
+		Renderer::FBFeature.Complete();
+
+		Renderer::frameBufferInitialized = true;
 	}
 
+	// OBJECT PART
 	Renderer::Renderer(ecs::Scene* _scene) :
 		scene(_scene),
 		camera(scene->GetComponent<ecs::core::Camera>()),
@@ -72,9 +94,17 @@ namespace illusion {
 		meshInstance(scene->GetComponent<MeshInstance>()),
 		instanceRenderingThreshold(3)
 	{
+		Renderer::InitializeBuffers();
+
 		GenerateShaders();
 		GenerateMaterials();
 		GenerateMeshes();
+	}
+
+	Renderer::~Renderer() {
+		for (auto& [meshId, mesh] : meshes) {
+			mesh.ClearOnGPU();
+		}
 	}
 
 	void Renderer::AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
@@ -151,6 +181,7 @@ namespace illusion {
 		//Default Mesh
 		AddMesh(illusion::defaultshape::Cube(), 0);
 		AddMesh(illusion::defaultshape::IcoSphere(), 1);
+		AddMesh(illusion::defaultshape::Quad(), 2);
 
 		if (illusion::resources::CurrentProject().path == "") return;
 		illusion::resources::assets::LoadAllMeshes(*this);
@@ -162,6 +193,54 @@ namespace illusion {
 			return;
 		}
 
+		/**
+		 * Frame Buffer
+		 * FBAA : Frame buffer anti aliasing
+		 * FBFeature : Frame buffer to extract features & create main texture
+		 *	- Texture 0 : Main rendering
+		 *  - Texture 1 : Bloom
+		 * { Frame Buffer Post Process } : Depend on effects created
+		 * FBMain = 0 : Render the all system with effects etc etc...
+		 *	- Texture 0 : Main rendering
+		 *  - Texture 1 : Bloom
+		 *  - Texture 2 : Shadow Map
+		 *	- etc...
+		 */
+
+		// AA first pass & Render Main Scene
+		glEnable(GL_DEPTH_TEST);
+		Renderer::FBAA.Bind();
+		Renderer::FBAA.Clear();
+		Renderer::RenderScene();
+
+		// Post Processing Pass
+		glDisable(GL_DEPTH_TEST);
+		scene->renderer->meshes[2].Bind(); //Bind Main Quad
+
+		// Feature extractions
+		Shader::featureShader.use();
+		Shader::featureShader.setVec2("screenSize", Vec2(Window::width, Window::height));
+
+		Renderer::FBFeature.Bind();
+		Renderer::FBFeature.Clear();
+
+		Renderer::FBAA.BindMSTexture(0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //DRAW QUAD
+
+		// FINAL RENDER
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		Shader::screenShader.use();
+		for (u32 i = 0; i < Renderer::FBFeature.nbTextures; i++) {
+			Renderer::FBFeature.BindTexture(i, i);
+		}
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //DRAW QUAD
+
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	void Renderer::RenderScene() {
 		//@Todo change projection only if one of these values are changed
 		float aspect = (float)Window::width / (float)Window::height;
 		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
@@ -234,15 +313,15 @@ namespace illusion {
 
 				//for each instance
 				size_t numInstances = entitiesArray.size();
+
 				for (size_t i = 0; i < numInstances; i++) {
 					ecs::entity_id instance_id = entitiesArray[i];
 					ecs::component_id idTransform = transform->getIndex(instance_id);
 					ecs::component_id idMesh = meshInstance->getIndex(instance_id);
 					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
 
-					// @Todo get Material
 					Material& material = materials[meshInstance->materialId[idMesh]];
-
+					//set material uniforms
 					for (json::iterator it = shader.resource.uniforms.begin(); it != shader.resource.uniforms.end(); ++it) {
 						json value = material.uniforms[it.key()];
 						const std::string typeV = it.value()["type"];
@@ -253,6 +332,25 @@ namespace illusion {
 						else if (typeV == "Vec3" || typeV == "Color3") { shader.setVec3(index, value[0], value[1], value[2]); }
 						else if (typeV == "Vec4" || typeV == "Color4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
 					}
+					//set Skelletons uniforms if it has one
+					//@Todo get skeletonComponent
+					//if(mesh.HasSkeleton()){
+					//	if(!skeleton.idsComputed){
+					//		//compute ids
+					//		//for (animation::Bone& bone : skeleton.bones) {
+					//		//	bone.id = transform->FindByName(instance_id,bone.relativePath);
+					//		//}
+					//		skeleton.idsComputed=true;
+					//	}
+
+						// get transformation of the entity representing the bone
+						//Mat4x4 bonesMatrices[NUM_BONES_PER_MESH];
+						//for(animation::Bone& bone : mesh.skeleton.bones){
+						//	ecs::component_id idTransform =transform->getIndex(bone.id);
+						//}
+						//	set bone transformation uniforms
+					//	shader.setMat4("bones",bonesMatrices[0],NUM_BONES_PER_MESH);
+					//}
 
 					//get all model matrices and put them in a BufferObject
 					//set the Buffer object to instance

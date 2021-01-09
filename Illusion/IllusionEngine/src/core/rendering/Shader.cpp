@@ -1,5 +1,8 @@
 #include "core/rendering/Shader.h"
 
+/**
+ * Principal Vertex Shader pour l'engine
+ */
 char DEFAULT_VERTEX_SHADER[] = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
@@ -23,6 +26,9 @@ void main() {
 }
 )";
 
+/**
+ * Principal Fragment Shader pour l'engine
+ */
 char DEFAULT_FRAGMENT_SHADER[] = R"(
 #version 330 core
 out vec4 FragColor;
@@ -120,5 +126,70 @@ void main() {
 }
 )";
 
+/**
+ * Vertex shader pour pouvoir afficher des quads, utile pour le post process
+ */
+char DEFAULT_VERTEX_QUAD_SHADER[] = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormalPos;
+layout (location = 2) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main() {
+    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0); 
+    TexCoords = aTexCoords;
+} 
+)";
+
+/**
+ * Fragment shader permettant d'extraire les features utiles au post processing + merge le Anti aliasing
+ */
+char DEFAULT_FRAGMENT_FEATURE_SHADER[] = R"(
+#version 330 core
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
+  
+in vec2 TexCoords;
+uniform sampler2DMS screenTextureMS; 
+uniform vec2 screenSize;
+
+void main() {
+	ivec2 vpCoords = ivec2(screenSize.x, screenSize.y);
+	vpCoords.x = int(vpCoords.x * TexCoords.x); 
+	vpCoords.y = int(vpCoords.y * TexCoords.y);
+
+	vec4 sample1 = texelFetch(screenTextureMS, vpCoords, 0);
+	vec4 sample2 = texelFetch(screenTextureMS, vpCoords, 1);
+	vec4 sample3 = texelFetch(screenTextureMS, vpCoords, 2);
+	vec4 sample4 = texelFetch(screenTextureMS, vpCoords, 3);
+
+    FragColor = (sample1 + sample2 + sample3 + sample4) / 4.0f;
+
+    float brightness = FragColor.r;
+    if(brightness > 0.6) BrightColor = vec4(FragColor.rgb, 1.0);
+    else BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+}
+)";
+
+/**
+ * Fragment Shader pour le rendu final
+ */
+char DEFAULT_FRAGMENT_SCREEN_SHADER[] = R"(
+#version 330 core
+out vec4 FragColor;
+  
+in vec2 TexCoords;
+uniform sampler2D screenTexture;
+uniform sampler2D bloomBlur;
+
+void main() { 
+    FragColor = texture2D(screenTexture, TexCoords);
+}
+)";
+
 illusion::resources::assets::ShaderResource Shader::defaultShaderResource;
 Shader Shader::defaultShader;
+Shader Shader::featureShader;
+Shader Shader::screenShader;

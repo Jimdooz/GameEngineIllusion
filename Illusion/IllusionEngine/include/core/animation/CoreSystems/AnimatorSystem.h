@@ -20,7 +20,6 @@ namespace illusion::core::animation {
 		virtual void LateUpdate() override {
 			u32 size = static_cast<u32>(ToEntity.size());
 			for (currIndex = 0; currIndex < size; currIndex++) {
-		
 				// @Todo : Compute id relative
 				AnimatorElement &anim = animator();
 				if (!anim.HasAnimations()) continue;

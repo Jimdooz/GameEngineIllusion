@@ -128,6 +128,7 @@ int main(int argc, char* argv[]) {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 
 	f32 physicsTime = 0.0f;
 
