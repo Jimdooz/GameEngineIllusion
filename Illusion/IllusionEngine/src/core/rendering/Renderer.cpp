@@ -400,6 +400,7 @@ namespace illusion {
 
 							//get transformation of the entity representing the bone
 							Mat4x4 bonesMatrices[NUM_BONES_PER_MESH];
+							// @TODO Error on import when bones > NUM_BONES_PER_MESH
 							for (size_t j = 0,size = skeleton->bones[skeletonId].size(); j < size;j++) {
 								animation::Bone& bone = skeleton->bones[skeletonId][j];
 								ecs::component_id idTransform = transform->getIndex(bone.id);

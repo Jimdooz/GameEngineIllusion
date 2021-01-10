@@ -4,7 +4,7 @@
 #include "ecs/id.h"
 
 constexpr u32 NUM_BONES_PER_VERTEX = 4;
-constexpr u32 NUM_BONES_PER_MESH = 30;
+constexpr u32 NUM_BONES_PER_MESH = 64;
 
 namespace illusion::core::animation {
 

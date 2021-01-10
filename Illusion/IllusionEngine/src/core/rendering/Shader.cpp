@@ -6,7 +6,7 @@
 char DEFAULT_VERTEX_SHADER[] = R"(
 #version 330 core
 #define NUM_BONES_PER_VERTEX 4
-#define NUM_BONES_PER_MESH 30
+#define NUM_BONES_PER_MESH 64
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
