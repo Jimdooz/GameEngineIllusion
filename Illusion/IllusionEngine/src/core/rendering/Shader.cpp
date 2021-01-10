@@ -22,7 +22,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform bool SkeletonActive;
+uniform float SkeletonActive;
 uniform mat4 Bones[NUM_BONES_PER_MESH];
 
 
@@ -30,7 +30,7 @@ void main() {
     mat4 modelComputed = model;
     mat4 vp = projection * view;
 
-    if(SkeletonActive){
+    if(SkeletonActive > 0.0){
         mat4 bonesTransform = Bones[aBoneIds[0]] * aBoneWeights[0];
         for(int i=1; i<NUM_BONES_PER_VERTEX; i++){
             bonesTransform += Bones[aBoneIds[i]] * aBoneWeights[i];

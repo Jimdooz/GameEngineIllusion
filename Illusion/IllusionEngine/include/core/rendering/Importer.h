@@ -22,9 +22,14 @@ namespace illusion {
 	static inline glm::vec3 vec3_convert(const aiVector3D& v) { return glm::vec3(v.x, v.y, v.z); }
 	static inline glm::vec2 vec2_convert(const aiVector3D& v) { return glm::vec2(v.x, v.y); }
 	static inline glm::quat quat_convert(const aiQuaternion& q) { return glm::quat(q.w, q.x, q.y, q.z); }
-	static inline glm::mat4 mat4_convert(const aiMatrix4x4& m) { return glm::transpose(glm::make_mat4(&m.a1)); }
-	//mat3
-	static inline glm::mat4 mat4_convert(const aiMatrix3x3& m) { return glm::transpose(glm::make_mat3(&m.a1)); }
+	static inline glm::mat4 mat4_convert(const aiMatrix4x4& m) {
+		return Mat4x4(
+			Vec4(m[0][0], m[0][1], m[0][2], m[0][3]),
+			Vec4(m[1][0], m[1][1], m[1][2], m[1][3]),
+			Vec4(m[2][0], m[2][1], m[2][2], m[2][3]),
+			Vec4(m[3][0], m[3][1], m[3][2], m[3][3])
+		);
+	}
 	static std::string GetParentRelativePath(aiNode* ai_parent, aiNode* ai_node) {
 		if (ai_node == nullptr) {
 			INTERNAL_ERR("NULL NODE ");
@@ -201,7 +206,7 @@ namespace illusion {
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
 		transform->position[transform_id] = position * 0.01f;
-		transform->rotation[transform_id] = glm::conjugate(rotation); // Conjugate rotation to apply the correct quaternion with decompose
+		transform->rotation[transform_id] = Quaternion(); // Conjugate rotation to apply the correct quaternion with decompose
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same ai_node		
 		if (ai_node->mNumMeshes > 0) {

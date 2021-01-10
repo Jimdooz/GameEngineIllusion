@@ -301,6 +301,7 @@ namespace illusion {
 			//set view and projection matrices
 			shader.setMat4("view", view);
 			shader.setMat4("projection", projection);
+			shader.setFloat("SkeletonActive", 0.0f);
 
 			core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
 			core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();
@@ -377,11 +378,11 @@ namespace illusion {
 					}
 					//set Skelletons uniforms if it has one
 					//@Todo get skeletonComponent
-					shader.setBool("SkeletonActive", false);
+					shader.setFloat("SkeletonActive", 0.0f);
 					if(mesh.HasSkeleton()){
 						ecs::component_id skeletonId = skeleton->getIndex(instance_id);
 						if (ecs::id::IsValid(skeletonId)) { //@Todo isvalid
-							shader.setBool("SkeletonActive", true);
+							shader.setFloat("SkeletonActive", 1.0f);
 							if (!skeleton->idsComputed[skeletonId]) {
 								//compute ids
 								//parentid
