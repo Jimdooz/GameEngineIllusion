@@ -17,16 +17,16 @@ namespace illusion::core::physics {
 		colliders1.clear();
 		colliders2.clear();
 		results.clear();
-		f32 LinearProjectionPercent = 0.8f;
+		f32 LinearProjectionPercent = 0.45f;
 		f32 PenetrationSlack = 0.01f;
-		int ImpulseIteration = 7;
+		int ImpulseIteration = 10;
 
 		RigidBody* rigidbodies = scene.GetComponent<RigidBody>();
 		BoxCollider* boxColliders = scene.GetComponent<BoxCollider>();
 		SphereCollider* sphereColliders = scene.GetComponent<SphereCollider>();
 
 		size_t toReserve = (boxColliders->ToEntity.size() - 1) * (boxColliders->ToEntity.size() - 1);
-
+		 
 		colliders1.reserve(toReserve);
 		colliders2.reserve(toReserve);
 		results.reserve(toReserve);

@@ -38,7 +38,7 @@ namespace illusion::core::animation {
 				auto A = rotationKeys[nearIndex];
 				auto B = rotationKeys[(nearIndex + 1) % rotationKeys.size()];
 				f32 interpolation = ComputeInterpolation(time, A, B);
-				computedRotation = glm::mix(A.value, B.value, interpolation);
+				computedRotation = glm::slerp(A.value, B.value, interpolation);
 			}
 			if (scaleKeys.size() > 0) {
 				size_t nearIndex = GetNearKey(time, scaleKeys);
