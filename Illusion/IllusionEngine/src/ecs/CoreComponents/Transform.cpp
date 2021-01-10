@@ -94,8 +94,8 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
-	Mat4x4& Transform::ComputeModel(ecs::component_id component) {
-		if (currentTick[component] == Time::tick) return modelTransform[component];
+	Mat4x4& Transform::ComputeModel(ecs::component_id component, bool forceRecompute) {
+		if (!forceRecompute && currentTick[component] == Time::tick) return modelTransform[component];
 
 		glm::mat4 &model = modelTransform[component];
 

@@ -68,6 +68,11 @@ namespace illusion {
 	static animation::Bone ConvertToBone(const aiScene* ai_scene, aiNode* ai_node, aiBone* ai_bone) {
 		animation::Bone bone;
 		bone.offset = mat4_convert(ai_bone->mOffsetMatrix);
+		//Scale translation
+		//bone.offset[0][3] *= 0.01f;
+		//bone.offset[1][3] *= 0.01f;
+		//bone.offset[2][3] *= 0.01f;
+		INTERNAL_INFO(bone.offset);
 		aiNode* ai_bonenode = ai_scene->mRootNode->FindNode(ai_bone->mName);
 		std::string nodePath = GetParentRelativePath(ai_scene->mRootNode, ai_node);
 		std::string bonePath = GetNodeRelativePath(ai_scene->mRootNode, ai_bonenode);
@@ -88,7 +93,7 @@ namespace illusion {
 		aiVectorKey* ai_positionKeys = ai_channel->mPositionKeys;
 		for (int i = 0; i < ai_channel->mNumPositionKeys; i++) {
 			animation::Key<Vec3> key = ConvertToKey(ai_positionKeys[i], ticksPerSeconds);
-			key.value *= 0.01f;
+			//key.value *= 0.01f;
 			channel.positionKeys.push_back(key);
 		}
 		aiQuatKey* ai_rotationKeys = ai_channel->mRotationKeys;
@@ -138,7 +143,7 @@ namespace illusion {
 		//}
 		for (int i = 0;i < ai_mesh->mNumVertices; i++) {
 			auto current_Position = ai_mesh->mVertices[i];
-			current_Position *= 0.01f;
+			//current_Position *= 0.01f;
 			auto current_Normal = ai_mesh->mNormals[i];
 			aiVector3D current_Uv;
 			if (ai_mesh->HasTextureCoords(0)) {
@@ -205,7 +210,7 @@ namespace illusion {
 		Quaternion rotation;
 		Vec4 perspective;
 		glm::decompose(transformation, scale, rotation, position, skew, perspective);
-		transform->position[transform_id] = position * 0.01f;
+		transform->position[transform_id] = position; //*0.01f
 		transform->rotation[transform_id] = Quaternion(); // Conjugate rotation to apply the correct quaternion with decompose
 		transform->scale[transform_id] = scale;
 		// @Todo : support multiples meshes on the same ai_node		

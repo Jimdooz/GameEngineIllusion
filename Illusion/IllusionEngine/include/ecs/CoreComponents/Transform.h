@@ -76,7 +76,7 @@ namespace illusion::ecs::core {
 		 */
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
 
-		Mat4x4 &ComputeModel(ecs::component_id component);
+		Mat4x4 &ComputeModel(ecs::component_id component, bool forceRecompute = false);
 
 		ecs::entity_id FindByName(ecs::entity_id parent, std::string path);
 

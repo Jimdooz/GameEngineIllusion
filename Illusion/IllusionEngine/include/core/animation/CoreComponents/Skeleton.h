@@ -11,6 +11,7 @@ namespace illusion::core::animation {
 
 		Skeleton(Scene* scene) : Component(scene) {
 			COMPONENT_PROTECTED(bones);
+			COMPONENT_PROTECTED(parentRelativePath);
 		}
 
 		COMPONENT_NAME("Skeleton");
