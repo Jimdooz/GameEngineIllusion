@@ -22,19 +22,13 @@ namespace illusion {
 	static inline glm::vec3 vec3_convert(const aiVector3D& v) { return glm::vec3(v.x, v.y, v.z); }
 	static inline glm::vec2 vec2_convert(const aiVector3D& v) { return glm::vec2(v.x, v.y); }
 	static inline glm::quat quat_convert(const aiQuaternion& q) { return glm::quat(q.w, q.x, q.y, q.z); }
-	static inline glm::mat4 mat4_convert(const aiMatrix4x4& m) {
-		/*return Mat4x4(
-			Vec4(m[0][0], m[0][1], m[0][2], m[0][3]),
-			Vec4(m[1][0], m[1][1], m[1][2], m[1][3]),
-			Vec4(m[2][0], m[2][1], m[2][2], m[2][3]),
-			Vec4(m[3][0], m[3][1], m[3][2], m[3][3])
-		);*/
-		return Mat4x4(
-			Vec4(m[0][0], m[1][0], m[2][0], m[3][0]),
-			Vec4(m[0][1], m[1][1], m[2][1], m[3][1]),
-			Vec4(m[0][2], m[1][2], m[2][2], m[3][2]),
-			Vec4(m[0][3], m[1][3], m[2][3], m[3][3])
-		);
+	static inline glm::mat4 mat4_convert(const aiMatrix4x4& aiMat) {
+		return {
+			aiMat.a1, aiMat.b1, aiMat.c1, aiMat.d1,
+			aiMat.a2, aiMat.b2, aiMat.c2, aiMat.d2,
+			aiMat.a3, aiMat.b3, aiMat.c3, aiMat.d3,
+			aiMat.a4, aiMat.b4, aiMat.c4, aiMat.d4
+		};
 	}
 	static std::string GetParentRelativePath(aiNode* ai_parent, aiNode* ai_node) {
 		if (ai_node == nullptr) {
