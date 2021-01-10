@@ -218,8 +218,25 @@ namespace illusion {
 		core::rendering::PostProcess& postProcess = *scene->GetComponent<core::rendering::PostProcess>();
 		bool usePostProcess = postProcess.size() > 0;
 		bool useBloom = false;
+
+		float gamma = 1.0f;
+		float exposure = 1.0f;
+
+		float bloomThreshold = 1.0f;
+		float bloomIntensity = 0.0f;
+
 		if (usePostProcess) {
 			useBloom = postProcess.bloomEffect[0];
+			gamma = postProcess.gamma[0];
+			gamma = gamma <= 0 ? 0.001 : gamma;
+			exposure = postProcess.exposure[0];
+		}
+
+		if (useBloom) {
+			bloomThreshold = postProcess.bloomExpansion[0];
+			bloomThreshold = bloomThreshold < 0 ? 0 : bloomThreshold;
+			bloomIntensity = postProcess.bloomIntensity[0];
+			bloomIntensity = bloomIntensity < 0 ? 0 : bloomIntensity;
 		}
 
 		// AA first pass & Render Main Scene
@@ -235,6 +252,7 @@ namespace illusion {
 		// 2. Feature extractions
 		Shader::featureShader.use();
 		Shader::featureShader.setVec2("screenSize", Vec2(Window::width, Window::height));
+		Shader::featureShader.setFloat("bloomThreshold", bloomThreshold);
 
 		Renderer::FBFeature.Bind();
 		Renderer::FBFeature.Clear();
@@ -251,8 +269,15 @@ namespace illusion {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		Shader::screenShader.use();
+		//Shader Screen : Textures datas
 		Renderer::FBFeature.BindTexture(0, 0);						//Main Scene
 		if (useBloom) Renderer::FBBloomPingPong[pingPongValue].BindTexture(0, 1); //Bloom result
+
+		//Shader Screen : Post process datas
+		Shader::screenShader.setFloat("gamma", gamma);
+		Shader::screenShader.setFloat("exposure", exposure);
+		Shader::screenShader.setFloat("bloomIntensity", bloomIntensity);
+
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);		//DRAW QUAD
 
 		glEnable(GL_DEPTH_TEST);
@@ -352,11 +377,16 @@ namespace illusion {
 					}
 					//set Skelletons uniforms if it has one
 					//@Todo get skeletonComponent
+					shader.setBool("SkeletonActive", false);
 					if(mesh.HasSkeleton()){
 						ecs::component_id skeletonId = skeleton->getIndex(instance_id);
 						if (ecs::id::IsValid(skeletonId)) { //@Todo isvalid
+							shader.setBool("SkeletonActive", true);
 							if (!skeleton->idsComputed[skeletonId]) {
 								//compute ids
+								//parentid
+								skeleton->parentId[skeletonId]=transform->FindByName(instance_id,skeleton->parentRelativePath[skeletonId]);
+								//bone ids
 								for (animation::Bone& bone : skeleton->bones[skeletonId]) {
 									bone.id = transform->FindByName(instance_id,bone.relativePath);
 								}
@@ -365,11 +395,14 @@ namespace illusion {
 
 							//get transformation of the entity representing the bone
 							Mat4x4 bonesMatrices[NUM_BONES_PER_MESH];
-							for (animation::Bone& bone : skeleton->bones[skeletonId]) {
+							for (size_t j = 0,size = skeleton->bones[skeletonId].size(); j < size;j++) {
+								animation::Bone& bone = skeleton->bones[skeletonId][j];
 								ecs::component_id idTransform = transform->getIndex(bone.id);
+								ecs::component_id parentIdTransform = transform->getIndex(skeleton->parentId[skeletonId]);
+								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform);
 							}
 							//set bone transformation uniforms
-							shader.setMat4("bones", bonesMatrices[0], NUM_BONES_PER_MESH);
+							shader.setMat4("Bones", bonesMatrices[0], NUM_BONES_PER_MESH);
 						}
 					}
 
@@ -386,8 +419,15 @@ namespace illusion {
 
 	u32 Renderer::BloomEffect(core::rendering::PostProcess& postProcess) {
 		bool horizontal = true, first_iteration = true;
-		int amount = postProcess.bloomIntensity[0] < 0 ? 0 : postProcess.bloomIntensity[0];
+		unsigned int amount = postProcess.bloomDiffusion[0] < 1 ? 1 : postProcess.bloomDiffusion[0];
+		if (amount > 200) amount = 200;
+
+		float bloomExpansion = postProcess.bloomExpansion[0];
+		bloomExpansion = bloomExpansion <= 1 ? 1 : bloomExpansion > 100 ? 100 : bloomExpansion;
+
 		Shader::blurShader.use();
+
+		Shader::blurShader.setFloat("expansion", bloomExpansion);
 
 		for (unsigned int i = 0; i < amount; i++) {
 			Renderer::FBBloomPingPong[horizontal].Bind();
@@ -401,6 +441,6 @@ namespace illusion {
 			if (first_iteration) first_iteration = false;
 		}
 
-		return horizontal ? 1 : 0;
+		return horizontal ? 0 : 1;
 	}
 }

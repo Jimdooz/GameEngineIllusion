@@ -4,7 +4,7 @@
 #include "ecs/id.h"
 
 constexpr u32 NUM_BONES_PER_VERTEX = 4;
-constexpr u32 NUM_BONES_PER_MESH = 100;
+constexpr u32 NUM_BONES_PER_MESH = 30;
 
 namespace illusion::core::animation {
 
@@ -15,7 +15,7 @@ namespace illusion::core::animation {
 	};
 
 	struct VertexBoneData {
-		GLuint ids[NUM_BONES_PER_VERTEX] = { 0 };
+		GLuint boneIds[NUM_BONES_PER_VERTEX] = { 0 };
 		GLfloat weights[NUM_BONES_PER_VERTEX] = { 0 };
 	};
 

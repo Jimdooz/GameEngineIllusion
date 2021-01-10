@@ -126,9 +126,9 @@ namespace illusion::ecs::core {
 		return model;
 	}
 
-	ecs::entity_id Transform::FindByName(ecs::entity_id parentId, std::string path) {
-		if (!id::IsValid(parentId) || !scene->entities.IsAlive(parentId)) return (ecs::entity_id)id::invalid_id;
-		ecs::entity_id currentId = parentId;
+	ecs::entity_id Transform::FindByName(ecs::entity_id startId, std::string path) {
+		if (!id::IsValid(startId) || !scene->entities.IsAlive(startId)) return (ecs::entity_id)id::invalid_id;
+		ecs::entity_id currentId = startId;
 		
 		std::stringstream test(path);
 		std::string segment;

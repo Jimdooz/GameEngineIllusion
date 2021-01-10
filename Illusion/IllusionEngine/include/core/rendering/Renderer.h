@@ -210,10 +210,11 @@ namespace illusion {
 				glBindBuffer(GL_ARRAY_BUFFER, bonesVBO);
 				glBufferData(GL_ARRAY_BUFFER, verticesBoneData.size() * sizeof(animation::VertexBoneData), &verticesBoneData[0], GL_STATIC_DRAW);
 				glEnableVertexAttribArray(BONE_ID_LOCATION);
-				glVertexAttribIPointer(BONE_ID_LOCATION, 4, GL_UNSIGNED_INT, sizeof(animation::VertexBoneData),(void*)offset);
-				offset += sizeof(GLuint);
+				glVertexAttribIPointer(BONE_ID_LOCATION, NUM_BONES_PER_VERTEX, GL_UNSIGNED_INT, sizeof(animation::VertexBoneData),(void*)offset);
+				offset += sizeof(GLuint) * NUM_BONES_PER_VERTEX;
 				glEnableVertexAttribArray(BONE_WEIGHT_LOCATION);
-				glVertexAttribPointer(BONE_WEIGHT_LOCATION, 4, GL_FLOAT, GL_FALSE, sizeof(animation::VertexBoneData), (void*)offset);
+				glVertexAttribPointer(BONE_WEIGHT_LOCATION, NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(animation::VertexBoneData), (void*)offset);
+				offset += sizeof(GLfloat) * NUM_BONES_PER_VERTEX;
 			}
 			// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 			glBindBuffer(GL_ARRAY_BUFFER, 0);

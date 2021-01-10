@@ -72,6 +72,12 @@ namespace illusioneditor::views::GameInspector {
 			f32 floatValue = val[componentId];
 			ImGui::DragFloat(data.name.c_str(), &floatValue, 0.01f);
 			val[componentId] = floatValue;
+		} else if (data.type == typeid(illusion::util::Array<u32>).hash_code()) {
+			illusion::util::Array<u32>& val = *(illusion::util::Array<u32>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::DragInt(data.name.c_str(), &floatValue, 0.01f, 0);
+			if (floatValue < 0) floatValue = 0;
+			val[componentId] = floatValue;
 		} else if (data.type == typeid(illusion::util::Array<boolean>).hash_code()) {
 			illusion::util::Array<boolean>& val = *(illusion::util::Array<boolean>*)data.data;
 			bool value = val[componentId];
@@ -262,6 +268,9 @@ namespace illusioneditor::views::GameInspector {
 				transform.rotation[indexTransform] = glm::tquat(glm::radians(euler));
 				transform.needUpdateEuler[indexTransform] = false;
 			}
+
+			float vec4a[4] = { transform.rotation[indexTransform].x, transform.rotation[indexTransform].y, transform.rotation[indexTransform].z, transform.rotation[indexTransform].w };
+			ImGui::DragFloat4("Quaternion Rotation", vec4a, 0.01f);
 
 			//Scale
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));

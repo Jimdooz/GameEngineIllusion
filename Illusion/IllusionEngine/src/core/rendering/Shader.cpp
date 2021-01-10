@@ -5,9 +5,14 @@
  */
 char DEFAULT_VERTEX_SHADER[] = R"(
 #version 330 core
+#define NUM_BONES_PER_VERTEX 4
+#define NUM_BONES_PER_MESH 30
+
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
+layout (location = 3) in uvec4 aBoneIds;
+layout (location = 4) in vec4 aBoneWeights;
 
 out vec3 fPos;
 out vec3 fNormal;
@@ -17,12 +22,27 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-void main() {
-    fTexCoord = aTexCoord;
-    fPos = vec3(model * vec4(aPos, 1.0));
-    fNormal = mat3(transpose(inverse(model))) * aNormal;
+uniform bool SkeletonActive;
+uniform mat4 Bones[NUM_BONES_PER_MESH];
 
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+
+void main() {
+    mat4 modelComputed = model;
+    mat4 vp = projection * view;
+
+    if(SkeletonActive){
+        mat4 bonesTransform = Bones[aBoneIds[0]] * aBoneWeights[0];
+        for(int i=1; i<NUM_BONES_PER_VERTEX; i++){
+            bonesTransform += Bones[aBoneIds[i]] * aBoneWeights[i];
+        }
+        modelComputed = bonesTransform * modelComputed;
+    }
+
+    fTexCoord = aTexCoord;
+    fPos = vec3(modelComputed * vec4(aPos, 1.0));
+    fNormal = mat3(transpose(inverse(modelComputed))) * aNormal;
+    
+    gl_Position = vp * modelComputed * vec4(aPos, 1.0);
 }
 )";
 
@@ -184,16 +204,19 @@ in vec2 TexCoords;
 uniform sampler2D scene;
 uniform sampler2D bloomBlur;
 
+uniform float gamma;
+uniform float exposure;
+
+uniform float bloomIntensity;
+
 void main() { 
-    const float gamma = 2.2;
-    const float exposure = 2.0;
     vec3 hdrColor = texture2D(scene, TexCoords).rgb;
     vec3 bloomColor = texture(bloomBlur, TexCoords).rgb;
-    hdrColor += bloomColor; // additive blending
+    hdrColor += bloomIntensity * bloomColor; // additive blending
     // Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
     // Gamma correction
-    //result = pow(result, vec3(1.0 / gamma));
+    result = pow(result, vec3(1.0 / gamma));
     FragColor = vec4(result, 1.0);
 }
 )";
@@ -211,11 +234,12 @@ uniform sampler2D image;
   
 uniform bool horizontal;
 uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+uniform float expansion;
 
 void main() {             
     vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
     vec3 result = texture(image, TexCoords).rgb * weight[0]; // current fragment's contribution
-    //tex_offset *= 2.0;
+    tex_offset *= expansion;
     if(horizontal) {
         for(int i = 1; i < 5; ++i) {
             result += texture(image, TexCoords + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];

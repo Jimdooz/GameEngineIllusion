@@ -159,17 +159,20 @@ namespace illusion {
 		if (ai_mesh->HasBones()) {
 			INTERNAL_INFO("HasBones");
 			//get Weights and bone ids
-			mesh.verticesBoneData.resize(ai_mesh->mNumVertices);
+			mesh.verticesBoneData.resize(ai_mesh->mNumVertices, { 0 });
 			INTERNAL_INFO("Num Bones :", ai_mesh->mNumBones);
+			// for each bone
 			for (int i = 0;i < ai_mesh->mNumBones; i++) {
 				aiBone* ai_bone = ai_mesh->mBones[i];
 				INTERNAL_INFO("Num Weights :", ai_bone->mNumWeights);
+				//for each vertexWeight
 				for (int j = 0; j < ai_bone->mNumWeights; j++) {
 					aiVertexWeight& vertexWeight = ai_bone->mWeights[j];
 					for (int k = 0; k < NUM_BONES_PER_VERTEX; k++) {
-						if (mesh.verticesBoneData[vertexWeight.mVertexId].weights[k] == 0.0f) {
+						if (mesh.verticesBoneData[vertexWeight.mVertexId].weights[k] <= 0.0f ) {
 							mesh.verticesBoneData[vertexWeight.mVertexId].weights[k] = vertexWeight.mWeight;
-							mesh.verticesBoneData[vertexWeight.mVertexId].ids[k] = i;
+							mesh.verticesBoneData[vertexWeight.mVertexId].boneIds[k] = i;
+							break;
 						}
 					}
 				}
@@ -219,6 +222,7 @@ namespace illusion {
 				animation::Skeleton& skeletonComponent = *(scene.GetComponent<animation::Skeleton>());
 				scene.EntityAddComponent<animation::Skeleton>(id);
 				illusion::ecs::component_id skeleton_id = skeletonComponent.getIndex(id);
+				skeletonComponent.parentRelativePath[skeleton_id] = GetParentRelativePath(ai_scene->mRootNode,ai_node);
 				//Add Bones
 				util::Array<animation::Bone>& bones = skeletonComponent.bones[skeleton_id];
 				INTERNAL_INFO("NUM BONES : ", ai_mesh->mNumBones);

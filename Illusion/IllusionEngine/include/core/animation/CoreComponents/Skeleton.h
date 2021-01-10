@@ -16,8 +16,10 @@ namespace illusion::core::animation {
 		COMPONENT_NAME("Skeleton");
 		COMPONENT_REGISTER(Skeleton);
 
-		COMPONENT_DATA(util::Array<Bone>, bones);
 		COMPONENT_DATA(boolean, idsComputed);
+		COMPONENT_DATA(std::string, parentRelativePath);
+		COMPONENT_DATA(ecs::entity_id, parentId);
+		COMPONENT_DATA(util::Array<Bone>, bones);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;
