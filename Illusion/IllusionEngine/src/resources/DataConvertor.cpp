@@ -3,6 +3,7 @@
 #include "ecs/Ecs.h"
 #include "ecs/Entity.h"
 #include "core/animation/Animation.h"
+#include "core/animation/Bone.h"
 
 #include <string>
 
@@ -208,7 +209,7 @@ namespace illusion::resources {
 			},
 				JSON_VECTOR_CONVERTOR(f64)
 				);
-		//size_t
+		//AnimatorElement
 		JsonConvertor::Create<illusion::core::animation::AnimatorElement>(
 			JSON_EXPORT{
 				const illusion::core::animation::AnimatorElement & animatorElement = *((illusion::core::animation::AnimatorElement*)data);
@@ -282,6 +283,42 @@ namespace illusion::resources {
 				}
 			},
 			JSON_VECTOR_CONVERTOR(illusion::core::animation::AnimatorElement)
+			);
+		//Bones
+		JsonConvertor::Create<util::Array<illusion::core::animation::Bone>>(
+			JSON_EXPORT{
+				const util::Array<illusion::core::animation::Bone>& bonesArray = *((util::Array<illusion::core::animation::Bone>*)data);
+				json bonesJson = json::array();
+				
+				for (u32 i = 0; i < bonesArray.size(); i++) {
+					json boneJson;
+					boneJson["relativePath"] = bonesArray[i].relativePath;
+					boneJson["offset"] = {
+						bonesArray[i].offset[0][0], bonesArray[i].offset[0][1], bonesArray[i].offset[0][2], bonesArray[i].offset[0][3],
+						bonesArray[i].offset[1][0], bonesArray[i].offset[1][1], bonesArray[i].offset[1][2], bonesArray[i].offset[1][3],
+						bonesArray[i].offset[2][0], bonesArray[i].offset[2][1], bonesArray[i].offset[2][2], bonesArray[i].offset[2][3],
+						bonesArray[i].offset[3][0], bonesArray[i].offset[3][1], bonesArray[i].offset[3][2], bonesArray[i].offset[3][3]
+					};
+					bonesJson.push_back(boneJson);
+				}
+
+				return bonesJson;
+			},
+			JSON_IMPORT{
+				util::Array<illusion::core::animation::Bone>& bonesArray = *(util::Array<illusion::core::animation::Bone>*)to;
+				for (auto& [akey, boneJson] : data.items()) {
+					illusion::core::animation::Bone bone;
+					bone.relativePath = boneJson["relativePath"];
+					bone.offset = Mat4x4(
+						Vec4(boneJson["offset"][0], boneJson["offset"][1], boneJson["offset"][2], boneJson["offset"][3]),
+						Vec4(boneJson["offset"][4], boneJson["offset"][5], boneJson["offset"][6], boneJson["offset"][7]),
+						Vec4(boneJson["offset"][8], boneJson["offset"][9], boneJson["offset"][10], boneJson["offset"][11]),
+						Vec4(boneJson["offset"][12], boneJson["offset"][13], boneJson["offset"][14], boneJson["offset"][15])
+					);
+					bonesArray.push_back(bone);
+				}
+			},
+			JSON_VECTOR_CONVERTOR(util::Array<illusion::core::animation::Bone>)
 			);
 	}
 

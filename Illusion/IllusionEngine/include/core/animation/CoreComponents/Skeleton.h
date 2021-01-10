@@ -10,7 +10,7 @@ namespace illusion::core::animation {
 	struct Skeleton : public Component {
 
 		Skeleton(Scene* scene) : Component(scene) {
-			//COMPONENT_PROTECTED(bones); //@Todo Save bones through Json
+			COMPONENT_PROTECTED(bones);
 		}
 
 		COMPONENT_NAME("Skeleton");
