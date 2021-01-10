@@ -233,7 +233,7 @@ namespace illusion {
 		}
 
 		if (useBloom) {
-			bloomThreshold = postProcess.bloomExpansion[0];
+			bloomThreshold = postProcess.bloomThreshold[0];
 			bloomThreshold = bloomThreshold < 0 ? 0 : bloomThreshold;
 			bloomIntensity = postProcess.bloomIntensity[0];
 			bloomIntensity = bloomIntensity < 0 ? 0 : bloomIntensity;

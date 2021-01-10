@@ -175,6 +175,8 @@ in vec2 TexCoords;
 uniform sampler2DMS screenTextureMS; 
 uniform vec2 screenSize;
 
+uniform float bloomThreshold;
+
 void main() {
 	ivec2 vpCoords = ivec2(screenSize.x, screenSize.y);
 	vpCoords.x = int(vpCoords.x * TexCoords.x); 
@@ -187,8 +189,8 @@ void main() {
 
     FragColor = (sample1 + sample2 + sample3 + sample4) / 4.0f;
 
-    float brightness = FragColor.r;
-    if(brightness > 0.6) BrightColor = vec4(FragColor.rgb, 1.0);
+    float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > bloomThreshold) BrightColor = vec4(FragColor.rgb, 1.0);
     else BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
 )";
