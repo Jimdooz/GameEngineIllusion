@@ -286,12 +286,16 @@ namespace illusion {
 	void Renderer::RenderScene() {
 		//@Todo change projection only if one of these values are changed
 		float aspect = (float)Window::width / (float)Window::height;
-		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-		view = glm::lookAt(transform->position[camera->ToEntity[0]], transform->position[camera->ToEntity[0]] + camera->front[0], camera->up[0]);
 
 		//Compute Camera Position
-		Mat4x4 modelCamera = transform->ComputeModel(transform->getIndex(camera->getId(0)));
+		ecs::entity_id cameraId = camera->ToEntity[0];
+		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
 		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
+
+		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
+		view = glm::lookAt(cameraWorldPos, cameraWorldPos + camera->front[0], camera->up[0]);
+
 
 		//for each shader
 		for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {

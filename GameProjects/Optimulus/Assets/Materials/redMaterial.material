@@ -1,11 +1,27 @@
 {
-    "shader": "Shader\\monShader.shader",
+    "shader": 0,
     "uniforms": {
+        "ambient": [
+            1,
+            1,
+            1
+        ],
         "color": [
             1.0,
             0.9999899864196777,
             0.9999899864196777,
             1.0
+        ],
+        "diffuse": [
+            1,
+            1,
+            1
+        ],
+        "shininess": 32.0,
+        "specular": [
+            1,
+            1,
+            1
         ]
     }
 }

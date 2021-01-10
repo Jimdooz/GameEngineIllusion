@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
 				}
 				views::GameStats::EndChronoData("FixedUpdate Loop", "Game");
 				
-				ComputePhysics(scene);
+				if (!scene.pause) ComputePhysics(scene);
 				if (stepMode) scene.pause = true;
 			}
 		}

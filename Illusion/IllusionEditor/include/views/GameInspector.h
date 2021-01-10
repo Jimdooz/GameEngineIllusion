@@ -269,9 +269,6 @@ namespace illusioneditor::views::GameInspector {
 				transform.needUpdateEuler[indexTransform] = false;
 			}
 
-			float vec4a[4] = { transform.rotation[indexTransform].x, transform.rotation[indexTransform].y, transform.rotation[indexTransform].z, transform.rotation[indexTransform].w };
-			ImGui::DragFloat4("Quaternion Rotation", vec4a, 0.01f);
-
 			//Scale
 			ImGui::SetNextItemWidth(fmaxf(80, ImGui::GetWindowContentRegionWidth() * 0.4f - 25.0f));
 			ImGui::LabelText("###Scale", "Scale");
