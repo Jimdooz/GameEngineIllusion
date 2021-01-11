@@ -66,6 +66,8 @@ namespace illusion {
 	// STATIC PART
 	bool Renderer::frameBufferInitialized = false;
 
+	int Renderer::widthSaved, Renderer::heightSaved;
+
 	FrameBuffer Renderer::FBAA;
 	FrameBuffer Renderer::FBFeature;
 
@@ -91,6 +93,27 @@ namespace illusion {
 		}
 
 		Renderer::frameBufferInitialized = true;
+
+		Renderer::widthSaved = Window::width;
+		Renderer::heightSaved = Window::height;
+	}
+
+	void Renderer::ReloadBuffers() {
+		if (!Renderer::frameBufferInitialized) {
+			Renderer::InitializeBuffers();
+			return; //Already Initialized
+		}
+
+		Renderer::FBAA.Reload();
+		Renderer::FBFeature.Reload();
+
+		//Bloom Frame Buffers
+		for (u32 i = 0; i < 2; i++) {
+			Renderer::FBBloomPingPong[i].Reload();
+		}
+
+		Renderer::widthSaved = Window::width;
+		Renderer::heightSaved = Window::height;
 	}
 
 	// OBJECT PART
@@ -214,6 +237,10 @@ namespace illusion {
 		 *  - Texture 2 : Shadow Map
 		 *	- etc...
 		 */
+		if (Renderer::widthSaved != Window::width || Renderer::heightSaved != Window::height) {
+			INTERNAL_INFO("RELOAD BUFFER");
+			Renderer::ReloadBuffers();
+		}
 
 		core::rendering::PostProcess& postProcess = *scene->GetComponent<core::rendering::PostProcess>();
 		bool usePostProcess = postProcess.size() > 0;
