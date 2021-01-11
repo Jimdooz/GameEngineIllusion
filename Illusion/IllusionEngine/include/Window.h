@@ -8,10 +8,12 @@
 namespace illusion {
 	class Window {
 	public:
-		static int width, height;
+		static int width, height, last_width, last_height;
+		static int posX, posY, last_posX, last_posY;
 		static std::string title;
 		static GLFWwindow* glfwWindow;
 		static bool shouldClose;
+		static bool fullscreen;
 		/**
 		 * @brief Permet la création d'une fenêtre
 		 *
@@ -28,5 +30,6 @@ namespace illusion {
 		static void Update();
 		static void Destroy();
 		static void Close();
+		static void SetFullScreen(bool _fullscreen);
 	};
 }

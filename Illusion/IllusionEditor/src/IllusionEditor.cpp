@@ -317,6 +317,9 @@ int main(int argc, char* argv[]) {
 		//SWAP BUFFER
 		glfwSwapBuffers(Window::glfwWindow);
 
+		if (Input::isKeyDown(GLFW_KEY_F11)) {
+			Window::SetFullScreen(!Window::fullscreen);
+		}
 		views::GameStats::EndChronoData("Game");
 	}
 
