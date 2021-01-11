@@ -230,8 +230,8 @@ void main() {
 
 			illusion::defaultshape::Cube().Bind();
 			DrawArrow(scene, translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
-			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
-			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
 			glEnable(GL_DEPTH_TEST);
 		}
 	}
