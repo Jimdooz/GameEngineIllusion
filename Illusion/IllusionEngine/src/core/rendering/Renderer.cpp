@@ -88,7 +88,7 @@ namespace illusion {
 		Renderer::FBFeature.Complete();
 
 		Renderer::FBDirectShadow.Reserve();
-		Renderer::FBDirectShadow.SetBufferDimensions(2048, 2048);
+		Renderer::FBDirectShadow.SetBufferDimensions(24576, 24576);
 		Renderer::FBDirectShadow.GenerateDepthTexture();
 		Renderer::FBDirectShadow.DisableColorBuffer();
 		Renderer::FBDirectShadow.Complete();
