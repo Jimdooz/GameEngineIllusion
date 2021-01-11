@@ -71,6 +71,8 @@ namespace illusion {
 	FrameBuffer Renderer::FBAA;
 	FrameBuffer Renderer::FBFeature;
 
+	FrameBuffer Renderer::FBDirectShadow;
+
 	FrameBuffer Renderer::FBBloomPingPong[2];
 
 	void Renderer::InitializeBuffers() {
@@ -84,6 +86,12 @@ namespace illusion {
 		Renderer::FBFeature.Reserve();
 		Renderer::FBFeature.GenerateTexture(2);
 		Renderer::FBFeature.Complete();
+
+		Renderer::FBDirectShadow.Reserve();
+		Renderer::FBDirectShadow.SetBufferDimensions(2048, 2048);
+		Renderer::FBDirectShadow.GenerateDepthTexture();
+		Renderer::FBDirectShadow.DisableColorBuffer();
+		Renderer::FBDirectShadow.Complete();
 
 		//Bloom Frame Buffers
 		for (u32 i = 0; i < 2; i++) {
@@ -223,7 +231,7 @@ namespace illusion {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
 		}
-
+		glEnable(GL_CULL_FACE);
 		/**
 		 * Frame Buffer
 		 * FBAA : Frame buffer anti aliasing
@@ -268,8 +276,21 @@ namespace illusion {
 
 		// AA first pass & Render Main Scene
 		glEnable(GL_DEPTH_TEST);
+		Renderer::FBDirectShadow.ApplyViewPort();
+		Renderer::FBDirectShadow.Bind();
+		Renderer::FBDirectShadow.Clear();
+		Shader::shadowShader.use();
+		//glCullFace(GL_FRONT);
+		glDisable(GL_CULL_FACE);
+		Renderer::RenderScene(&Shader::shadowShader);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+		Renderer::FBAA.ApplyViewPort();
 		Renderer::FBAA.Bind();
 		Renderer::FBAA.Clear();
+
+		Renderer::FBDirectShadow.BindDepthTexture(0); //Bind Depth direct shadow
 		Renderer::RenderScene();
 
 		// 1. Post Processing Pass
@@ -301,6 +322,7 @@ namespace illusion {
 		if (useBloom) Renderer::FBBloomPingPong[pingPongValue].BindTexture(0, 1); //Bloom result
 
 		//Shader Screen : Post process datas
+		Shader::screenShader.setFloat("hdrIntensity", 0);
 		Shader::screenShader.setFloat("gamma", gamma);
 		Shader::screenShader.setFloat("exposure", exposure);
 		Shader::screenShader.setFloat("bloomIntensity", bloomIntensity);
@@ -310,7 +332,7 @@ namespace illusion {
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	void Renderer::RenderScene() {
+	void Renderer::RenderScene(Shader *overrideShader) {
 		//@Todo change projection only if one of these values are changed
 		float aspect = (float)Window::width / (float)Window::height;
 
@@ -326,13 +348,14 @@ namespace illusion {
 
 		//for each shader
 		for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
-			Shader& shader = shaders[shaderKey];
-			shader.use();
+			Shader* shader = &shaders[shaderKey];
+			if (overrideShader != nullptr) shader = overrideShader;
+			else shader->use();
 
 			//set view and projection matrices
-			shader.setMat4("view", view);
-			shader.setMat4("projection", projection);
-			shader.setFloat("SkeletonActive", 0.0f);
+			shader->setMat4("view", view);
+			shader->setMat4("projection", projection);
+			shader->setFloat("SkeletonActive", 0.0f);
 
 			core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
 			core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();
@@ -343,21 +366,29 @@ namespace illusion {
 				glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
 				glm::vec3 skew; glm::vec4 perspective;
 				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
+				Vec3 direction = Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0));
 
-				shader.setVec3("dirLight.specular", lights->specular[0]);
-				shader.setVec3("dirLight.diffuse", lights->diffuse[0]);
-				shader.setVec3("dirLight.ambient", lights->ambient[0]);
-				shader.setVec3("dirLight.direction", Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0)));
+				float near_plane = 0.01f, far_plane = 100.0f;
+				glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+				glm::mat4 lightView = glm::lookAt(translation, translation + direction, glm::vec3(0.0f, 1.0f, 0.0f));
+				glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+				shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+				shader->setVec3("dirLight.specular", lights->specular[0]);
+				shader->setVec3("dirLight.diffuse", lights->diffuse[0]);
+				shader->setVec3("dirLight.ambient", lights->ambient[0]);
+				shader->setVec3("dirLight.direction", direction);
+				shader->setVec3("dirLight.position", translation);
 			}
 			else {
-				shader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-				shader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-				shader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-				shader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+				shader->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+				shader->setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+				shader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+				shader->setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
 			}
 
 			size_t pointNumbers = pointLights->size();
-			shader.setFloat("nbPointLights", pointNumbers);
+			shader->setFloat("nbPointLights", pointNumbers);
 
 			for (u32 i = 0; i < pointNumbers; i++) {
 				ecs::entity_id idLight = pointLights->getId(i);
@@ -367,17 +398,17 @@ namespace illusion {
 				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
 
 				std::string start = "pointLights[" + std::to_string(i) + "].";
-				shader.setVec3(start + "position", translation);
-				shader.setFloat(start + "constant", pointLights->constant[i]);
-				shader.setFloat(start + "linear", pointLights->linear[i]);
-				shader.setFloat(start + "quadratic", pointLights->quadratic[i]);
+				shader->setVec3(start + "position", translation);
+				shader->setFloat(start + "constant", pointLights->constant[i]);
+				shader->setFloat(start + "linear", pointLights->linear[i]);
+				shader->setFloat(start + "quadratic", pointLights->quadratic[i]);
 
-				shader.setVec3(start + "ambient", pointLights->ambient[i]);
-				shader.setVec3(start + "diffuse", pointLights->diffuse[i]);
-				shader.setVec3(start + "specular", pointLights->specular[i]);
+				shader->setVec3(start + "ambient", pointLights->ambient[i]);
+				shader->setVec3(start + "diffuse", pointLights->diffuse[i]);
+				shader->setVec3(start + "specular", pointLights->specular[i]);
 			}
 
-			shader.setVec3("viewPos", cameraWorldPos);
+			shader->setVec3("viewPos", cameraWorldPos);
 
 			//for each Mesh using this shader
 			for (auto const& [meshKey, entitiesArray] : meshMap) {
@@ -397,23 +428,23 @@ namespace illusion {
 
 					Material& material = materials[meshInstance->materialId[idMesh]];
 					//set material uniforms
-					for (json::iterator it = shader.resource.uniforms.begin(); it != shader.resource.uniforms.end(); ++it) {
+					for (json::iterator it = shader->resource.uniforms.begin(); it != shader->resource.uniforms.end(); ++it) {
 						json value = material.uniforms[it.key()];
 						const std::string typeV = it.value()["type"];
 						if (value.is_null()) value = it.value()["default"];
 						std::string index = "material." + it.key();
-						if (typeV == "f32") { shader.setFloat(index, value); }
-						else if (typeV == "Vec2") { shader.setVec2(index, value[0], value[1]); }
-						else if (typeV == "Vec3" || typeV == "Color3") { shader.setVec3(index, value[0], value[1], value[2]); }
-						else if (typeV == "Vec4" || typeV == "Color4") { shader.setVec4(index, value[0], value[1], value[2], value[3]); }
+						if (typeV == "f32") { shader->setFloat(index, value); }
+						else if (typeV == "Vec2") { shader->setVec2(index, value[0], value[1]); }
+						else if (typeV == "Vec3" || typeV == "Color3") { shader->setVec3(index, value[0], value[1], value[2]); }
+						else if (typeV == "Vec4" || typeV == "Color4") { shader->setVec4(index, value[0], value[1], value[2], value[3]); }
 					}
 					//set Skelletons uniforms if it has one
 					//@Todo get skeletonComponent
-					shader.setFloat("SkeletonActive", 0.0f);
+					shader->setFloat("SkeletonActive", 0.0f);
 					if(mesh.HasSkeleton()){
 						ecs::component_id skeletonId = skeleton->getIndex(instance_id);
 						if (ecs::id::IsValid(skeletonId)) { //@Todo isvalid
-							shader.setFloat("SkeletonActive", 1.0f);
+							shader->setFloat("SkeletonActive", 1.0f);
 							if (!skeleton->idsComputed[skeletonId]) {
 								//compute ids
 								//parentid
@@ -436,14 +467,14 @@ namespace illusion {
 								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform) * bone.offset; //  
 							}
 							//set bone transformation uniforms
-							shader.setMat4("Bones", bonesMatrices[0], NUM_BONES_PER_MESH);
+							shader->setMat4("Bones", bonesMatrices[0], NUM_BONES_PER_MESH);
 						}
 					}
 
 					//get all model matrices and put them in a BufferObject
 					//set the Buffer object to instance
 					// @Todo make instance rendering if instances >treshold
-					shader.setMat4("model", modelMatrix);
+					shader->setMat4("model", modelMatrix);
 					//Render
 					glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 				}

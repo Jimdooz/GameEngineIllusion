@@ -141,7 +141,7 @@ namespace illusion {
 			INTERNAL_WARN("Window Mode already Set");
 			return;
 		}
-		GLFWmonitor* glfwMonitor = glfwGetPrimaryMonitor();//get_current_monitor(glfwWindow);
+		GLFWmonitor* glfwMonitor =get_current_monitor(glfwWindow); //glfwGetPrimaryMonitor();
 		const GLFWvidmode* vidMode = glfwGetVideoMode(glfwMonitor);
 
 		INTERNAL_INFO("CHANGE Window MODE");

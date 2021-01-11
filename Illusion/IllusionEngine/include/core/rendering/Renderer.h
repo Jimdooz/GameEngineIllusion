@@ -37,18 +37,33 @@ namespace illusion {
 		bool depthStencilGenerated = false;
 		bool textureGenerated = false;
 		bool msTextureGenerated = false;
+		bool depthTextureGenerated = false;
 
 		u32 idDepthStencil;
 		u32* idTexture; //Id Texture
 		u32* idMSTexture; //Id Multi Sample Texture
+		u32 depthTexture; //Id depth map
 
 		u32 sampleDepthStencil = 0;
 		u32 nbTextures = 0;
 		u32 nbMSTextures = 0;
 		u32 sampleMSTextures = 0;
 
+		i32 width = -1;
+		i32 height = -1;
+
 		~FrameBuffer() {
 			Delete();
+		}
+
+		inline i32 getWidth() {
+			if (width > 0) return width;
+			return Window::width;
+		}
+
+		inline i32 getHeight() {
+			if (height > 0) return height;
+			return Window::height;
 		}
 
 		inline void Bind() {
@@ -76,6 +91,12 @@ namespace illusion {
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, idMSTexture[texture]);
 		}
 
+		inline void BindDepthTexture(u32 position = 0) {
+			if (!depthTextureGenerated) return;
+			glActiveTexture(GL_TEXTURE0 + position);
+			glBindTexture(GL_TEXTURE_2D, depthTexture);
+		}
+
 		void Delete(bool resetValues = true) {
 			if (!generated) return;
 			glDeleteFramebuffers(1, &id);
@@ -88,10 +109,14 @@ namespace illusion {
 				glDeleteTextures(nbMSTextures, idMSTexture);
 				delete idMSTexture;
 			}
+			if (depthTextureGenerated) {
+				glDeleteTextures(1, &depthTexture);
+			}
 			if (resetValues) {
 				depthStencilGenerated = false;
 				textureGenerated = false;
 				msTextureGenerated = false;
+				depthTextureGenerated = false;
 			}
 			generated = false;
 		}
@@ -111,6 +136,10 @@ namespace illusion {
 				msTextureGenerated = false;
 				GenerateMSTexture(nbMSTextures, sampleMSTextures);
 			}
+			if (depthTextureGenerated) {
+				depthTextureGenerated = false;
+				GenerateDepthTexture();
+			}
 			Complete();
 		}
 
@@ -120,13 +149,27 @@ namespace illusion {
 			glBindFramebuffer(GL_FRAMEBUFFER, id);
 		}
 
+		void SetBufferDimensions(i32 width = Window::width, i32 height = Window::height) {
+			this->width = width;
+			this->height = height;
+		}
+
+		void DisableColorBuffer() {
+			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
+		}
+
+		void ApplyViewPort() {
+			glViewport(0, 0, getWidth(), getHeight());
+		}
+
 		void GenerateDepthStencil(u32 sample = 1) {
 			if (generated) return;
-			INFO("GenerateDepthStencil");
+			INTERNAL_INFO("GENERATE DEPTH ", getWidth(), " ", getHeight());
 			sampleDepthStencil = sample;
 			glGenRenderbuffers(1, &idDepthStencil);
 			glBindRenderbuffer(GL_RENDERBUFFER, idDepthStencil);
-			glRenderbufferStorageMultisample(GL_RENDERBUFFER, sample, GL_DEPTH24_STENCIL8, Window::width, Window::height);
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, sample, GL_DEPTH24_STENCIL8, getWidth(), getHeight());
 			glBindRenderbuffer(GL_RENDERBUFFER, 0);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, idDepthStencil);
 			depthStencilGenerated = true;
@@ -141,7 +184,7 @@ namespace illusion {
 
 			for (unsigned int i = 0; i < quantity; i++) {
 				glBindTexture(GL_TEXTURE_2D, idTexture[i]);
-				glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA16F, Window::width, Window::height, 0, GL_RGBA, GL_FLOAT, NULL );
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA16F, getWidth(), getHeight(), 0, GL_RGBA, GL_FLOAT, NULL );
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -165,7 +208,7 @@ namespace illusion {
 
 			for (unsigned int i = 0; i < quantity; i++) {
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, idMSTexture[i]);
-				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_RGB, Window::width, Window::height, GL_TRUE);
+				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sample, GL_RGB, getWidth(), getHeight(), GL_TRUE);
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, i);
 				glFramebufferTexture2D(
 					GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, idMSTexture[i], 0
@@ -175,6 +218,21 @@ namespace illusion {
 
 			glDrawBuffers(quantity, attachments);
 			msTextureGenerated = true;
+		}
+
+		void GenerateDepthTexture() {
+			if (generated || depthTextureGenerated) return;
+			glGenTextures(1, &depthTexture);
+			glBindTexture(GL_TEXTURE_2D, depthTexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, getWidth(), getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+			depthTextureGenerated = true;
 		}
 		
 		bool Complete() {
@@ -417,7 +475,7 @@ namespace illusion {
 		 * Permet de rendre la scène
 		 */
 		void Render();//@Todo register draw calls and num entities rendered per frame
-		void RenderScene();
+		void RenderScene(Shader* overrideShader = nullptr);
 
 		u32 BloomEffect(core::rendering::PostProcess& postProcess); //Return the ping pong value FB
 
@@ -429,6 +487,8 @@ namespace illusion {
 
 		static FrameBuffer FBAA; //Frame buffer anti aliasing
 		static FrameBuffer FBFeature; //Frame buffer Features
+
+		static FrameBuffer FBDirectShadow;
 
 		// Post Process Buffer
 		static FrameBuffer FBBloomPingPong[];

@@ -55,12 +55,12 @@ struct JumpBigCubeSystem : public ecs::System {
 			timerJump() = 0.0f;
 		}
 
-		f32 gamepadTreshold = 0.11; 
+		f32 gamepadTreshold = 0.2f; 
 		f32 gamepadX = Input::getGamepadAxis(GLFW_GAMEPAD_AXIS_LEFT_X);
 		f32 gamepadY = Input::getGamepadAxis(GLFW_GAMEPAD_AXIS_LEFT_Y);
 		INFO("Gamepad X : ", gamepadX);
-		if (Input::isKey(GLFW_KEY_LEFT) || gamepadX < -gamepadTreshold) velocity() = Vec3(-5, velocity().y, 0);
-		if (Input::isKey(GLFW_KEY_RIGHT) || gamepadX > gamepadTreshold) velocity() = Vec3(5, velocity().y, 0);
+		if (Input::isKey(GLFW_KEY_LEFT) || gamepadX < -gamepadTreshold) velocity() = Vec3(-5 * -gamepadX, velocity().y, 0);
+		if (Input::isKey(GLFW_KEY_RIGHT) || gamepadX > gamepadTreshold) velocity() = Vec3(5 * gamepadX, velocity().y, 0);
 
 		if((!Input::isKey(GLFW_KEY_LEFT) && !Input::isKey(GLFW_KEY_RIGHT)) && (gamepadX < gamepadTreshold && gamepadX > -gamepadTreshold) ) velocity() = Vec3(0, velocity().y, 0);
 		position().z = 0;

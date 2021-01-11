@@ -14,6 +14,10 @@
 
 char DEFAULT_VERTEX_SHADER[];
 char DEFAULT_FRAGMENT_SHADER[];
+
+char DEFAULT_SHADOW_VERTEX_SHADER[];
+char DEFAULT_SHADOW_FRAGMENT_SHADER[];
+
 char DEFAULT_VERTEX_QUAD_SHADER[];
 char DEFAULT_FRAGMENT_FEATURE_SHADER[];
 char DEFAULT_FRAGMENT_SCREEN_SHADER[];
@@ -158,12 +162,17 @@ public:
             }
         };
         Shader::defaultShader = Shader(Shader::defaultShaderResource);
+        defaultShader.use();
+        defaultShader.setInt("directShadowMap", 0);
+
         Shader::featureShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_FEATURE_SHADER);
         Shader::screenShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_SCREEN_SHADER);
 
         screenShader.use();
         screenShader.setInt("scene", 0);
         screenShader.setInt("bloomBlur", 1);
+
+        Shader::shadowShader = Shader(DEFAULT_SHADOW_VERTEX_SHADER, DEFAULT_SHADOW_FRAGMENT_SHADER);
 
         Shader::blurShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_BLUR_SHADER);
         blurShader.use();
@@ -175,6 +184,7 @@ public:
     static Shader featureShader;
     static Shader screenShader;
 
+    static Shader shadowShader;
     static Shader blurShader;
 
 private:
