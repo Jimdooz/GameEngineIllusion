@@ -30,11 +30,47 @@ namespace illusioneditor::views::GameInspector {
 		delete[] buf1;
 	}
 
+	inline bool ValueExist(const json& value, const std::string& key) {
+		return value.find(key) != value.end();
+	}
+
 	void GenerateUiComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component *component) {
 		ecs::component_id componentId = component->getIndex(currentSelected);
 		if (component->getIndex(currentSelected) == ecs::id::invalid_id) return;
 
-		if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
+		if (data.type == typeid(illusion::util::Array<ecs::entity_id>).hash_code() && ValueExist(data.uiInformations, "entity")) {
+			illusion::util::Array<ecs::entity_id>& entityIds = *(illusion::util::Array<ecs::entity_id>*)data.data;
+			ecs::entity_id entityId = entityIds[componentId];
+
+			//MESH
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			if (currentScene->entities.IsAlive(entityId)) {
+				ecs::core::Transform *transforms = currentScene->GetComponent<ecs::core::Transform>();
+				ImGui::Button(transforms->name[transforms->getIndex(entityId)].c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+			}
+			else {
+				ImGui::Button("Invalid Id", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+			}
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
+					ecs::entity_id id;
+					memcpy(&id, payload->Data, sizeof(ecs::entity_id));
+					entityIds[componentId] = id;
+				}
+				ImGui::EndDragDropTarget();
+			}
+			
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor(4);
+
+			ImGui::SameLine();
+			ImGui::Text(data.name.c_str());
+
+		}else if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
 			illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
 			float vec3a[3] = { vec3[componentId].x, vec3[componentId].y, vec3[componentId].z };
 			ImGui::DragFloat3(data.name.c_str(), vec3a, 0.01f);

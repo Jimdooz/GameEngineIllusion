@@ -52,6 +52,7 @@
 #include "scripting/Planet.h"
 //Script Game
 #include "scripting/PlayerController.h"
+#include "scripting/CameraPlayer.h"
 
 #include "core/rendering/Renderer.h"
 
@@ -94,12 +95,14 @@ int main(int argc, char* argv[]) {
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
 	illusion::ecs::Component::AppendComponents<PlayerController>();
+	illusion::ecs::Component::AppendComponents<CameraPlayer>();
 
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
 	//Systems
 	illusion::ecs::System::AppendCoreSystems();
 	illusion::ecs::System::AppendSystems<PlayerControllerSystem>();
+	illusion::ecs::System::AppendSystems<CameraPlayerSystem>();
 	
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
