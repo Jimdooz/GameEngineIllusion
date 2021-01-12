@@ -77,6 +77,8 @@ uniform Material material;
 
 ///// SHADOW PART
 uniform sampler2D directShadowMap; // 0
+uniform float shadowIntensity;
+uniform int shadowSmooth;
 
 ///// LIGHT SYSTEM
 struct DirLight {
@@ -158,20 +160,20 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
     float shadow = 0.0f;
     vec2 texelSize = 1.0 / textureSize(directShadowMap, 0);
     vec2 divergeance = vec2(1.0);
-    int step = 1;
-    for(int x = -step; x <= step; ++x) {
-        for(int y = -step; y <= step; ++y) {
-            float pcfDepth = texture(directShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
-        }    
+
+    int step = shadowSmooth;
+
+    if(step > 0){
+        for(int x = -step; x <= step; ++x) {
+            for(int y = -step; y <= step; ++y) {
+                float pcfDepth = texture(directShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+                shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+            }    
+        }
+        shadow /= (step * 2.0 + 1.0) * (step * 2.0 + 1.0);
     }
-    shadow /= (step + 2.0) * (step + 2.0);
 
-    //float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0; 
-    //if(projCoords.z > 1.0 || projCoords.z < 0.0)
-    //    shadow = 0.0;
-
-    return shadow;
+    return shadow * shadowIntensity;
 }
 
 void main() {

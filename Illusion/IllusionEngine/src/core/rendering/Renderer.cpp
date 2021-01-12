@@ -64,6 +64,7 @@ namespace illusion {
 	 */
 
 	// STATIC PART
+	QualitySettings Renderer::qualitySettings;
 	bool Renderer::frameBufferInitialized = false;
 
 	int Renderer::widthSaved, Renderer::heightSaved;
@@ -88,7 +89,7 @@ namespace illusion {
 		Renderer::FBFeature.Complete();
 
 		Renderer::FBDirectShadow.Reserve();
-		Renderer::FBDirectShadow.SetBufferDimensions(2048, 2048);
+		Renderer::FBDirectShadow.SetBufferDimensions(4096, 4096);
 		Renderer::FBDirectShadow.GenerateDepthTexture();
 		Renderer::FBDirectShadow.DisableColorBuffer();
 		Renderer::FBDirectShadow.Complete();
@@ -160,7 +161,7 @@ namespace illusion {
 		if (!ContainsShader(idShader) || !ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
 
 		if (!MeshExistInShader(idShader, idMesh)) {
-			//Création de l'espace pour le mesh
+			//Crï¿½ation de l'espace pour le mesh
 			instancesByMeshByShader[idShader][idMesh] = util::Array<ecs::entity_id>();
 		}
 
@@ -254,40 +255,50 @@ namespace illusion {
 		}
 
 		core::rendering::PostProcess& postProcess = *scene->GetComponent<core::rendering::PostProcess>();
-		bool usePostProcess = postProcess.size() > 0;
-		bool useBloom = false;
+		qualitySettings.usePostProcess = postProcess.size() > 0;
 
-		float gamma = 1.0f;
-		float exposure = 1.0f;
+		qualitySettings.Reset();
 
-		float bloomThreshold = 1.0f;
-		float bloomIntensity = 0.0f;
-
-		if (usePostProcess) {
-			useBloom = postProcess.bloomEffect[0];
-			gamma = postProcess.gamma[0];
-			gamma = gamma <= 0 ? 0.001 : gamma;
-			exposure = postProcess.exposure[0];
+		if (qualitySettings.usePostProcess) {
+			qualitySettings.useHdr = postProcess.hdrEffect[0];
+			qualitySettings.useShadow = postProcess.shadowEffect[0];
+			qualitySettings.useBloom = postProcess.bloomEffect[0];
 		}
 
-		if (useBloom) {
-			bloomThreshold = postProcess.bloomThreshold[0];
-			bloomThreshold = bloomThreshold < 0 ? 0 : bloomThreshold;
-			bloomIntensity = postProcess.bloomIntensity[0];
-			bloomIntensity = bloomIntensity < 0 ? 0 : bloomIntensity;
+		if (qualitySettings.useHdr) {
+			qualitySettings.hdrIntensity = 1.0f;
+			qualitySettings.gamma = postProcess.gamma[0];
+			qualitySettings.gamma = qualitySettings.gamma <= 0 ? 0.001 : qualitySettings.gamma;
+			qualitySettings.exposure = postProcess.exposure[0];
+		}
+
+		if (qualitySettings.useShadow) {
+			qualitySettings.shadowIntensity = postProcess.shadowIntensity[0];
+			qualitySettings.shadowIntensity = qualitySettings.shadowIntensity > 1.0f ? 1.0f : qualitySettings.shadowIntensity < 0.0f ? 0.0f : qualitySettings.shadowIntensity;
+			qualitySettings.shadowSmooth = postProcess.shadowSmooth[0];
+			if(qualitySettings.shadowSmooth < 0) qualitySettings.shadowSmooth;
+		}
+
+		if (qualitySettings.useBloom) {
+			qualitySettings.bloomThreshold = postProcess.bloomThreshold[0];
+			qualitySettings.bloomThreshold = qualitySettings.bloomThreshold < 0 ? 0 : qualitySettings.bloomThreshold;
+			qualitySettings.bloomIntensity = postProcess.bloomIntensity[0];
+			qualitySettings.bloomIntensity = qualitySettings.bloomIntensity < 0 ? 0 : qualitySettings.bloomIntensity;
 		}
 
 		// AA first pass & Render Main Scene
 		glEnable(GL_DEPTH_TEST);
-		Renderer::FBDirectShadow.ApplyViewPort();
-		Renderer::FBDirectShadow.Bind();
-		Renderer::FBDirectShadow.Clear();
-		Shader::shadowShader.use();
-		//glCullFace(GL_FRONT);
-		glDisable(GL_CULL_FACE);
-		Renderer::RenderScene(&Shader::shadowShader);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
+
+		if (qualitySettings.useShadow && qualitySettings.shadowIntensity > 0.0f) {
+			Renderer::FBDirectShadow.ApplyViewPort();
+			Renderer::FBDirectShadow.Bind();
+			Renderer::FBDirectShadow.Clear();
+			Shader::shadowShader.use();
+			glDisable(GL_CULL_FACE);
+			Renderer::RenderScene(&Shader::shadowShader);
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+		}
 
 		Renderer::FBAA.ApplyViewPort();
 		Renderer::FBAA.Bind();
@@ -303,7 +314,7 @@ namespace illusion {
 		// 2. Feature extractions
 		Shader::featureShader.use();
 		Shader::featureShader.setVec2("screenSize", Vec2(Window::width, Window::height));
-		Shader::featureShader.setFloat("bloomThreshold", bloomThreshold);
+		Shader::featureShader.setFloat("bloomThreshold", qualitySettings.bloomThreshold);
 
 		Renderer::FBFeature.Bind();
 		Renderer::FBFeature.Clear();
@@ -313,7 +324,7 @@ namespace illusion {
 
 		// POST PROCESS EFFECT
 		u32 pingPongValue = 0;
-		if(useBloom) pingPongValue = BloomEffect(postProcess);
+		if(qualitySettings.useBloom) pingPongValue = BloomEffect(postProcess);
 
 		// FINAL RENDER
 		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -322,13 +333,13 @@ namespace illusion {
 		Shader::screenShader.use();
 		//Shader Screen : Textures datas
 		Renderer::FBFeature.BindTexture(0, 0);						//Main Scene
-		if (useBloom) Renderer::FBBloomPingPong[pingPongValue].BindTexture(0, 1); //Bloom result
+		if (qualitySettings.useBloom) Renderer::FBBloomPingPong[pingPongValue].BindTexture(0, 1); //Bloom result
 
 		//Shader Screen : Post process datas
-		Shader::screenShader.setFloat("hdrIntensity", 0);
-		Shader::screenShader.setFloat("gamma", gamma);
-		Shader::screenShader.setFloat("exposure", exposure);
-		Shader::screenShader.setFloat("bloomIntensity", bloomIntensity);
+		Shader::screenShader.setFloat("hdrIntensity", qualitySettings.hdrIntensity);
+		Shader::screenShader.setFloat("gamma", qualitySettings.gamma);
+		Shader::screenShader.setFloat("exposure", qualitySettings.exposure);
+		Shader::screenShader.setFloat("bloomIntensity", qualitySettings.bloomIntensity);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);		//DRAW QUAD
 
@@ -348,6 +359,26 @@ namespace illusion {
 		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
 		view = glm::lookAt(cameraWorldPos, cameraWorldPos + camera->front[0], camera->up[0]);
 
+		core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
+		core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();
+
+		glm::mat4 lightSpaceMatrix;
+		Vec3 lightDirection;
+		Vec3 lightTranslation;
+		if (lights->size() > 0) {
+			ecs::entity_id idLight = lights->getId(0);
+
+			glm::vec3 scale; glm::quat rotation;
+			glm::vec3 skew; glm::vec4 perspective;
+			glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, lightTranslation, skew, perspective);
+			lightDirection = Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0));
+
+			float near_plane = 0.01f, far_plane = 100.0f;
+			glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+			glm::mat4 lightView = glm::lookAt(lightTranslation, lightTranslation + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+			lightSpaceMatrix = lightProjection * lightView;
+		}
+
 
 		//for each shader
 		for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
@@ -360,28 +391,13 @@ namespace illusion {
 			shader->setMat4("projection", projection);
 			shader->setFloat("SkeletonActive", 0.0f);
 
-			core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
-			core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();
-
+			shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 			if (lights->size() > 0) {
-				ecs::entity_id idLight = lights->getId(0);
-
-				glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
-				glm::vec3 skew; glm::vec4 perspective;
-				glm::decompose(transform->ComputeModel(transform->getIndex(idLight)), scale, rotation, translation, skew, perspective);
-				Vec3 direction = Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0));
-
-				float near_plane = 0.01f, far_plane = 100.0f;
-				glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-				glm::mat4 lightView = glm::lookAt(translation, translation + direction, glm::vec3(0.0f, 1.0f, 0.0f));
-				glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-				shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
 				shader->setVec3("dirLight.specular", lights->specular[0]);
 				shader->setVec3("dirLight.diffuse", lights->diffuse[0]);
 				shader->setVec3("dirLight.ambient", lights->ambient[0]);
-				shader->setVec3("dirLight.direction", direction);
-				shader->setVec3("dirLight.position", translation);
+				shader->setVec3("dirLight.direction", lightDirection);
+				shader->setVec3("dirLight.position", lightTranslation);
 			}
 			else {
 				shader->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
@@ -413,6 +429,10 @@ namespace illusion {
 
 			shader->setVec3("viewPos", cameraWorldPos);
 
+			//Shadow option
+			shader->setFloat("shadowIntensity", qualitySettings.shadowIntensity);
+			shader->setInt("shadowSmooth", qualitySettings.shadowSmooth);
+
 			//for each Mesh using this shader
 			for (auto const& [meshKey, entitiesArray] : meshMap) {
 				Mesh& mesh = meshes[meshKey];
@@ -427,7 +447,7 @@ namespace illusion {
 					ecs::entity_id instance_id = entitiesArray[i];
 					ecs::component_id idTransform = transform->getIndex(instance_id);
 					ecs::component_id idMesh = meshInstance->getIndex(instance_id);
-					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
+					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entitï¿½s ?
 
 					Material& material = materials[meshInstance->materialId[idMesh]];
 					//set material uniforms
@@ -467,7 +487,7 @@ namespace illusion {
 								animation::Bone& bone = skeleton->bones[skeletonId][j];
 								ecs::component_id idTransform = transform->getIndex(bone.id);
 								ecs::component_id parentIdTransform = transform->getIndex(skeleton->parentId[skeletonId]);
-								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform) * bone.offset; //  
+								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform) * bone.offset; //
 							}
 							//set bone transformation uniforms
 							shader->setMat4("Bones", bonesMatrices[0], NUM_BONES_PER_MESH);
