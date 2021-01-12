@@ -33,8 +33,8 @@ namespace illusion::resources {
 				size_t * rto = (size_t*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(size_t)
-				);
+			JSON_VECTOR_CONVERTOR(size_t)
+			);
 		//Boolean
 		JsonConvertor::Create<boolean>(
 			JSON_EXPORT{
@@ -46,8 +46,8 @@ namespace illusion::resources {
 				boolean * rto = (boolean*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(boolean)
-				);
+			JSON_VECTOR_CONVERTOR(boolean)
+			);
 		//String
 		JsonConvertor::Create<std::string>(
 			JSON_EXPORT{
@@ -59,8 +59,8 @@ namespace illusion::resources {
 				std::string * rto = (std::string*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(std::string)
-				);
+			JSON_VECTOR_CONVERTOR(std::string)
+			);
 		//Vector4
 		JsonConvertor::Create<Vec2>(
 			JSON_EXPORT{
@@ -75,8 +75,8 @@ namespace illusion::resources {
 				rto->x = data[0];
 				rto->y = data[1];
 			},
-				JSON_VECTOR_CONVERTOR(Vec2)
-				);
+			JSON_VECTOR_CONVERTOR(Vec2)
+			);
 		//Vector3
 		JsonConvertor::Create<Vec3>(
 			JSON_EXPORT{
@@ -93,8 +93,8 @@ namespace illusion::resources {
 				rto->y = data[1];
 				rto->z = data[2];
 			},
-				JSON_VECTOR_CONVERTOR(Vec3)
-				);
+			JSON_VECTOR_CONVERTOR(Vec3)
+			);
 		//Vector4
 		JsonConvertor::Create<Vec4>(
 			JSON_EXPORT{
@@ -113,8 +113,8 @@ namespace illusion::resources {
 				rto->z = data[2];
 				rto->w = data[3];
 			},
-				JSON_VECTOR_CONVERTOR(Vec4)
-				);
+			JSON_VECTOR_CONVERTOR(Vec4)
+			);
 		//Quaternion
 		JsonConvertor::Create<Quaternion>(
 			JSON_EXPORT{
@@ -133,8 +133,8 @@ namespace illusion::resources {
 				rto->y = data[2];
 				rto->z = data[3];
 			},
-				JSON_VECTOR_CONVERTOR(Quaternion)
-				);
+			JSON_VECTOR_CONVERTOR(Quaternion)
+			);
 		//Entity_id
 		JsonConvertor::Create<illusion::ecs::entity_id>(
 			JSON_EXPORT{
@@ -148,8 +148,8 @@ namespace illusion::resources {
 				if (data.is_null()) *rto = (ecs::entity_id)ecs::id::invalid_id;
 				else *rto = ecs::entity_id(data);
 			},
-				JSON_VECTOR_CONVERTOR(illusion::ecs::entity_id)
-				);
+			JSON_VECTOR_CONVERTOR(illusion::ecs::entity_id)
+			);
 		//List<Entity_id>
 		JsonConvertor::Create<illusion::util::Array<illusion::ecs::entity_id>>(
 			JSON_EXPORT{
@@ -168,8 +168,8 @@ namespace illusion::resources {
 					JsonConvertor::ImportFromJSON(data[i], &((*rto)[i]), TYPE_ID(illusion::ecs::entity_id));
 				}
 			},
-				JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
-				);
+			JSON_VECTOR_CONVERTOR(illusion::util::Array<illusion::ecs::entity_id>)
+			);
 		//u32
 		JsonConvertor::Create<u32>(
 			JSON_EXPORT{
@@ -181,8 +181,8 @@ namespace illusion::resources {
 				u32* rto = (u32*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(f32)
-				);
+			JSON_VECTOR_CONVERTOR(f32)
+			);
 		//f32
 		JsonConvertor::Create<f32>(
 			JSON_EXPORT{
@@ -194,8 +194,8 @@ namespace illusion::resources {
 				f32 * rto = (f32*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(f32)
-				);
+			JSON_VECTOR_CONVERTOR(f32)
+			);
 		//f16
 		JsonConvertor::Create<f64>(
 			JSON_EXPORT{
@@ -207,8 +207,8 @@ namespace illusion::resources {
 				f64 * rto = (f64*)to;
 				*rto = data;
 			},
-				JSON_VECTOR_CONVERTOR(f64)
-				);
+			JSON_VECTOR_CONVERTOR(f64)
+			);
 		//AnimatorElement
 		JsonConvertor::Create<illusion::core::animation::AnimatorElement>(
 			JSON_EXPORT{

@@ -78,6 +78,12 @@ namespace illusioneditor::views::GameInspector {
 			ImGui::DragInt(data.name.c_str(), &floatValue, 0.01f, 0);
 			if (floatValue < 0) floatValue = 0;
 			val[componentId] = floatValue;
+		} else if (data.type == typeid(illusion::util::Array<i32>).hash_code()) {
+			illusion::util::Array<i32>& val = *(illusion::util::Array<i32>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::DragInt(data.name.c_str(), &floatValue, 0.01f);
+			if (floatValue < 0) floatValue = 0;
+			val[componentId] = floatValue;
 		} else if (data.type == typeid(illusion::util::Array<boolean>).hash_code()) {
 			illusion::util::Array<boolean>& val = *(illusion::util::Array<boolean>*)data.data;
 			bool value = val[componentId];

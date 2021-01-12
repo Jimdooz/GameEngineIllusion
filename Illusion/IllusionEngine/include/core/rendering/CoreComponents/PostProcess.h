@@ -8,8 +8,13 @@ namespace illusion::core::rendering {
 
 	struct PostProcess : public Component {
 		PostProcess(Scene* scene) : Component(scene) {
+			COMPONENT_PUBLIC(hdrEffect);
 			COMPONENT_PUBLIC(exposure);
 			COMPONENT_PUBLIC(gamma);
+
+			COMPONENT_PUBLIC(shadowEffect);
+			COMPONENT_PUBLIC(shadowIntensity);
+			COMPONENT_PUBLIC(shadowSmooth);
 
 			COMPONENT_PUBLIC(bloomEffect);
 			COMPONENT_PUBLIC(bloomIntensity);
@@ -21,8 +26,15 @@ namespace illusion::core::rendering {
 		COMPONENT_NAME("Post Processing");
 		COMPONENT_REGISTER(PostProcess);
 
+		//Hdr
+		COMPONENT_DATA(boolean, hdrEffect);
 		COMPONENT_DATA(f32, exposure);
 		COMPONENT_DATA(f32, gamma);
+
+		//Shadow
+		COMPONENT_DATA(boolean, shadowEffect);
+		COMPONENT_DATA(f32, shadowIntensity);
+		COMPONENT_DATA(i32, shadowSmooth);
 
 		//Bloom
 		COMPONENT_DATA(boolean, bloomEffect);

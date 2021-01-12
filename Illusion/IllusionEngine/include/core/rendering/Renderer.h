@@ -31,6 +31,33 @@ namespace illusion::ecs {
 
 namespace illusion {
 
+	struct QualitySettings {
+		bool usePostProcess = false;
+		bool useShadow = false;
+		bool useHdr = false;
+		bool useBloom = false;
+
+		float hdrIntensity = 0.0f;
+		float gamma = 1.0f;
+		float exposure = 1.0f;
+
+		float shadowIntensity = 0.0f;
+		i32 shadowSmooth = 1;
+
+		float bloomThreshold = 1.0f;
+		float bloomIntensity = 0.0f;
+
+		inline void Reset() {
+			useShadow = false;
+			useHdr = false;
+			useBloom = false;
+
+			hdrIntensity = 0.0f;
+			shadowIntensity = 0.0f;
+			bloomIntensity = 0.0f;
+		}
+	};
+
 	struct FrameBuffer {
 		u32 id;
 		bool generated = false;
@@ -483,6 +510,7 @@ namespace illusion {
 		/* STATIC SYSTEM							 */
 		/*********************************************/
 
+		static QualitySettings qualitySettings;
 		static bool frameBufferInitialized;
 
 		static FrameBuffer FBAA; //Frame buffer anti aliasing
