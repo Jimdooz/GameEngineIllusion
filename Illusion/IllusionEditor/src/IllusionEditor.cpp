@@ -53,6 +53,11 @@
 
 #include "core/rendering/Renderer.h"
 
+
+//test irrKlang
+#include <irrKlang.h>
+
+
 using namespace std::chrono;
 using namespace illusion;
 using namespace illusioneditor;
@@ -64,6 +69,8 @@ int main(int argc, char* argv[]) {
 	//--------
 	Window::Create(1792, 1008,"Illusion Engine");
 
+	irrklang::ISoundEngine* soundEngine = irrklang::createIrrKlangDevice();
+	soundEngine->play2D("D:\\Projects\\GameEngineIllusion\\GameProjects\\Optimulus\\Assets\\Audio\\breakout.mp3",true);
 	// Test [Romain Saclier]
 	//--------
 

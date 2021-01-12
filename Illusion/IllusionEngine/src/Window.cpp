@@ -20,6 +20,42 @@ namespace illusion {
 	bool Window::fullscreen = false;
 	bool Window::focused = true;
 
+	//utility function to get the monitor where the window currently is 
+	GLFWmonitor* get_current_monitor(GLFWwindow* window)
+	{
+		int nmonitors, i;
+		int wx, wy, ww, wh;
+		int mx, my, mw, mh;
+		int overlap, bestoverlap;
+		GLFWmonitor* bestmonitor;
+		GLFWmonitor** monitors;
+		const GLFWvidmode* mode;
+
+		bestoverlap = 0;
+		bestmonitor = NULL;
+
+		glfwGetWindowPos(window, &wx, &wy);
+		glfwGetWindowSize(window, &ww, &wh);
+		monitors = glfwGetMonitors(&nmonitors);
+
+		for (i = 0; i < nmonitors; i++) {
+			mode = glfwGetVideoMode(monitors[i]);
+			glfwGetMonitorPos(monitors[i], &mx, &my);
+			mw = mode->width;
+			mh = mode->height;
+
+			overlap =
+				std::max(0, std::min(wx + ww, mx + mw) - std::max(wx, mx)) *
+				std::max(0, std::min(wy + wh, my + mh) - std::max(wy, my));
+
+			if (bestoverlap < overlap) {
+				bestoverlap = overlap;
+				bestmonitor = monitors[i];
+			}
+		}
+
+		return bestmonitor;
+	}
 	void Window::Create(const int _width, const int _height, const char* _title) {
 		width = _width;
 		height = _height;
@@ -37,10 +73,13 @@ namespace illusion {
 		if (!glfwInit()) {
 			INTERNAL_ERR("Failed Initializing GLFW");
 		}
+		GLFWmonitor* glfwMonitor = glfwGetPrimaryMonitor();// get the Primary monitor
+		const GLFWvidmode* vidMode = glfwGetVideoMode(glfwMonitor);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+		glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
 		glfwWindow = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 		glfwGetWindowPos(glfwWindow, &posX, &posY);
 		last_posX = posX;
@@ -100,41 +139,7 @@ namespace illusion {
 		INTERNAL_INFO("Closing Window");
 		shouldClose = true;
 	}
-	GLFWmonitor* get_current_monitor(GLFWwindow* window)
-	{
-		int nmonitors, i;
-		int wx, wy, ww, wh;
-		int mx, my, mw, mh;
-		int overlap, bestoverlap;
-		GLFWmonitor* bestmonitor;
-		GLFWmonitor** monitors;
-		const GLFWvidmode* mode;
-
-		bestoverlap = 0;
-		bestmonitor = NULL;
-
-		glfwGetWindowPos(window, &wx, &wy);
-		glfwGetWindowSize(window, &ww, &wh);
-		monitors = glfwGetMonitors(&nmonitors);
-
-		for (i = 0; i < nmonitors; i++) {
-			mode = glfwGetVideoMode(monitors[i]);
-			glfwGetMonitorPos(monitors[i], &mx, &my);
-			mw = mode->width;
-			mh = mode->height;
-
-			overlap =
-				std::max(0, std::min(wx + ww, mx + mw) - std::max(wx, mx)) *
-				std::max(0, std::min(wy + wh, my + mh) - std::max(wy, my));
-
-			if (bestoverlap < overlap) {
-				bestoverlap = overlap;
-				bestmonitor = monitors[i];
-			}
-		}
-
-		return bestmonitor;
-	}
+	
 	void Window::SetFullScreen(bool _fullscreen) {
 		if(fullscreen==_fullscreen){
 			INTERNAL_WARN("Window Mode already Set");

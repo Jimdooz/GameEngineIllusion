@@ -17,6 +17,7 @@ IncludeDir["Glad"] = "%{wks.location}/libs/Glad/include"
 IncludeDir["glm"] = "%{wks.location}/libs/glm/"
 IncludeDir["imgui"] = "%{wks.location}/libs/imgui/"
 IncludeDir["assimp"] = "%{wks.location}/libs/assimp/include"
+IncludeDir["irrKlang"] = "%{wks.location}/libs/irrKlang/include"
 IncludeDir["IllusionEngine"] = "%{wks.location}/IllusionEngine/include"
 project "IllusionEngine"
 	location "%{wks.location}/%{prj.name}"
@@ -43,6 +44,7 @@ project "IllusionEngine"
 		"%{IncludeDir.glfw}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.assimp}",
+		"%{IncludeDir.irrKlang}",
 		"%{IncludeDir.Glad}"
 	}
 
@@ -69,17 +71,21 @@ project "IllusionEngine"
 		libdirs 
 		{
 			"%{wks.location}/libs/glfw/lib-vc2019/",
-			"%{wks.location}/libs/assimp/lib-vc2019/"
+			"%{wks.location}/libs/assimp/lib-vc2019/",
+			"%{wks.location}/libs/irrKlang/Winx64-visualStudio/"
 		}
 		links
 		{
 			"Glad",
-			"glfw3.lib"
+			"glfw3.lib",
+			"irrKlang.lib"
 		}
 
 		postbuildcommands
 		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../build/" .. outputdir .. "/IllusionEditor/\"")
+			("{COPY} %{wks.location}/libs/irrKlang/Winx64-visualStudio/irrKlang.dll \"../build/" .. outputdir .. "/IllusionEditor/\""),
+			("{COPY} %{wks.location}/libs/irrKlang/Winx64-visualStudio/ikpMP3.dll \"../build/" .. outputdir .. "/IllusionEditor/\""),
+			("{COPY} %{wks.location}/libs/irrKlang/Winx64-visualStudio/ikpFlac.dll \"../build/" .. outputdir .. "/IllusionEditor/\"")
 		}
 
 	filter{ "configurations:Debug", "system:windows" }
@@ -149,6 +155,7 @@ project "IllusionEditor"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.assimp}",
+		"%{IncludeDir.irrKlang}",
 		"%{IncludeDir.IllusionEngine}"
 	}
 
