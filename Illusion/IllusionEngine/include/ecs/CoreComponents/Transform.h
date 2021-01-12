@@ -12,6 +12,8 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
 
+			COMPONENT_PROTECTED(rotationEuler);
+
 			COMPONENT_PROTECTED(parent);
 			COMPONENT_PROTECTED(childs);
 		}
@@ -77,6 +79,8 @@ namespace illusion::ecs::core {
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
 
 		Mat4x4 &ComputeModel(ecs::component_id component, bool forceRecompute = false);
+
+		Vec3 GetPosition(ecs::entity_id id);
 
 		ecs::entity_id FindByName(ecs::entity_id parent, std::string path);
 

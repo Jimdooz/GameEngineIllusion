@@ -34,7 +34,7 @@ namespace illusion {
 
 	void MeshInstance::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
-		RemoveData(index, meshId, materialId);
+		RemoveData(index, meshId, materialId, initialized);
 	}
 
 	void MeshInstance::SetMesh(ecs::component_id index, size_t newMeshId) {
@@ -236,6 +236,7 @@ namespace illusion {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
 		}
+
 		/**
 		 * Frame Buffer
 		 * FBAA : Frame buffer anti aliasing
@@ -353,11 +354,11 @@ namespace illusion {
 		//Compute Camera Position
 		ecs::entity_id cameraId = camera->ToEntity[0];
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
-		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
 		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
-		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-		view = glm::lookAt(cameraWorldPos, cameraWorldPos + camera->front[0], camera->up[0]);
+		projection = camera->GetProjection();// glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
+		view = camera->GetView();
 
 		core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
 		core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();

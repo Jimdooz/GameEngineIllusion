@@ -50,6 +50,9 @@
 //Scripting
 #include "scripting/JumpBigCube.h"
 #include "scripting/Planet.h"
+//Script Game
+#include "scripting/PlayerController.h"
+#include "scripting/CameraPlayer.h"
 
 #include "core/rendering/Renderer.h"
 
@@ -98,12 +101,16 @@ int main(int argc, char* argv[]) {
 	// Init ECS
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
+	illusion::ecs::Component::AppendComponents<PlayerController>();
+	illusion::ecs::Component::AppendComponents<CameraPlayer>();
 
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
 	//Systems
 	illusion::ecs::System::AppendCoreSystems();
-
+	illusion::ecs::System::AppendSystems<PlayerControllerSystem>();
+	illusion::ecs::System::AppendSystems<CameraPlayerSystem>();
+	
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
@@ -165,7 +172,13 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		//Main components
+		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
+		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
+
 		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_B)) ActiveGUI = !ActiveGUI;
+		if (Input::isKeyDown(GLFW_KEY_C) && camera.size() > 0) camera.editMode[0] = !camera.editMode[0];
 
 		if (ActiveGUI) {
 			{
@@ -222,9 +235,6 @@ int main(int argc, char* argv[]) {
 
 		//RENDER
 		//--------
-		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
-		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
-		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		ImGui::Render();
 		int display_w, display_h;
@@ -276,18 +286,20 @@ int main(int argc, char* argv[]) {
 
 		//CAMERA MOVEMENT
 		//--------
-		if (camera.size() > 0)  {
+		if (camera.size() > 0 && camera.editMode[0])  {
 			camera.UpdateVectors(camera.ToEntity[0]);
 			if (Input::isMouse(1)) {
 				camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
 			}
 			else if (Input::isMouse(2)) {
 				glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-				transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
-					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
+				camera.UpdatePosition(camera.ToEntity[0], Vec2(-Input::getMouseDelta().x, Input::getMouseDelta().y) * Time::unscaledDeltaTime);
+				/*transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
+					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;*/
 			}
-			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
-				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered()) {
+				camera.UpdatePosition(camera.ToEntity[0], Input::getMouseWheelDelta()* Time::unscaledDeltaTime);
+			}
 		}
 
 		//LATE UPDATE
@@ -306,7 +318,7 @@ int main(int argc, char* argv[]) {
 
 		//EDITOR SELECTION
 		//--------
-		if (camera.size() > 0) {
+		if (camera.size() > 0 && camera.editMode[0]) {
 			Vec4 ray_eye = glm::inverse(scene.renderer->projection) * ray_clip;
 			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
 			Vec3 ray_wor = (glm::inverse(scene.renderer->view) * ray_eye);
