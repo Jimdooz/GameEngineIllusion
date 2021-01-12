@@ -14,6 +14,7 @@ namespace illusion {
 		static GLFWwindow* glfwWindow;
 		static bool shouldClose;
 		static bool fullscreen;
+		static bool focused;
 		/**
 		 * @brief Permet la création d'une fenêtre
 		 *

@@ -88,7 +88,7 @@ namespace illusion {
 		Renderer::FBFeature.Complete();
 
 		Renderer::FBDirectShadow.Reserve();
-		Renderer::FBDirectShadow.SetBufferDimensions(24576, 24576);
+		Renderer::FBDirectShadow.SetBufferDimensions(2048, 2048);
 		Renderer::FBDirectShadow.GenerateDepthTexture();
 		Renderer::FBDirectShadow.DisableColorBuffer();
 		Renderer::FBDirectShadow.Complete();
@@ -227,6 +227,10 @@ namespace illusion {
 	}
 
 	void Renderer::Render() {//@Todo register draw calls and num entities rendered per frame
+		if (Window::width==0 || Window::height == 0) {
+			//INTERNAL_ERR("Window size is 0, the scene can't be rendered");
+			return;
+		}
 		if (camera->size() < 1) {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
