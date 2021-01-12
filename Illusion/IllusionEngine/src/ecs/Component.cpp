@@ -14,6 +14,8 @@
 #include "core/animation/CoreComponents/Animator.h"
 #include "core/animation/CoreComponents/Skeleton.h"
 
+#include "core/sound/AudioSource.h"
+
 using namespace illusion::core;
 
 namespace illusion::ecs {
@@ -86,5 +88,7 @@ namespace illusion::ecs {
 
 		Component::AppendComponents<animation::Animator>();
 		Component::AppendComponents<animation::Skeleton>();
+
+		Component::AppendComponents<sound::AudioSource>();
 	}
 }

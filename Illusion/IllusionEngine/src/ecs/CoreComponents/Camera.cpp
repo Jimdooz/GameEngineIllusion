@@ -13,9 +13,6 @@ namespace illusion::ecs::core {
 
 		COMPONENT_PUBLIC(yaw);
 		COMPONENT_PUBLIC(pitch);
-
-		INTERNAL_INFO("TRY TRANSFORM GET");
-		INTERNAL_INFO("TRANSFORM GET");
 	}
 
 	void Camera::UpdateRotation(ecs::entity_id id, f32 xoffset, f32 yoffset) {

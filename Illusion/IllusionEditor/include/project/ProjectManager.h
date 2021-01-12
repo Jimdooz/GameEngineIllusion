@@ -17,6 +17,8 @@ using json = illusion::json;
 #include <string>
 #include "resources/Project.h"
 
+#include "resources/assets/Audio.h"
+
 namespace illusioneditor::project {
 	
 	namespace config {
@@ -90,6 +92,8 @@ namespace illusioneditor::project {
 			illusion::resources::CurrentProject().open = config::projectOpen;
 
 			INFO("LOAD PROJECT : ", illusion::resources::CurrentProject().path);
+
+			illusion::resources::assets::LoadAllSounds();
 
 			return true;
 		}

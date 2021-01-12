@@ -72,7 +72,6 @@ namespace illusion {
 		//bone.offset[0][3] *= 0.01f;
 		//bone.offset[1][3] *= 0.01f;
 		//bone.offset[2][3] *= 0.01f;
-		INTERNAL_INFO(bone.offset);
 		aiNode* ai_bonenode = ai_scene->mRootNode->FindNode(ai_bone->mName);
 		std::string nodePath = GetParentRelativePath(ai_scene->mRootNode, ai_node);
 		std::string bonePath = GetNodeRelativePath(ai_scene->mRootNode, ai_bonenode);
@@ -85,11 +84,11 @@ namespace illusion {
 		//Get RelativePath
 		aiNode* ai_node = ai_scene->mRootNode->FindNode(ai_channel->mNodeName);
 		channel.relativePath = GetNodeRelativePath(ai_scene->mRootNode, ai_node);
-		INTERNAL_INFO("nodeName : ", ai_channel->mNodeName.C_Str());
-		INTERNAL_INFO("relativePath : ", channel.relativePath);
-		INTERNAL_INFO("positionKeys : ", ai_channel->mNumPositionKeys);
-		INTERNAL_INFO("rotationKeys : ", ai_channel->mNumRotationKeys);
-		INTERNAL_INFO("scaleKeys : ", ai_channel->mNumScalingKeys);
+		//INTERNAL_INFO("nodeName : ", ai_channel->mNodeName.C_Str());
+		//INTERNAL_INFO("relativePath : ", channel.relativePath);
+		//INTERNAL_INFO("positionKeys : ", ai_channel->mNumPositionKeys);
+		//INTERNAL_INFO("rotationKeys : ", ai_channel->mNumRotationKeys);
+		//INTERNAL_INFO("scaleKeys : ", ai_channel->mNumScalingKeys);
 		aiVectorKey* ai_positionKeys = ai_channel->mPositionKeys;
 		for (int i = 0; i < ai_channel->mNumPositionKeys; i++) {
 			animation::Key<Vec3> key = ConvertToKey(ai_positionKeys[i], ticksPerSeconds);
@@ -111,11 +110,11 @@ namespace illusion {
 		//animation.
 		animation.name = ai_animation->mName.C_Str();
 		animation.duration = ai_animation->mDuration / ai_animation->mTicksPerSecond;
-		INTERNAL_INFO("Animation : ", animation.name);
-		INTERNAL_INFO("mDuration : ", ai_animation->mDuration);
-		INTERNAL_INFO("mTicksPerSecond : ", ai_animation->mTicksPerSecond);
-		INTERNAL_INFO("convert duration : ", animation.duration);
-		INTERNAL_INFO("Channels : ", ai_animation->mNumChannels);
+		//INTERNAL_INFO("Animation : ", animation.name);
+		//INTERNAL_INFO("mDuration : ", ai_animation->mDuration);
+		//INTERNAL_INFO("mTicksPerSecond : ", ai_animation->mTicksPerSecond);
+		//INTERNAL_INFO("convert duration : ", animation.duration);
+		//INTERNAL_INFO("Channels : ", ai_animation->mNumChannels);
 		aiNodeAnim** ai_channels = ai_animation->mChannels;
 		for (int i = 0; i < ai_animation->mNumChannels; i++) {
 			animation.channels.push_back(ConvertToChannel(ai_scene, ai_channels[i], ai_animation->mTicksPerSecond));
@@ -125,7 +124,7 @@ namespace illusion {
 	static animation::AnimatorElement GetAnimatorElement(const aiScene* ai_scene) {
 		animation::AnimatorElement animator;
 		aiAnimation** ai_animations = ai_scene->mAnimations;
-		INTERNAL_INFO("Nombre d'animations importées : ", ai_scene->mNumAnimations);
+		//INTERNAL_INFO("Nombre d'animations importées : ", ai_scene->mNumAnimations);
 		for (int i = 0; i < ai_scene->mNumAnimations; i++) {
 			animator.animations.push_back(ConvertToAnimation(ai_scene, ai_animations[0]));
 		}
@@ -133,7 +132,7 @@ namespace illusion {
 	}
 
 	static Mesh ConvertToMesh(const aiMesh* ai_mesh, std::string& name, std::string& group) {
-		INTERNAL_INFO("Try to convert to mesh");
+		//INTERNAL_INFO("Try to convert to mesh");
 		Mesh mesh;
 		//if (ai_mesh->HasNormals()) {
 		//	INFO("HasNormals");
@@ -167,14 +166,14 @@ namespace illusion {
 			mesh.indices.push_back(current.mIndices[2]);
 		}
 		if (ai_mesh->HasBones()) {
-			INTERNAL_INFO("HasBones");
+			//INTERNAL_INFO("HasBones");
 			//get Weights and bone ids
 			mesh.verticesBoneData.resize(ai_mesh->mNumVertices, { 0 });
-			INTERNAL_INFO("Num Bones :", ai_mesh->mNumBones);
+			//INTERNAL_INFO("Num Bones :", ai_mesh->mNumBones);
 			// for each bone
 			for (int i = 0;i < ai_mesh->mNumBones; i++) {
 				aiBone* ai_bone = ai_mesh->mBones[i];
-				INTERNAL_INFO("Num Weights :", ai_bone->mNumWeights);
+				//INTERNAL_INFO("Num Weights :", ai_bone->mNumWeights);
 				//for each vertexWeight
 				for (int j = 0; j < ai_bone->mNumWeights; j++) {
 					aiVertexWeight& vertexWeight = ai_bone->mWeights[j];
@@ -187,14 +186,14 @@ namespace illusion {
 					}
 				}
 			}
-			INTERNAL_INFO("End Vertex Bone Weights");
+			//INTERNAL_INFO("End Vertex Bone Weights");
 
 
 		}
 		mesh.name = name;
 		mesh.group = group;
 
-		INTERNAL_INFO("END LOAD BONES ", mesh.name, " ", mesh.group);
+		//INTERNAL_INFO("END LOAD BONES ", mesh.name, " ", mesh.group);
 
 		return mesh;
 	}
@@ -217,7 +216,7 @@ namespace illusion {
 		if (ai_node->mNumMeshes > 0) {
 			MeshInstance& meshInstance = *(scene.GetComponent<MeshInstance>());
 			scene.EntityAddComponent<MeshInstance>(id);
-			INFO("num meshes : ", ai_node->mNumMeshes);
+			//INFO("num meshes : ", ai_node->mNumMeshes);
 			unsigned int ai_meshid = ai_node->mMeshes[0];
 			std::string relativePath = fs::relative(path, resources::CurrentProject().path + "/Assets/").string();
 			size_t mesh_id = std::hash<std::string>{}(relativePath + std::to_string(ai_meshid));
@@ -235,7 +234,7 @@ namespace illusion {
 				skeletonComponent.parentRelativePath[skeleton_id] = GetParentRelativePath(ai_scene->mRootNode,ai_node);
 				//Add Bones
 				util::Array<animation::Bone>& bones = skeletonComponent.bones[skeleton_id];
-				INTERNAL_INFO("NUM BONES : ", ai_mesh->mNumBones);
+				//INTERNAL_INFO("NUM BONES : ", ai_mesh->mNumBones);
 				if (ai_mesh->mNumBones > NUM_BONES_PER_MESH) {
 					INTERNAL_ERR("too much bones - max : ", NUM_BONES_PER_MESH);
 				}
@@ -254,7 +253,7 @@ namespace illusion {
 	}
 	//Load meshes in the renderer
 	static void loadNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer& renderer) {
-		INTERNAL_INFO("LOAD NODE ");
+		//INTERNAL_INFO("LOAD NODE ");
 		// @Todo : support multiples meshes on the same node		
 		if (node->mNumMeshes > 0) {
 			unsigned int ai_meshid = node->mMeshes[0];

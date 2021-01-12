@@ -10,13 +10,13 @@ namespace illusion::core::sound {
 		COMPONENT_REGISTER(AudioSource);
 
 		AudioSource(Scene* scene) : Component(scene) {
-			COMPONENT_PROTECTED(sourcePath);
-			COMPONENT_PROTECTED(is3D);
-			COMPONENT_PROTECTED(loop);
-			COMPONENT_PROTECTED(paused);
-			COMPONENT_PROTECTED(volume);
+			COMPONENT_PUBLIC(relativePath);
+			COMPONENT_PUBLIC(is3D);
+			COMPONENT_PUBLIC(loop);
+			COMPONENT_PUBLIC(paused);
+			COMPONENT_PUBLIC(volume);
 		}
-		COMPONENT_DATA(std::string, sourcePath);
+		COMPONENT_DATA(std::string, relativePath);
 		COMPONENT_DATA(size_t, sound_id);
 		COMPONENT_DATA(boolean, idComputed);
 		COMPONENT_DATA(boolean, is3D);
