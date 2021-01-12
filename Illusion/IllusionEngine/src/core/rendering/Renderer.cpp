@@ -161,7 +161,7 @@ namespace illusion {
 		if (!ContainsShader(idShader) || !ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
 
 		if (!MeshExistInShader(idShader, idMesh)) {
-			//Création de l'espace pour le mesh
+			//Crï¿½ation de l'espace pour le mesh
 			instancesByMeshByShader[idShader][idMesh] = util::Array<ecs::entity_id>();
 		}
 
@@ -228,6 +228,10 @@ namespace illusion {
 	}
 
 	void Renderer::Render() {//@Todo register draw calls and num entities rendered per frame
+		if (Window::width==0 || Window::height == 0) {
+			//INTERNAL_ERR("Window size is 0, the scene can't be rendered");
+			return;
+		}
 		if (camera->size() < 1) {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
@@ -267,7 +271,7 @@ namespace illusion {
 			qualitySettings.gamma = postProcess.gamma[0];
 			qualitySettings.gamma = qualitySettings.gamma <= 0 ? 0.001 : qualitySettings.gamma;
 			qualitySettings.exposure = postProcess.exposure[0];
-		} 
+		}
 
 		if (qualitySettings.useShadow) {
 			qualitySettings.shadowIntensity = postProcess.shadowIntensity[0];
@@ -444,7 +448,7 @@ namespace illusion {
 					ecs::entity_id instance_id = entitiesArray[i];
 					ecs::component_id idTransform = transform->getIndex(instance_id);
 					ecs::component_id idMesh = meshInstance->getIndex(instance_id);
-					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entités ?
+					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entitï¿½s ?
 
 					Material& material = materials[meshInstance->materialId[idMesh]];
 					//set material uniforms
@@ -484,7 +488,7 @@ namespace illusion {
 								animation::Bone& bone = skeleton->bones[skeletonId][j];
 								ecs::component_id idTransform = transform->getIndex(bone.id);
 								ecs::component_id parentIdTransform = transform->getIndex(skeleton->parentId[skeletonId]);
-								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform) * bone.offset; //  
+								bonesMatrices[j]= glm::inverse(transform->ComputeModel(parentIdTransform)) * transform->ComputeModel(idTransform) * bone.offset; //
 							}
 							//set bone transformation uniforms
 							shader->setMat4("Bones", bonesMatrices[0], NUM_BONES_PER_MESH);

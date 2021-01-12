@@ -315,12 +315,11 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		//SWAP BUFFER
-		glfwSwapBuffers(Window::glfwWindow);
-
+		glfwSwapBuffers(Window::glfwWindow);		
+		views::GameStats::EndChronoData("Game");
 		if (Input::isKeyDown(GLFW_KEY_F11)) {
 			Window::SetFullScreen(!Window::fullscreen);
 		}
-		views::GameStats::EndChronoData("Game");
 	}
 
 	//Shutdown

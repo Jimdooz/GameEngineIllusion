@@ -3,16 +3,22 @@
 namespace illusion {
 	int Window::width = 0;
 	int Window::height = 0;
-	int Window::last_width = 0;
-	int Window::last_height = 0;
 	int Window::posX = 0;
 	int Window::posY = 0;
+
+	//data used to keep track of position and size of window before going full screen
+	int Window::last_width = 0;
+	int Window::last_height = 0;
 	int Window::last_posX = 0;
 	int Window::last_posY = 0;
+	//End 
+
+
 	std::string Window::title = "Unitialized";
 	GLFWwindow* Window::glfwWindow = nullptr;
 	bool Window::shouldClose = false;
 	bool Window::fullscreen = false;
+	bool Window::focused = true;
 
 	void Window::Create(const int _width, const int _height, const char* _title) {
 		width = _width;
@@ -54,28 +60,21 @@ namespace illusion {
 		{
 			INTERNAL_ERR("Failed to initialize GLAD");
 		}
-		glfwSetFramebufferSizeCallback(glfwWindow, [](GLFWwindow* _glfwWindow, int _width, int _height)
-		{
-			width = _width;
-			height = _height;
-			glViewport(0, 0, width, height);
-			INTERNAL_INFO("WINDOW RESIZED : ", width, height)
-		});
 		INTERNAL_INFO("GLAD initialized - OpenGL version : ", GLVersion.major, ".", GLVersion.minor);
 		glfwSetFramebufferSizeCallback(glfwWindow, [](GLFWwindow* _glfwWindow, int _width, int _height)
-		{
-			last_width = width;
-			last_height = height;
+		{			
 			width = _width;
 			height = _height;
 			glViewport(0, 0, width, height);
 			INTERNAL_INFO("WINDOW RESIZED : ", width, height)
 		});
 		glfwSetWindowPosCallback(glfwWindow, [](GLFWwindow* _glfwWindow, int xpos, int ypos) {
-			last_posX = posX;
-			last_posY = posY;
 			posX = xpos;
 			posY = ypos;
+		});
+		glfwSetWindowFocusCallback(glfwWindow, [](GLFWwindow* window, int _focused)
+		{
+			focused = _focused;
 		});
 		glViewport(0, 0, width, height);
 		Input::Init();
@@ -141,21 +140,24 @@ namespace illusion {
 			INTERNAL_WARN("Window Mode already Set");
 			return;
 		}
-		GLFWmonitor* glfwMonitor =get_current_monitor(glfwWindow); //glfwGetPrimaryMonitor();
+		GLFWmonitor* glfwMonitor =get_current_monitor(glfwWindow);// get the monitor where the window is
 		const GLFWvidmode* vidMode = glfwGetVideoMode(glfwMonitor);
 
 		INTERNAL_INFO("CHANGE Window MODE");
 		if (_fullscreen) {
-			int posX, posY;
-			glfwGetMonitorPos(glfwMonitor, &posX, &posY);
+			last_width = width;
+			last_height = height;
+			last_posX = posX;
+			last_posY = posY;
+			int _posX, _posY;
+			glfwGetMonitorPos(glfwMonitor, &_posX, &_posY);
 			INTERNAL_INFO("FullScreen MODE");			
-			glfwSetWindowMonitor(glfwWindow, glfwMonitor, posX, posY, vidMode->width, vidMode->height, vidMode->refreshRate);
+			glfwSetWindowMonitor(glfwWindow, glfwMonitor, _posX, _posY, vidMode->width, vidMode->height, vidMode->refreshRate);
 		}
 		else {
 			INTERNAL_INFO("Windowed MODE");
-			glfwSetWindowMonitor(glfwWindow, NULL, 0, 0, last_width, last_height, vidMode->refreshRate);
+			glfwSetWindowMonitor(glfwWindow, NULL, last_posX, last_posY, last_width, last_height, vidMode->refreshRate);
 			glfwSetWindowAttrib(glfwWindow, GLFW_DECORATED, GLFW_TRUE);
-			glfwSetWindowPos(glfwWindow, last_posX, last_posY);
 		}
 		fullscreen = _fullscreen;
 	}
