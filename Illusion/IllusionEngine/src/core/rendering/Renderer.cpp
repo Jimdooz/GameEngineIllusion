@@ -34,7 +34,7 @@ namespace illusion {
 
 	void MeshInstance::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
-		RemoveData(index, meshId, materialId);
+		RemoveData(index, meshId, materialId, initialized);
 	}
 
 	void MeshInstance::SetMesh(ecs::component_id index, size_t newMeshId) {
@@ -357,8 +357,8 @@ namespace illusion {
 		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
 		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
-		projection = glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
-		view = glm::lookAt(cameraWorldPos, cameraWorldPos + camera->front[0], camera->up[0]);
+		projection = camera->GetProjection();// glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
+		view = camera->GetView();
 
 		core::rendering::DirectionalLight* lights = scene->GetComponent<core::rendering::DirectionalLight>();
 		core::rendering::PointLight* pointLights = scene->GetComponent<core::rendering::PointLight>();

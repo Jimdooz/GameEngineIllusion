@@ -12,6 +12,8 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
 
+			COMPONENT_PROTECTED(rotationEuler);
+
 			COMPONENT_PROTECTED(parent);
 			COMPONENT_PROTECTED(childs);
 		}

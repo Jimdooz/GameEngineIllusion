@@ -105,7 +105,7 @@ void main() {
 		Vec3 size = Vec3(0.5, 0.5, 0.5);
 
 		core::physics::primitives::OBB obb(translation, scale * size, glm::inverse(glm::toMat4(rotation)));
-		core::physics::primitives::Ray ray(Vec3(transform.position[transform.getIndex(camera.ToEntity[0])]), rayWord);
+		core::physics::primitives::Ray ray(camera.getPosition() , rayWord);
 
 		f32 cast = core::physics::collisions::Raycast(obb, ray);
 
@@ -148,7 +148,6 @@ void main() {
 			ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 
 			ecs::component_id idTransform = transform.getIndex(views::GameHiearchy::selected);
-			ecs::component_id indexCamera = transform.getIndex(camera.ToEntity[0]);
 
 			glm::vec3 scale;
 			glm::quat rotation;
@@ -157,9 +156,9 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.ComputeModel(idTransform), scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = transform.position[indexCamera];
+			Vec3 CameraPosition = camera.getPosition();
 
-			core::physics::primitives::Ray ray(Vec3(transform.position[indexCamera]), rayWord);
+			core::physics::primitives::Ray ray(CameraPosition, rayWord);
 
 			if (translateSelection) {
 				core::physics::primitives::Line intersectionRay, intersectionRay2;
@@ -185,7 +184,7 @@ void main() {
 				core::physics::primitives::OBB obbY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 1, 0.3) * factor);
 				core::physics::primitives::OBB obbZ(translation + (Vec3(0, 0, 0.7) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 0.3, 1) * factor);
 
-				if (Input::isMouseDown(0)) {
+				if (Input::isMouseDown(0) && !ImGui::IsAnyWindowHovered() && !ImGui::IsAnyItemHovered()) {
 					bool castX = CastBoxAxis(obbX, Vec3(1, 0, 0), ray);
 					bool castY = CastBoxAxis(obbY, Vec3(0, 1, 0), ray);
 					bool castZ = CastBoxAxis(obbZ, Vec3(0, 0, 1), ray);
@@ -221,7 +220,7 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = transform.position[transform.getIndex(camera.ToEntity[0])];
+			Vec3 CameraPosition = camera.getPosition();
 
 			arrowShader->setMat4("projection", projection);
 			arrowShader->setMat4("view", view);
