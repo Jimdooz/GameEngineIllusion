@@ -126,6 +126,14 @@ namespace illusion::ecs::core {
 		return model;
 	}
 
+	Vec3 Transform::GetPosition(ecs::entity_id id) {
+		if (!scene->entities.IsAlive(id)) return Vec3();
+		component_id index = getIndex(id);
+
+		Mat4x4 modelElement = ComputeModel(index);
+		return Vec3(modelElement[3][0], modelElement[3][1], modelElement[3][2]);
+	}
+
 	ecs::entity_id Transform::FindByName(ecs::entity_id startId, std::string path) {
 		if (!id::IsValid(startId) || !scene->entities.IsAlive(startId)) return (ecs::entity_id)id::invalid_id;
 		ecs::entity_id currentId = startId;

@@ -236,6 +236,7 @@ namespace illusion {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
 		}
+
 		/**
 		 * Frame Buffer
 		 * FBAA : Frame buffer anti aliasing
@@ -353,7 +354,7 @@ namespace illusion {
 		//Compute Camera Position
 		ecs::entity_id cameraId = camera->ToEntity[0];
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
-		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
 		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
 		projection = camera->GetProjection();// glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);

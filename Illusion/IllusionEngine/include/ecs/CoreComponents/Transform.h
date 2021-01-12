@@ -80,6 +80,8 @@ namespace illusion::ecs::core {
 
 		Mat4x4 &ComputeModel(ecs::component_id component, bool forceRecompute = false);
 
+		Vec3 GetPosition(ecs::entity_id id);
+
 		ecs::entity_id FindByName(ecs::entity_id parent, std::string path);
 
 		virtual void AddDatas(ecs::entity_id id) override;
