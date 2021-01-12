@@ -8,6 +8,9 @@
 
 #include "MaterialEditor.h"
 
+#include "core/sound/AudioSource.h"
+#include "core/sound/SoundSystem.h"
+
 namespace illusioneditor::views::GameInspector {
 
 	using namespace illusion;
@@ -19,6 +22,7 @@ namespace illusioneditor::views::GameInspector {
 		std::string searchComponent = "";
 		std::string searchMesh = "";
 		std::string searchMaterial = "";
+		std::string searchAudioSource = "";
 	}
 
 	void GenerateInputString(std::string name, std::string& str) {
@@ -270,6 +274,75 @@ namespace illusioneditor::views::GameInspector {
 		
 	}
 	
+	void RenderAudioSourceInstance(const size_t componentKey, core::sound::AudioSource* audioSourceInstance, ecs::entity_id selected) {
+		ecs::component_id index = audioSourceInstance->getIndex(selected);
+
+		//SOUNDS
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(audioSourceInstance->relativePath[index].c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Source###changeSourceAudio")) {
+			ImGui::OpenPopup("RenderAudioSourceInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("RenderAudioSourceInstanceChoice")) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchAudio", searchAudioSource);
+			ImGui::Separator();
+
+			for (auto const& [key, val] : core::sound::GetSoundEngine().sources) {
+				if (searchAudioSource != "" && key.find(searchAudioSource) == std::string::npos) continue;
+				bool styleAdded = false;
+				if (key == audioSourceInstance->relativePath[index]) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+					styleAdded = true;
+				}
+
+				if (ImGui::Button((key + "###audioSource_" + key).c_str())) {
+					audioSourceInstance->relativePath[index] = key;
+				}
+
+				if (styleAdded) ImGui::PopStyleColor();
+			}
+			ImGui::EndPopup();
+		}
+
+		bool paused = audioSourceInstance->paused[index];
+		ImGui::Checkbox("Pause###soundPaused", &paused);
+		audioSourceInstance->paused[index] = paused;
+
+		bool loop = audioSourceInstance->loop[index];
+		ImGui::Checkbox("Loop###soundLoop", &loop);
+		audioSourceInstance->loop[index] = loop;
+
+		bool sound3d = audioSourceInstance->is3D[index];
+		ImGui::Checkbox("3D Space###3DSoundSpace", &sound3d);
+		audioSourceInstance->is3D[index] = sound3d;
+
+		float volume = audioSourceInstance->volume[index];
+		ImGui::SliderFloat("Volume###soundVolume", &volume, 0, 1);
+		audioSourceInstance->volume[index] = volume;
+
+		if (ImGui::Button("Play###PlaySound")) {
+			audioSourceInstance->Play(index);
+		}
+
+		//f32 volume = audioSourceInstance->volume[index];
+		//ImGui::Checkbox("Volume###soundVolume", &volume);
+		//audioSourceInstance->loop[index] = volume;
+	}
+
 	void Show() {
 		ImGui::Begin("Inspector");
 
@@ -329,6 +402,7 @@ namespace illusioneditor::views::GameInspector {
 				if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 				if (ImGui::TreeNode(title.c_str())) {
 					if (val->getName() == "Mesh Instance") RenderMeshInstance(key, static_cast<MeshInstance*>(val), currentSelected);
+					else if (val->getName() == "AudioSource") RenderAudioSourceInstance(key, static_cast<core::sound::AudioSource*>(val), currentSelected);
 					else {
 						for (u32 i = 0; i < val->publicDatas.size(); i++) {
 							if (val->publicDatas[i].visible)

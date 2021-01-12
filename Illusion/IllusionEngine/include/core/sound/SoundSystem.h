@@ -4,6 +4,7 @@
 #include "ecs/Scene.h"
 #include "ecs/System.h"
 #include "ecs/CoreComponents/Transform.h"
+#include "ecs/CoreComponents/Camera.h"
 #include "core/sound/AudioSource.h"
 
 #include "resources/Project.h"
@@ -16,7 +17,7 @@ namespace illusion::core::sound {
 
 		static SoundEngine main;
 	};
-	
+
 	static inline SoundEngine& GetSoundEngine() {
 		return SoundEngine::main;
 	}
@@ -24,96 +25,89 @@ namespace illusion::core::sound {
 	//used to load files from 
 	static void LoadSound(std::string fullPath) {
 		std::string relativePath = fs::relative(fullPath, illusion::resources::CurrentProject().path + "/Assets").string();
-		GetSoundEngine().sources[relativePath]= GetSoundEngine().soundEngine->addSoundSourceFromFile(fullPath.c_str(), irrklang::ESM_AUTO_DETECT, true);
+		GetSoundEngine().sources[relativePath] = GetSoundEngine().soundEngine->addSoundSourceFromFile(fullPath.c_str(), irrklang::ESM_AUTO_DETECT, true);
 		INTERNAL_INFO("Loaded Sound Source : ", relativePath, " ", &GetSoundEngine().sources);
 	}
-#define INVALID_SOUND_ID 99999999
 	struct SoundSystem : ecs::System {
 		SYSTEM_NAME("Sound System");
 		SYSTEM_REGISTER(SoundSystem);
-		ecs::core::Transform* transformComponent;
-		AudioSource* audioSourceComponent;
+		ecs::core::Transform* transforms;
+		ecs::core::Camera* cameras;
+		AudioSource* audios;
 
 		virtual void LateUpdate() override {
 			u32 size = static_cast<u32>(ToEntity.size());
 			for (currIndex = 0; currIndex < size; currIndex++) {
-				size_t& sound_id = audioSourceComponent->sound_id[currIndex];
-				component_id transform_id=transformComponent->getIndex(ToEntity[currIndex]);
+				if (audios->sound_ptr[currIndex] != nullptr) {
+					if (audios->sound_ptr[currIndex]->isFinished())
+						audios->paused[currIndex] = true;
+				}
 
-				if (!audioSourceComponent->idComputed[currIndex]) {
-					sound_id = StartSound(audioSourceComponent->relativePath[currIndex],audioSourceComponent->is3D[currIndex]);
-					if(sound_id==INVALID_SOUND_ID){
-						continue;
-					}
-					INTERNAL_INFO("ID SOUND GET : ", sound_id);
-					audioSourceComponent->idComputed[currIndex] = true;
+				//If sound source has changed or spatialization change -> update Sound
+				if (audios->old_is3D[currIndex] != audios->is3D[currIndex]
+					|| audios->old_relativePath[currIndex] != audios->relativePath[currIndex]
+					|| audios->sound_ptr[currIndex] == nullptr
+					|| (audios->sound_ptr[currIndex]->isFinished() && audios->loop[currIndex])
+					) {
+					audios->FreeCurrentSound((component_id)currIndex);
+					audios->sound_ptr[currIndex] = StartSound(audios->relativePath[currIndex], audios->is3D[currIndex], (bool)audios->loop[currIndex], (bool)audios->paused[currIndex]);
+
+					INTERNAL_INFO(audios->sound_ptr[currIndex]);
+
+
+					//Set new value to old...
+					audios->old_is3D[currIndex] = audios->is3D[currIndex];
+					audios->old_relativePath[currIndex] = audios->relativePath[currIndex];
 				}
-				irrklang::ISound* sound = sounds[sound_id];
-				if (sound==nullptr) {
-					INTERNAL_ERR("SOUND PTR IS NULL for entity : ",transformComponent->name[transform_id], " addr ", sounds[0], " size ", sounds.size());
-					continue;
-				}
-				//If sound type has changed update SoundType
-				if (audioSourceComponent->is3D[currIndex]!=is3Dsounds[sound_id]) {
-					ChangeSoundType(sound_id, audioSourceComponent->is3D[currIndex]);
-				}
+
+				if (audios->sound_ptr[currIndex] == nullptr) continue;
+
+				irrklang::ISound* sound_ptr = audios->sound_ptr[currIndex];
 				// Update Sound Values
-				INTERNAL_INFO("ID SOUND PTR : ", sound_id);
-				sound->setIsPaused(audioSourceComponent->paused[currIndex]);
-				sound->setIsLooped(audioSourceComponent->loop[currIndex]);
-				sound->setVolume(audioSourceComponent->volume[currIndex]);
-				if (audioSourceComponent->is3D[currIndex]) {
-					UpdatePosition(sound, transformComponent->position[transform_id]);
+
+				bool p = audios->paused[currIndex] ? true : false;
+				bool l = audios->loop[currIndex] ? true : false;
+				if (p != sound_ptr->getIsPaused())
+					sound_ptr->setIsPaused(p);
+				if (l != sound_ptr->isLooped())
+					sound_ptr->setIsLooped(l);
+
+				if (audios->volume[currIndex] != sound_ptr->getVolume())
+					sound_ptr->setVolume(audios->volume[currIndex]);
+				audios->playPosition[currIndex] = sound_ptr->getPlayPosition();
+
+				Vec3 positionSound = transforms->GetPosition(audios->getId(currIndex));
+				if (cameras->size() > 0) positionSound = cameras->GetView() * Vec4(positionSound, 1.0);
+
+				if (audios->is3D[currIndex]) {
+					UpdatePosition(sound_ptr, positionSound);
 				}
 			}
 		}
 		virtual void Initialize(ecs::Scene& scene) override {
-			transformComponent = scene.GetComponent<ecs::core::Transform>();
-			audioSourceComponent = scene.GetComponent<AudioSource>();
-			SetDependencies(audioSourceComponent);
+			transforms = scene.GetComponent<ecs::core::Transform>();
+			cameras = scene.GetComponent<ecs::core::Camera>();
+			audios = scene.GetComponent<AudioSource>();
+			SetDependencies(audios);
 		}
-		~SoundSystem() {
-			for (irrklang::ISound* sound : sounds) {
-				if(sound!=nullptr)sound->drop();
-			}
-		}		
+
 	private:
-		util::Array<> sounds;
-		util::Array<bool> is3Dsounds;
 		// UTIL functions
-		size_t StartSound(std::string relativePath, bool is3D) {
-			if (GetSoundEngine().sources.find(relativePath)== GetSoundEngine().sources.end()) {
-				INTERNAL_ERR("Sound Souce File Not FOUND : ", relativePath, " ", &GetSoundEngine().sources);
-				return INVALID_SOUND_ID;
-			}
+		inline irrklang::ISound* StartSound(std::string relativePath, bool is3D, bool loop, bool paused) {
+			if (GetSoundEngine().sources.find(relativePath) == GetSoundEngine().sources.end()) return nullptr;
+			INTERNAL_INFO("START SOUND");
 			if (is3D) {
-				sounds.push_back(GetSoundEngine().soundEngine->play3D(GetSoundEngine().sources[relativePath], irrklang::vec3df(),true, false, true));
+				return GetSoundEngine().soundEngine->play3D(GetSoundEngine().sources[relativePath], irrklang::vec3df(), false, true, true);
 			}
-			else {
-				irrklang::ISound* sound = GetSoundEngine().soundEngine->play2D(GetSoundEngine().sources[relativePath],true, false, true);
-				sounds.push_back(sound);
-			}
-			is3Dsounds.push_back(is3D);
-			if(sounds.size()>0)
-			INTERNAL_INFO("Add sound at adress ", &sounds);
-			return sounds.size() - 1;
+			return GetSoundEngine().soundEngine->play2D(GetSoundEngine().sources[relativePath], false, true, true);
 		}
-		inline void ChangeSoundType(size_t sound_id, bool is3D) {
-			irrklang::ISoundSource* source =sounds[sound_id]->getSoundSource();
-			if (is3D) {
-				sounds[sound_id]= GetSoundEngine().soundEngine->play3D(source, irrklang::vec3df());
-			}
-			else {
-				sounds[sound_id]= GetSoundEngine().soundEngine->play2D(source);
-			}
-			is3Dsounds[sound_id] = is3D;
-		}
-		inline void UpdatePosition(irrklang::ISound *sound,Vec3& pos) {
+		inline void UpdatePosition(irrklang::ISound* sound, Vec3& pos) {
 			irrklang::vec3df sound_pos;
 			sound_pos.X = pos.x;
 			sound_pos.Y = pos.y;
 			sound_pos.Z = pos.z;
-			sound->setPosition(sound_pos);
+			if (sound_pos != sound->getPosition())
+				sound->setPosition(sound_pos);
 		}
 		//END UTIL		
 	};

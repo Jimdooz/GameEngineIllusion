@@ -3,15 +3,24 @@
 
 namespace illusion::core::sound {
 	void AudioSource::AddDatas(ecs::entity_id id) {
-		AddData(relativePath, std::string("Audio\\breakout.mp3"));
-		AddData<size_t>(sound_id, 0);
-		AddData<boolean>(idComputed, false);
+		AddData(relativePath, std::string(""));
+		AddData<irrklang::ISound *>(sound_ptr, nullptr);
 		AddData<boolean>(is3D, false);
 		AddData<boolean>(loop, false);
-		AddData<boolean>(paused, false);
-		AddData(volume, 1.0f);
+		AddData<boolean>(paused, true);
+		AddData(volume, 0.5f);
+
+		AddData<u32>(playPosition, 0);
+
+		AddData(old_relativePath, std::string(""));
+		AddData<boolean>(old_is3D, false);
 	}
+	
+
 	void AudioSource::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, relativePath, sound_id, idComputed, is3D, loop, paused, volume);
+		FreeCurrentSound(index);
+		RemoveData(index, relativePath, sound_ptr, old_is3D, is3D, loop, paused, volume);
+		RemoveData(index, playPosition);
+		RemoveData(index, old_relativePath, old_is3D);
 	}
 }

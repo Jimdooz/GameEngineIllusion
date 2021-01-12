@@ -56,6 +56,8 @@
 
 #include "core/rendering/Renderer.h"
 
+#include "core/sound/SoundSystem.h"
+
 
 //test irrKlang
 #include <irrKlang.h>
@@ -147,7 +149,6 @@ int main(int argc, char* argv[]) {
 	bool stepMode = false;
 
 	bool ActiveGUI = true;
-
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
