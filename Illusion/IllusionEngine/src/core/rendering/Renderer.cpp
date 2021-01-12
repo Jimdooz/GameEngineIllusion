@@ -131,7 +131,7 @@ namespace illusion {
 		transform(scene->GetComponent<ecs::core::Transform>()),
 		meshInstance(scene->GetComponent<MeshInstance>()),
 		skeleton(scene->GetComponent<animation::Skeleton>()),
-		instanceRenderingThreshold(3)
+		instanceRenderingThreshold(6)
 	{
 		Renderer::InitializeBuffers();
 
@@ -235,7 +235,6 @@ namespace illusion {
 			//INTERNAL_ERR("No Camera, the scene can't be rendered");
 			return;
 		}
-		glEnable(GL_CULL_FACE);
 		/**
 		 * Frame Buffer
 		 * FBAA : Frame buffer anti aliasing
