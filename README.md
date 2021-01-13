@@ -11,24 +11,33 @@ Illusion is a custom game engine developed in C++ in the context of the "Game En
 
 First of all, clone this repository to your desktop.
 
-Several files are pre-configured in order to generate an executable version of the editor. For instance, the project has been tested on Windows NT OS.
+Several files are pre-configured in order to generate an executable version of the editor. For instance, the project has been tested on Windows NT OS. Make sure to support OpenGL version 4.5
 
 ### Windows NT
 
-The current version of the project is fully functional on Windows NT 10.0.17763.316 (February, 2019) and has been built with Visual Studio 2019. To generate it, please follow the next steps:
+The current version of the project is fully functional on Windows NT 10.0.17763.316 (February, 2019) x64 and has been built with Visual Studio 2019. To generate it, please follow the next steps:
 
 * Clean the project from any residual previous builds by clicking on or executing with CL `GameEngineIllusion\Illusion\clean.bat` ;
 * Generate a VS solution by executing the `GameEngineIllusion\Illusion\generate.bat` file. The following files will be created:
 	* Illusion.sln;
 	* IllusionEngine.vcxproj;
-	* IllusionEditor.vcxproj.
+	* IllusionEditor.vcxproj;
+	* Glad.vcxproj;
 * On Visual Studio 2019, do `File > Open > Project/Solution` and choose `GameEngineIllusion\Illusion\Illusion.sln` ;
-* Depending on the build type the user needs, select "Debug" or "Release" and also the architectural target (x64_86 or x86) then run a building process.
+* Depending on the build type the user needs, select "Debug" or "Release" and also the architectural target (x64_86) then run a building process.
+* x64 is the only architecture currently supported
+* <b>To see the engine's limits select Release mode it allow much better performance </b>
+
+### Linux
+
+The current version of the project doesn't compile due to compiler specific code and missing dependencies.
+However, it was compiled before the remake settings for Linux have to be adjusted and the dependencies added.
 
 ## Features
 
 * Creating, saving and loading projects through a File Explorer;
 * Entity-Component-System pattern;
+	* cache friendly architecture
 * Hierarchized entities:
 	* add entities to the current scene;
 	* hard delete entities, i.e. even their children;
@@ -59,8 +68,10 @@ The current version of the project is fully functional on Windows NT 10.0.17763.
 The project is created with:
 
 * C++17
+* OpenGL: 4.5
 * GLM: 0.9.8.6
 * GLAD: 0.1.34
 * GLFW: 3.3.2 
-* Open Asset Import Library (Assimp): 4.1.0
+* Open Asset Import Library (Assimp): 5.0.1
 * Dear ImGui: 1.79
+* irrKlang: 1.6.0
