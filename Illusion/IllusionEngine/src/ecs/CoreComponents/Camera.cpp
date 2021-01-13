@@ -71,9 +71,21 @@ namespace illusion::ecs::core {
 
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
 		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
-		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
 		return glm::inverse(modelCamera);
+	}
+
+	Mat4x4 Camera::GetRotation(ecs::component_id index) {
+		//Compute Camera Position
+		ecs::entity_id cameraId = getId(index);
+		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
+
+		glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
+		glm::vec3 skew; glm::vec4 perspective;
+		glm::decompose(modelCamera, scale, rotation, translation, skew, perspective);
+
+		return glm::toMat4(glm::conjugate(rotation));
 	}
 
 	Vec3 Camera::GetPosition(ecs::component_id index) {
