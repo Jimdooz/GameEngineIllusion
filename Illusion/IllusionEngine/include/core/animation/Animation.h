@@ -28,22 +28,22 @@ namespace illusion::core::animation {
 		void ComputeTransformations(TimeAnimation& time) {
 			if (positionKeys.size() > 0) {
 				size_t nearIndex = GetNearKey(time, positionKeys);
-				auto A = positionKeys[nearIndex];
-				auto B = positionKeys[(nearIndex + 1) % positionKeys.size()];
+				const auto& A = positionKeys[nearIndex];
+				const auto& B = positionKeys[(nearIndex + 1) % positionKeys.size()];
 				f32 interpolation = ComputeInterpolation(time, A, B);
 				computedPosition = glm::mix(A.value, B.value, interpolation);
 			}
 			if (rotationKeys.size() > 0) {
 				size_t nearIndex = GetNearKey(time, rotationKeys);
-				auto A = rotationKeys[nearIndex];
-				auto B = rotationKeys[(nearIndex + 1) % rotationKeys.size()];
+				const auto& A = rotationKeys[nearIndex];
+				const auto& B = rotationKeys[(nearIndex + 1) % rotationKeys.size()];
 				f32 interpolation = ComputeInterpolation(time, A, B);
 				computedRotation = glm::slerp(A.value, B.value, interpolation);
 			}
 			if (scaleKeys.size() > 0) {
 				size_t nearIndex = GetNearKey(time, scaleKeys);
-				auto A = scaleKeys[nearIndex];
-				auto B = scaleKeys[(nearIndex + 1) % scaleKeys.size()];
+				const auto& A = scaleKeys[nearIndex];
+				const auto& B = scaleKeys[(nearIndex + 1) % scaleKeys.size()];
 				f32 interpolation = ComputeInterpolation(time, A, B);
 				computedScale = glm::mix(A.value, B.value, interpolation);
 			}

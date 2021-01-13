@@ -348,7 +348,7 @@ namespace illusioneditor::views::GameProject {
 						}
 						//@todo changer la fonction pour uniquement modifier le tableau meshbyshader
 						if (itemMaterial) {
-							scene->renderer->GenerateMaterials();
+							illusion::resources::assets::LoadAllMaterials();
 							scene->renderer->ReGenerateMeshByShader();
 						}
 

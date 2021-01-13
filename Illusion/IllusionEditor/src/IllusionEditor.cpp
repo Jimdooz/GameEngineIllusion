@@ -31,8 +31,6 @@
 
 #include "project/ProjectManager.h"
 
-#include "core/rendering/shapes/defaultShapes.h"
-
 #include <iostream>
 #include <vector>
 #include <bitset>

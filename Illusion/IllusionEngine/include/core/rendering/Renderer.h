@@ -7,6 +7,7 @@
 #include "ecs/CoreComponents/Transform.h"
 #include "ecs/CoreComponents/Camera.h"
 
+
 #include "core/rendering/CoreComponents/directionalLight.h"
 #include "core/rendering/CoreComponents/PostProcess.h"
 #include "core/rendering/CoreComponents/pointLight.h"
@@ -400,29 +401,10 @@ namespace illusion {
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;
 	};
 
-	struct Renderer {
-		ecs::Scene* scene;
-		ecs::core::Camera* camera;
-		ecs::core::Transform* transform;
-		MeshInstance* meshInstance;
-		animation::Skeleton* skeleton;
-
-		Mat4x4 projection;
-		Mat4x4 view;
-
+	struct RenderEngine {
 		util::UnorderedMap<size_t, Shader> shaders;
 		util::UnorderedMap<size_t, Mesh> meshes;
 		util::UnorderedMap<size_t, Material> materials;
-
-		util::UnorderedMap<size_t, util::UnorderedMap<size_t, util::Array<ecs::entity_id>>> instancesByMeshByShader;
-		//@Todo organiser par material aussi pour optimiser si plusieurs instances du mesh ont le même material ?
-
-		size_t instanceRenderingThreshold;
-
-		static int widthSaved, heightSaved;
-
-		Renderer(ecs::Scene* _scene);
-		~Renderer();
 
 		/**
 		 * Permet d'ajouter un mesh par son id
@@ -444,8 +426,6 @@ namespace illusion {
 		 */
 		inline void AddShader(Shader shader, size_t idShader) {
 			shaders[idShader] = shader;
-			//On créé automatiquement un espace pour la suite
-			instancesByMeshByShader[idShader] = util::UnorderedMap<size_t, util::Array<ecs::entity_id>>();
 		}
 
 		/**
@@ -469,6 +449,40 @@ namespace illusion {
 			return materials.find(idMaterial) != materials.end();
 		}
 
+		inline Mesh& GetCube() { return meshes[0]; }
+		inline Mesh& GetSphere() { return meshes[1]; }
+		inline Mesh& GetQuad(){ return meshes[2]; }
+
+		inline Shader& defaultShader() { return shaders[0]; }
+		inline Material& defaultMaterial() { return materials[0]; }
+
+		static RenderEngine main;
+	};
+
+	static inline RenderEngine& GetRenderEngine() {
+		return RenderEngine::main;
+	}
+
+	struct Renderer {
+		ecs::Scene* scene;
+		ecs::core::Camera* camera;
+		ecs::core::Transform* transform;
+		MeshInstance* meshInstance;
+		animation::Skeleton* skeleton;
+
+		Mat4x4 projection;
+		Mat4x4 view;
+
+		util::UnorderedMap<size_t, util::UnorderedMap<size_t, util::Array<ecs::entity_id>>> instancesByMeshByShader;
+		//@Todo organiser par material aussi pour optimiser si plusieurs instances du mesh ont le même material ?
+
+		size_t instanceRenderingThreshold;
+
+		static int widthSaved, heightSaved;
+
+		Renderer(ecs::Scene* _scene);
+		~Renderer();
+
 		/*********************************************/
 		/* Ajout & Suppression par [Shader / Mesh] */
 		/*********************************************/
@@ -488,14 +502,6 @@ namespace illusion {
 			for (size_t i = 0, size = meshInstance->size(); i < size; i++) {
 				AddMeshMaterial(meshInstance->materialId[i], meshInstance->meshId[i], meshInstance->getId(i));
 			}
-		}
-
-		void GenerateMaterials();
-		void GenerateMeshes();
-		void GenerateShaders();
-
-		Shader& defaultShader() {
-			return shaders[0];
 		}
 
 		/**

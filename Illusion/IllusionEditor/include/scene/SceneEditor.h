@@ -201,7 +201,7 @@ void main() {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
 		arrowShader->setVec4("color", color);
 		arrowShader->setMat4("model", model);
-		scene.renderer->meshes[0].Render();
+		GetRenderEngine().GetCube().Render();
 	}
 
 	void DrawArrowTranslate(ecs::Scene& scene, Mat4x4& projection, Mat4x4& view) {

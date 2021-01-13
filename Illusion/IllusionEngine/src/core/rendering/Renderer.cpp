@@ -6,7 +6,6 @@
 #include "resources/assets/Materials.h"
 #include "resources/assets/Meshes.h"
 
-#include "core/rendering/shapes/defaultShapes.h"
 #include "core/rendering/Importer.h"
 
 
@@ -64,6 +63,8 @@ namespace illusion {
 	/**
 	 * Renderer Part
 	 */
+
+	RenderEngine RenderEngine::main;
 
 	// STATIC PART
 	QualitySettings Renderer::qualitySettings;
@@ -138,29 +139,29 @@ namespace illusion {
 	{
 		Renderer::InitializeBuffers();
 
-		GenerateShaders();
+		auto shaders = GetRenderEngine().shaders;
+		for (auto const& [idShader, val] : shaders) {
+			instancesByMeshByShader[idShader] = util::UnorderedMap<size_t, util::Array<ecs::entity_id>>();
+		}
+		/*GenerateShaders();
 		GenerateMaterials();
-		GenerateMeshes();
+		GenerateMeshes();*/
 	}
 
-	Renderer::~Renderer() {
-		for (auto& [meshId, mesh] : meshes) {
-			mesh.ClearOnGPU();
-		}
-	}
+	Renderer::~Renderer() {}
 
 	void Renderer::AddMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
-		if (!ContainsMaterial(idMaterial) || !ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
-		AddMeshShader(materials[idMaterial].shaderId, idMesh, entity);
+		if (!GetRenderEngine().ContainsMaterial(idMaterial) || !GetRenderEngine().ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
+		AddMeshShader(GetRenderEngine().materials[idMaterial].shaderId, idMesh, entity);
 	}
 
 	void Renderer::RemoveMeshMaterial(size_t idMaterial, size_t idMesh, ecs::entity_id entity) {
-		if (!ContainsMaterial(idMaterial) || !ContainsMesh(idMesh)) return;
-		RemoveMeshShader(materials[idMaterial].shaderId, idMesh, entity);
+		if (!GetRenderEngine().ContainsMaterial(idMaterial) || !GetRenderEngine().ContainsMesh(idMesh)) return;
+		RemoveMeshShader(GetRenderEngine().materials[idMaterial].shaderId, idMesh, entity);
 	}
 
 	void Renderer::AddMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity) {
-		if (!ContainsShader(idShader) || !ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
+		if (!GetRenderEngine().ContainsShader(idShader) || !GetRenderEngine().ContainsMesh(idMesh) || !scene->entities.IsAlive(entity)) return;
 
 		if (!MeshExistInShader(idShader, idMesh)) {
 			//Cr�ation de l'espace pour le mesh
@@ -170,7 +171,7 @@ namespace illusion {
 		instancesByMeshByShader[idShader][idMesh].push_back(entity);
 	}
 	void Renderer::RemoveMeshShader(size_t idShader, size_t idMesh, ecs::entity_id entity) {
-		if (!ContainsShader(idShader) || !ContainsMesh(idMesh)) return;
+		if (!GetRenderEngine().ContainsShader(idShader) || !GetRenderEngine().ContainsMesh(idMesh)) return;
 		if (!MeshExistInShader(idShader, idMesh)) {
 			WARN("Mesh doesn't exist in [instancesByMeshByShader] but entity try to be removed from him");
 			return;
@@ -189,44 +190,6 @@ namespace illusion {
 
 		if (instancesByMeshByShader[idShader][idMesh].size() == 0) instancesByMeshByShader[idShader].erase(instancesByMeshByShader[idShader].find(idMesh));
 
-	}
-	void Renderer::GenerateMaterials() {
-		materials.clear();
-
-		AddMaterial({ 0, 0, "default material", "", "", {
-		{ "ambient", {1.0f,1.0f,1.0f,1.0f} },
-		{ "diffuse", {1.0f,1.0f,1.0f,1.0f} },
-		{ "specular", {1.0f,1.0f,1.0f,1.0f} },
-		{ "shininess", 32.0 }
-		} }, 0);
-
-		if (illusion::resources::CurrentProject().path == "") return;
-
-		auto materials = illusion::resources::assets::LoadAllMaterials();
-		for (auto const& material : materials) {
-			AddMaterial(material, material.id);
-		}
-	}
-	void Renderer::GenerateShaders() {
-		shaders.clear();
-
-		AddShader(Shader::defaultShader, 0);
-
-		if (illusion::resources::CurrentProject().path == "") return;
-
-		auto shaders = illusion::resources::assets::LoadAllShaders();
-		for (auto const& shader : shaders) {
-			AddShader(Shader(shader), shader.id);
-		}
-	}
-	void Renderer::GenerateMeshes() {
-		//Default Mesh
-		AddMesh(illusion::defaultshape::Cube(), 0);
-		AddMesh(illusion::defaultshape::IcoSphere(), 1);
-		AddMesh(illusion::defaultshape::Quad(), 2);
-
-		if (illusion::resources::CurrentProject().path == "") return;
-		illusion::resources::assets::LoadAllMeshes(*this);
 	}
 
 	void Renderer::Render() {//@Todo register draw calls and num entities rendered per frame
@@ -312,7 +275,7 @@ namespace illusion {
 
 		// 1. Post Processing Pass
 		glDisable(GL_DEPTH_TEST);
-		scene->renderer->meshes[2].Bind(); //Bind Main Quad
+		GetRenderEngine().GetQuad().Bind();
 
 		// 2. Feature extractions
 		Shader::featureShader.use();
@@ -384,7 +347,7 @@ namespace illusion {
 
 		//for each shader
 		for (auto const& [shaderKey, meshMap] : instancesByMeshByShader) {
-			Shader* shader = &shaders[shaderKey];
+			Shader* shader = &GetRenderEngine().shaders[shaderKey];
 			if (overrideShader != nullptr) shader = overrideShader;
 			else shader->use();
 
@@ -437,7 +400,7 @@ namespace illusion {
 
 			//for each Mesh using this shader
 			for (auto const& [meshKey, entitiesArray] : meshMap) {
-				Mesh& mesh = meshes[meshKey];
+				Mesh& mesh = GetRenderEngine().meshes[meshKey];
 				// @Todo : que faire quand le mesh n'est pas setup sur le GPU ? le setup ou juste ignorer ? afficher une erreur  ?
 				if (!mesh.isSetupOnGPU) continue;
 				mesh.Bind();
@@ -451,7 +414,7 @@ namespace illusion {
 					ecs::component_id idMesh = meshInstance->getIndex(instance_id);
 					Mat4x4 modelMatrix = transform->ComputeModel(idTransform);//@Todo Compute model en dehors du rendu pour toutes les entit�s ?
 
-					Material& material = materials[meshInstance->materialId[idMesh]];
+					Material& material = GetRenderEngine().materials[meshInstance->materialId[idMesh]];
 					//set material uniforms
 					for (json::iterator it = shader->resource.uniforms.begin(); it != shader->resource.uniforms.end(); ++it) {
 						json value = material.uniforms[it.key()];

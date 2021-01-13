@@ -145,10 +145,10 @@ namespace illusioneditor::views::GameInspector {
 		ecs::component_id index = meshInstance->getIndex(selected);
 		size_t indexMesh = meshInstance->meshId[index];
 		size_t indexMaterial = meshInstance->materialId[index];
-		if (!currentScene->renderer->ContainsMesh(indexMesh)) indexMesh = 0;
-		if (!currentScene->renderer->ContainsMaterial(indexMaterial)) indexMaterial = 0;
-		std::string titleMesh = currentScene->renderer->meshes.at(indexMesh).name;
-		std::string titleMaterial = currentScene->renderer->materials.at(indexMaterial).name;
+		if (!GetRenderEngine().ContainsMesh(indexMesh)) indexMesh = 0;
+		if (!GetRenderEngine().ContainsMaterial(indexMaterial)) indexMaterial = 0;
+		std::string titleMesh = GetRenderEngine().meshes.at(indexMesh).name;
+		std::string titleMaterial = GetRenderEngine().materials.at(indexMaterial).name;
 
 		//MESH
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -176,7 +176,7 @@ namespace illusioneditor::views::GameInspector {
 
 			util::Array<std::string> groupNames;
 			util::Array<int> groupNumbers;
-			for (auto const& [key, val] : currentScene->renderer->meshes) {
+			for (auto const& [key, val] : GetRenderEngine().meshes) {
 				if (val.group == "") {
 					if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 					if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -203,7 +203,7 @@ namespace illusioneditor::views::GameInspector {
 				if (groupNumbers[i] > 1) {
 					//Case when the file contain more than one shape
 					if (ImGui::TreeNode((groupName + "###GroupMesh_" + groupName).c_str())) {
-						for (auto const& [key, val] : currentScene->renderer->meshes) {
+						for (auto const& [key, val] : GetRenderEngine().meshes) {
 							if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 							if (val.group == groupName) {
 								if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -218,7 +218,7 @@ namespace illusioneditor::views::GameInspector {
 				}
 				else {
 					//Case when the file contain only one shape
-					for (auto const& [key, val] : currentScene->renderer->meshes) {
+					for (auto const& [key, val] : GetRenderEngine().meshes) {
 						if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 						if (val.group == groupName) {
 							if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -259,7 +259,7 @@ namespace illusioneditor::views::GameInspector {
 			GenerateInputString("###SearchMaterial", searchMaterial);
 			ImGui::Separator();
 
-			for (auto const& [key, val] : currentScene->renderer->materials) {
+			for (auto const& [key, val] : GetRenderEngine().materials) {
 				if (searchMaterial != "" && val.name.find(searchMaterial) == std::string::npos) continue;
 				if (key == indexMaterial) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
 

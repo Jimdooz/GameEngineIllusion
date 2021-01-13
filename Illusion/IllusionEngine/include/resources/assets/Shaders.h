@@ -15,8 +15,10 @@ using json = illusion::json;
 
 namespace illusion::resources::assets {
 
+	using namespace illusion;
+
 	struct ShaderResource {
-		size_t id;
+		size_t id = 0;
 		std::string vertex;
 		std::string fragment;
 		json uniforms;
@@ -55,31 +57,7 @@ namespace illusion::resources::assets {
 		};
 	}
 
-	static util::Array<ShaderResource> LoadAllShaders(std::string path = CurrentProject().path + "/Assets") {
-		util::Array<ShaderResource> allShaders;
-
-		for (auto& p : fs::directory_iterator(path)) {
-			std::string currPath = p.path().filename().string();
-			if (p.is_directory() && currPath.find('.') == std::string::npos) {
-
-				util::Array<ShaderResource>& recursiveShader = LoadAllShaders(path + "/" + currPath);
-				for (u32 i = 0; i < recursiveShader.size(); i++) {
-					allShaders.push_back(recursiveShader[i]);
-				}
-
-			}
-			else if (currPath.find(".shader") != std::string::npos) {
-				//LOAD SHADER
-				try {
-					allShaders.push_back(LoadShader(path + "/" + currPath));
-				}
-				catch (const std::exception&) {
-					INTERNAL_ERR("Impossible de lire le shader ", path + "/" + currPath);
-				}
-			}
-		}
-
-		return allShaders;
-	}
+	void LoadAllShaders(std::string path = CurrentProject().path + "/Assets");
+	void LoadAllShadersRecursive(std::string path = CurrentProject().path + "/Assets");
 
 }

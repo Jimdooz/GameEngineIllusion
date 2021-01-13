@@ -9,6 +9,8 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#include "ecs/Scene.h"
+
 
 #include "resources/Project.h"
 #include "core/animation/Animation.h"
@@ -252,7 +254,7 @@ namespace illusion {
 		return id;
 	}
 	//Load meshes in the renderer
-	static void loadNode(const char* path, aiNode* node, const aiScene* ai_scene, illusion::Renderer& renderer) {
+	static void loadNode(const char* path, aiNode* node, const aiScene* ai_scene) {
 		//INTERNAL_INFO("LOAD NODE ");
 		// @Todo : support multiples meshes on the same node		
 		if (node->mNumMeshes > 0) {
@@ -266,22 +268,24 @@ namespace illusion {
 			//if don't contains 
 				//Get Matrial from Assimp
 				//Add Material to Renderer
-			if (!renderer.ContainsMesh(mesh_id)) {
+			if (!GetRenderEngine().ContainsMesh(mesh_id)) {
 				std::string meshName = node->mName.C_Str();
 				//Add Mesh to renderer
 				Mesh mesh = ConvertToMesh(ai_scene->mMeshes[ai_meshid], meshName, group);
-				renderer.AddMesh(mesh, mesh_id);
+				//RenderEngine().meshes
+				GetRenderEngine().AddMesh(mesh, mesh_id);
 			}
 		}
 		// then do the same for each of its children
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			loadNode(path, node->mChildren[i], ai_scene, renderer);
+			loadNode(path, node->mChildren[i], ai_scene);
 		}
 
 	}
 	static void import3DModel(const char* path, illusion::ecs::Scene& scene)
 	{
+		INTERNAL_INFO("IMPORT 3D MODEL ", path);
 		illusion::Renderer* renderer = scene.renderer;
 		const aiScene* ai_scene = aiImportFile(path,
 			aiProcess_CalcTangentSpace |
@@ -294,7 +298,7 @@ namespace illusion {
 			ERR("ASSIMP : ", aiGetErrorString());
 			return;
 		}
-		loadNode(path, ai_scene->mRootNode, ai_scene, *(scene.renderer));
+		loadNode(path, ai_scene->mRootNode, ai_scene);
 		ecs::entity_id rootEntity_id = processNode(path, ai_scene->mRootNode, ai_scene, scene, (ecs::entity_id)illusion::ecs::id::invalid_id);
 		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
 		std::string relativePath = fs::relative(path, resources::CurrentProject().path + "/Assets/").string();
@@ -313,21 +317,20 @@ namespace illusion {
 		//Ajouter à l'entity root du model
 		aiReleaseImport(ai_scene);
 	}
-	static void load3DModel(const char* path, illusion::Renderer& renderer)
-	{
 
+	static void load3DModel(const char* path) {
+		INTERNAL_INFO("LOAD 3D MODEL ", path);
 		const aiScene* ai_scene = aiImportFile(path,
 			aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_SortByPType);
 
-		if (!ai_scene || ai_scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !ai_scene->mRootNode)
-		{
-			ERR("ASSIMP : ", aiGetErrorString());
+		if (!ai_scene || ai_scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !ai_scene->mRootNode) {
+			ERR("ASSIMP on ", path, " : ", aiGetErrorString(), "\n", ai_scene, " ", ai_scene->mRootNode);
 			return;
 		}
-		loadNode(path, ai_scene->mRootNode, ai_scene, renderer);
+		loadNode(path, ai_scene->mRootNode, ai_scene);
 		aiReleaseImport(ai_scene);
 	}
 

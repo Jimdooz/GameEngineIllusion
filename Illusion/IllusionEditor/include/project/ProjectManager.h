@@ -18,6 +18,9 @@ using json = illusion::json;
 #include "resources/Project.h"
 
 #include "resources/assets/Audio.h"
+//#include "resources/assets/Shaders.h"
+#include "resources/assets/Materials.h"
+#include "resources/assets/Meshes.h"
 
 namespace illusioneditor::project {
 	
@@ -94,6 +97,10 @@ namespace illusioneditor::project {
 			INFO("LOAD PROJECT : ", illusion::resources::CurrentProject().path);
 
 			illusion::resources::assets::LoadAllSounds();
+
+			illusion::resources::assets::LoadAllShaders();
+			illusion::resources::assets::LoadAllMaterials();
+			illusion::resources::assets::LoadAllMeshes();
 
 			return true;
 		}
