@@ -112,7 +112,10 @@ int main(int argc, char* argv[]) {
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
 	//Load Project
-	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
+	illusion::resources::assets::LoadAllShaders();
+	illusion::resources::assets::LoadAllMaterials();
+	illusion::resources::assets::LoadAllMeshes();
+	//illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
 
 	// Init Scene
 	//----------
