@@ -82,7 +82,7 @@ struct PlayerControllerSystem : public ecs::System {
 
 				currentDirection() = glm::mix(currentDirection(), wantedDirection, Time::fixedDeltaTime * 5.0f);
 
-				rotation() = glm::conjugate(Quaternion(glm::lookAt(Vec3(0, 0, 0), glm::normalize(currentDirection()), Vec3(0, 1, 0))));
+				rotation() = glm::conjugate(Quaternion(glm::lookAt(Vec3(0, 0, 0), -glm::normalize(currentDirection()), Vec3(0, 1, 0))));
 
 				finalVelocity = currentDirection() + Vec3(0, velocity().y, 0);
 			}
