@@ -52,7 +52,7 @@ namespace illusion::core::sound {
 					audios->FreeCurrentSound((component_id)currIndex);
 					audios->sound_ptr[currIndex] = StartSound(audios->relativePath[currIndex], audios->is3D[currIndex], (bool)audios->loop[currIndex], (bool)audios->paused[currIndex]);
 
-					INTERNAL_INFO(audios->sound_ptr[currIndex]);
+					//INTERNAL_INFO(audios->sound_ptr[currIndex]);
 
 
 					//Set new value to old...
