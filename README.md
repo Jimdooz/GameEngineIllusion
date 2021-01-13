@@ -26,7 +26,7 @@ The current version of the project is fully functional on Windows NT 10.0.17763.
 * On Visual Studio 2019, do `File > Open > Project/Solution` and choose `GameEngineIllusion\Illusion\Illusion.sln` ;
 * Depending on the build type the user needs, select "Debug" or "Release" and also the architectural target (x64_86) then run a building process.
 * x64 is the only architecture currently supported
-* <b>To see the engine's limits select Release mode it allow much better performance </b>
+* **To see the engine's limits select Release mode it allow much better performance**
 
 ### Linux
 
@@ -40,17 +40,38 @@ However, it was compiled before the remake settings for Linux have to be adjuste
 	* cache friendly architecture
 * Hierarchized entities:
 	* add entities to the current scene;
+	* change entity level with drag'n drop.
 	* hard delete entities, i.e. even their children;
-	* soft delete entities, i.e. keep their children by increasing their level in the hierarchy the deleting their parents.
+	* soft delete entities, i.e. keep their children by increasing their level in the hierarchy the deleting their parents;
 * Inspector window:
 	* look at an entity properties;
 	* add/remove its components; 
 	* alter components if needed;
+* Mesh:
+	* Import system for OBJ and FBX files;
+	* Material with a material editor;
+	* Apply custom shaders;
+* Animator:
+	* load animation from OBJ/FBX files;
+	* skeleton handling (if bones are filled in the imported file)
 * Physics:
 	* Rigid Body component:
 		* Fixing position and rotation on X/Y/Z axis;
 		* Apply gravity on an axis, a mass and a friction force;
 	* Colliding box and collision detection;
+* Controller:
+	* Keyboard and Gamepad inputs;
+* Camera:
+	* Play Camera mode which can target a scene's object;
+	* Switching between Play and Edit Camera mode;
+* Audio:
+	* Loading MP3, WAV and FLAC audio files;
+	* Play, pause and loop sounds;
+	* 3D audio effect.
+* Post-Processing:
+	* HDR effect;
+	* Shadow mapping;
+	* Bloom effect;
 * Real-time statistics
 	* frame time refresh in seconds;
 	* FPS by moving average;
