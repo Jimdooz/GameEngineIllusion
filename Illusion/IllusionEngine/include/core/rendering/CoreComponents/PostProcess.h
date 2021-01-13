@@ -15,6 +15,9 @@ namespace illusion::core::rendering {
 			COMPONENT_PUBLIC(shadowEffect);
 			COMPONENT_PUBLIC(shadowIntensity);
 			COMPONENT_PUBLIC(shadowSmooth);
+			COMPONENT_PUBLIC(shadowWidth);
+			COMPONENT_PUBLIC(shadowHeight);
+			COMPONENT_PUBLIC(shadowQuality);
 
 			COMPONENT_PUBLIC(bloomEffect);
 			COMPONENT_PUBLIC(bloomIntensity);
@@ -35,6 +38,9 @@ namespace illusion::core::rendering {
 		COMPONENT_DATA(boolean, shadowEffect);
 		COMPONENT_DATA(f32, shadowIntensity);
 		COMPONENT_DATA(i32, shadowSmooth);
+		COMPONENT_DATA(f32, shadowWidth);
+		COMPONENT_DATA(f32, shadowHeight);
+		COMPONENT_DATA(u32, shadowQuality);
 
 		//Bloom
 		COMPONENT_DATA(boolean, bloomEffect);

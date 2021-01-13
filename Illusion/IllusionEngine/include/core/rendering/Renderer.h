@@ -44,6 +44,9 @@ namespace illusion {
 
 		float shadowIntensity = 0.0f;
 		i32 shadowSmooth = 1;
+		f32 shadowWidth = 10.0f;
+		f32 shadowHeight = 10.0f;
+		u32 shadowQuality = 4096;
 
 		float bloomThreshold = 1.0f;
 		float bloomIntensity = 0.0f;

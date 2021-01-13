@@ -243,6 +243,20 @@ namespace illusion {
 			qualitySettings.shadowIntensity = qualitySettings.shadowIntensity > 1.0f ? 1.0f : qualitySettings.shadowIntensity < 0.0f ? 0.0f : qualitySettings.shadowIntensity;
 			qualitySettings.shadowSmooth = postProcess.shadowSmooth[0];
 			if(qualitySettings.shadowSmooth < 0) qualitySettings.shadowSmooth;
+
+			qualitySettings.shadowWidth = postProcess.shadowWidth[0];
+			qualitySettings.shadowHeight = postProcess.shadowHeight[0];
+
+			if (qualitySettings.shadowQuality != postProcess.shadowQuality[0]) {
+				if (postProcess.shadowQuality[0] > 10000) postProcess.shadowQuality[0] = 10000;
+				qualitySettings.shadowQuality = postProcess.shadowQuality[0];
+				Renderer::FBDirectShadow.Delete();
+				Renderer::FBDirectShadow.Reserve();
+				Renderer::FBDirectShadow.SetBufferDimensions(qualitySettings.shadowQuality, qualitySettings.shadowQuality);
+				Renderer::FBDirectShadow.GenerateDepthTexture();
+				Renderer::FBDirectShadow.DisableColorBuffer();
+				Renderer::FBDirectShadow.Complete();
+			}
 		}
 
 		if (qualitySettings.useBloom) {
@@ -339,7 +353,7 @@ namespace illusion {
 			lightDirection = Vec3(glm::toMat4(glm::conjugate(rotation)) * Vec4(0.0, 1.0, 0.0, 1.0));
 
 			float near_plane = 0.01f, far_plane = 100.0f;
-			glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+			glm::mat4 lightProjection = glm::ortho(-qualitySettings.shadowWidth, qualitySettings.shadowWidth, -qualitySettings.shadowHeight, qualitySettings.shadowHeight, near_plane, far_plane);
 			glm::mat4 lightView = glm::lookAt(lightTranslation, lightTranslation + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 			lightSpaceMatrix = lightProjection * lightView;
 		}
