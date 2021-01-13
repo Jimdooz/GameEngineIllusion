@@ -70,13 +70,13 @@ namespace illusion::ecs::core {
 		}
 
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
-		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
 		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
 
 		return glm::inverse(modelCamera);
 	}
 
-	Vec3 Camera::getPosition(ecs::component_id index) {
+	Vec3 Camera::GetPosition(ecs::component_id index) {
 		ecs::entity_id cameraId = getId(index);
 		if (editMode[index]) return editPosition[index];
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);

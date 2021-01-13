@@ -105,7 +105,7 @@ void main() {
 		Vec3 size = Vec3(0.5, 0.5, 0.5);
 
 		core::physics::primitives::OBB obb(translation, scale * size, glm::inverse(glm::toMat4(rotation)));
-		core::physics::primitives::Ray ray(camera.getPosition() , rayWord);
+		core::physics::primitives::Ray ray(camera.GetPosition() , rayWord);
 
 		f32 cast = core::physics::collisions::Raycast(obb, ray);
 
@@ -156,7 +156,7 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.ComputeModel(idTransform), scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = camera.getPosition();
+			Vec3 CameraPosition = camera.GetPosition();
 
 			core::physics::primitives::Ray ray(CameraPosition, rayWord);
 
@@ -220,7 +220,7 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = camera.getPosition();
+			Vec3 CameraPosition = camera.GetPosition();
 
 			arrowShader->setMat4("projection", projection);
 			arrowShader->setMat4("view", view);

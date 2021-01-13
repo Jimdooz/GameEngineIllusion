@@ -50,7 +50,7 @@ struct CameraPlayerSystem : public ecs::System {
 	virtual void LateUpdate() override {
 		u32 size = static_cast<u32>(ToEntity.size());
 		for (currIndex = 0; currIndex < size; currIndex++) {
-			Vec3 cameraPosition = cameras->getPosition();
+			Vec3 cameraPosition = cameras->GetPosition();
 			
 			if (scene->entities.IsAlive(target())) {
 				Vec3 positionObject = transforms->GetPosition(target());

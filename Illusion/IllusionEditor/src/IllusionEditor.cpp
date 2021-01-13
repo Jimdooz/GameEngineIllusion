@@ -291,12 +291,12 @@ int main(int argc, char* argv[]) {
 			}
 			else if (Input::isMouse(2)) {
 				glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-				camera.UpdatePosition(camera.ToEntity[0], Vec2(-Input::getMouseDelta().x, Input::getMouseDelta().y) * Time::unscaledDeltaTime);
+				camera.UpdatePosition(camera.ToEntity[0], Vec2(-Input::getMouseDelta().x, Input::getMouseDelta().y) * 0.01f);
 				/*transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
 					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;*/
 			}
 			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered()) {
-				camera.UpdatePosition(camera.ToEntity[0], Input::getMouseWheelDelta()* Time::unscaledDeltaTime);
+				camera.UpdatePosition(camera.ToEntity[0], Input::getMouseWheelDelta() * 0.01f);
 			}
 		}
 

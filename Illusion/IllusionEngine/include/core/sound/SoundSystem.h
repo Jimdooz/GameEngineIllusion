@@ -77,7 +77,8 @@ namespace illusion::core::sound {
 				audios->playPosition[currIndex] = sound_ptr->getPlayPosition();
 
 				Vec3 positionSound = transforms->GetPosition(audios->getId(currIndex));
-				if (cameras->size() > 0) positionSound = cameras->GetView() * Vec4(positionSound, 1.0);
+				Vec3 cameraWorldPos = cameras->GetPosition();
+				if (cameras->size() > 0) positionSound = glm::translate(cameraWorldPos) * Vec4(positionSound, 1.0);
 
 				if (audios->is3D[currIndex]) {
 					UpdatePosition(sound_ptr, positionSound);

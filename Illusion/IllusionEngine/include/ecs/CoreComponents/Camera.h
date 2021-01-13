@@ -44,7 +44,7 @@ namespace illusion::ecs::core {
 		void UpdatePosition(ecs::entity_id id, f32 translation);
 		void UpdatePosition(ecs::entity_id id, Vec2 translation);
 
-		Vec3 getPosition(ecs::component_id index = (ecs::component_id)0);
+		Vec3 GetPosition(ecs::component_id index = (ecs::component_id)0);
 
 		Mat4x4 GetProjection(ecs::component_id index = (ecs::component_id)0);
 		Mat4x4 GetView(ecs::component_id index = (ecs::component_id)0);

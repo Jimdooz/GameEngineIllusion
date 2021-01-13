@@ -356,8 +356,7 @@ namespace illusion {
 		//Compute Camera Position
 		ecs::entity_id cameraId = camera->ToEntity[0];
 		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
-		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
-		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
+		Vec3 cameraWorldPos = camera->GetPosition();
 
 		projection = camera->GetProjection();// glm::perspective(camera->fov[0], aspect, camera->near[0], camera->far[0]);
 		view = camera->GetView();
