@@ -47,12 +47,12 @@ namespace illusion::defaultshape {
 			{positions[7], normals[5], textures[4]}, {positions[3], normals[5], textures[12]}, {positions[1], normals[5], textures[13]}, {positions[5], normals[5], textures[6]}
 		};
 		std::vector<unsigned int> indices = {
-			0, 1, 2, 0, 3, 2,
-			4, 5, 6, 4, 7, 6,
-			8, 9, 10, 8, 11, 10,
-			12, 13, 14, 12, 15, 14,
-			16, 17, 18, 16, 19, 18,
-			20, 21, 22, 20, 23, 22
+			0, 1, 2, 0, 2, 3,
+			4, 5, 6, 4, 6, 7,
+			8, 9, 10, 8, 10, 11,
+			12, 13, 14, 12, 14, 15,
+			16, 17, 18, 16, 18, 19,
+			20, 21, 22, 20, 22, 23
 		};
 
 		cube.vertices = vertices;
@@ -82,11 +82,35 @@ namespace illusion::defaultshape {
 		icoSphere.indices = indices;
 	}
 
+	void InitializeQuad() {
+		quad = Mesh("Quad");
+		Vec3 positions[] = {
+			{ -1,1,0},{ -1,-1,0},{ 1,-1,0},{ 1,1,0}
+		};
+		Vec2 textures[] = {
+			{0, 1}, {0,0}, { 1,0 }, {1, 1}
+		};
+		Vec3 normals[] = {
+			{ 0,0,1 }
+		};
+		std::vector<Vertex> vertices = {
+			{ positions[0], normals[0], textures[0] },
+			{ positions[1], normals[0], textures[1] },
+			{ positions[2], normals[0], textures[2] },
+			{ positions[3], normals[0], textures[3] }
+		};
+		std::vector<unsigned int> indices = { 0,1,2,0,2,3 };
+		quad.vertices = vertices;
+		quad.indices = indices;
+	}
+
 	void Initialize() {
 		InitializeCube();
 		InitializeIcoSphere();
+		InitializeQuad();
 	}
 
 	Mesh& Cube() { return cube; }
 	Mesh& IcoSphere() { return icoSphere; }
+	Mesh& Quad() { return quad; }
 }

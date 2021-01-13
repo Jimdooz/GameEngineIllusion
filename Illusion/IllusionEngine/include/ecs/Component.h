@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/Entity.h"
+#include "resources/system/Json.h"
 
 /**
 * Macro permettant d'abstraire la création d'un type de donnée d'un component
@@ -21,6 +22,10 @@
 #define COMPONENT_PUBLIC(NAME) \
 	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME));
 
+//Permet de définir une donnée du component visible dans l'editeur et sauvegardable
+#define COMPONENT_PUBLIC_CUSTOM(NAME, DATAS) \
+	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME, true, DATAS ));
+
 //Permet de définir une donnée du component non visible dans l'editeur et sauvegardable
 #define COMPONENT_PROTECTED(NAME) \
 	this->publicDatas.push_back(illusion::ecs::PublicComponentDatas::GenerateData(this->NAME, #NAME, false));
@@ -33,8 +38,8 @@ namespace illusion::ecs {
 	DEFINE_TYPED_ID(component_id);
 
 	struct PublicComponentDatas {
-		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name, bool visible = true) {
-			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name, visible };
+		template<typename T> static PublicComponentDatas GenerateData(T& data, std::string name, bool visible = true, json datas = json::object(), bool active = true) {
+			PublicComponentDatas newData = { (void*)&data, typeid(T).hash_code(), name, visible, datas, active };
 			return newData;
 		}
 
@@ -42,6 +47,8 @@ namespace illusion::ecs {
 		size_t type;
 		std::string name;
 		bool visible;
+		json uiInformations = json::object();
+		bool active = true;
 	};
 
 	/**
@@ -188,16 +195,6 @@ namespace illusion::ecs {
 		 */
 		template<typename T> inline void RemoveData(illusion::util::Array<T>& array, component_id index) {
 			util::EraseUnordered(array, index);
-		}
-
-		/**
-		 * Fonction permettant d'ajouter les Components dont dépend le System
-		 * Cette fonction doit être appelé lors de la fonction d'Initialisation du System
-		 */
-		constexpr void RemoveData(component_id index) {}
-		template<typename Arg1, class... Args> inline void RemoveData(component_id index, illusion::util::Array<Arg1>& c1, Args... cNext) {
-			util::EraseUnordered(c1, index);
-			RemoveData(index, cNext...);
 		}
 
 	public:

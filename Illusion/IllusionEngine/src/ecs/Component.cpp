@@ -9,6 +9,12 @@
 
 #include "core/rendering/CoreComponents/directionalLight.h"
 #include "core/rendering/CoreComponents/pointLight.h"
+#include "core/rendering/CoreComponents/PostProcess.h"
+
+#include "core/animation/CoreComponents/Animator.h"
+#include "core/animation/CoreComponents/Skeleton.h"
+
+#include "core/sound/AudioSource.h"
 
 using namespace illusion::core;
 
@@ -78,5 +84,11 @@ namespace illusion::ecs {
 
 		Component::AppendComponents<rendering::DirectionalLight>();
 		Component::AppendComponents<rendering::PointLight>();
+		Component::AppendComponents<rendering::PostProcess>();
+
+		Component::AppendComponents<animation::Animator>();
+		Component::AppendComponents<animation::Skeleton>();
+
+		Component::AppendComponents<sound::AudioSource>();
 	}
 }

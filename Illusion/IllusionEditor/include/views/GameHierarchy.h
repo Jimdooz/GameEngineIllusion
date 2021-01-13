@@ -78,8 +78,8 @@ namespace illusioneditor::views::GameHiearchy {
 			std::string name = transform->name[parentIndex] + "###" + std::to_string(parentId);
 
 			bool open = ImGui::TreeNodeEx(name.c_str(),
-				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow);
-			if (ImGui::IsItemClicked()) {
+				ImGuiTreeNodeFlags_FramePadding | (selected == parentId ? ImGuiTreeNodeFlags_Selected : 0) | (childs.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth);
+			if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered()) {
 				itemAlreadyDropped = false;
 				selected = parentId;
 			}
@@ -135,6 +135,8 @@ namespace illusioneditor::views::GameHiearchy {
 
 	void Show() {
 		ImGui::Begin(std::string("Hierarchy ["+ illusioneditor::project::config::currentScenePath +"]###Hierarchy").c_str());
+		ImGui::BeginChild("HiearchyChild");
+
 		ecs::core::Transform* transforms = scene->GetComponent<ecs::core::Transform>();
 
 		std::string ButtonTitle = "Add Entity (" + std::to_string(transforms->ToEntity.size()) + ")";
@@ -153,6 +155,16 @@ namespace illusioneditor::views::GameHiearchy {
 			if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_D)) {
 				selected = Duplicate(selected);
 			}
+		}
+
+		ImGui::EndChild();
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
+				ecs::entity_id id;
+				memcpy(&id, payload->Data, sizeof(ecs::entity_id));
+				transforms->RemoveParent(id);
+			}
+			ImGui::EndDragDropTarget();
 		}
 
 		ImGui::End();

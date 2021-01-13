@@ -11,6 +11,8 @@
 
 namespace illusioneditor::views::MaterialEditor {
 
+	using namespace illusion;
+
 	namespace {
 		illusion::resources::assets::MaterialResource* currentMaterial = nullptr;
 		illusion::ecs::Scene* currentScene;
@@ -18,8 +20,8 @@ namespace illusioneditor::views::MaterialEditor {
 
 	static void GeneraterUiShaderPicker(illusion::ecs::Scene* scene, illusion::resources::assets::MaterialResource* material) {
 		Shader *shader;
-		if (!scene->renderer->ContainsShader(material->shaderId)) shader = &scene->renderer->defaultShader();
-		else shader = &scene->renderer->shaders[material->shaderId];
+		if (!GetRenderEngine().ContainsShader(material->shaderId)) shader = &GetRenderEngine().defaultShader();
+		else shader = &GetRenderEngine().shaders[material->shaderId];
 
 		std::string titleShader = shader->resource.name + "###" + std::to_string(shader->resource.id);
 
@@ -43,11 +45,12 @@ namespace illusioneditor::views::MaterialEditor {
 		//All shapes
 		if (ImGui::BeginPopup("ShaderInstanceChoice")) {
 			ImGui::Text("Shaders");
-			for (auto const& [key, val] : currentScene->renderer->shaders) {
+			for (auto const& [key, val] : GetRenderEngine().shaders) {
 				if (ImGui::Button((val.resource.name + "###shaderid_" + std::to_string(key)).c_str())) {
 					material->shaderId = key;
-					material->relativeShaderPath = currentScene->renderer->shaders[key].resource.relativePath;
+					material->relativeShaderPath = GetRenderEngine().shaders[key].resource.relativePath;
 					illusion::resources::assets::SaveMaterial(*material);
+					illusion::resources::assets::LoadAllMaterials();
 					scene->renderer->ReGenerateMeshByShader();
 				}
 			}
@@ -56,8 +59,8 @@ namespace illusioneditor::views::MaterialEditor {
 	}
 
 	static void GenerateUiMaterial(illusion::ecs::Scene* scene, illusion::resources::assets::MaterialResource* material) {
-		if (!scene->renderer->ContainsShader(material->shaderId)) return;
-		Shader &shader = scene->renderer->shaders[material->shaderId];
+		if (!GetRenderEngine().ContainsShader(material->shaderId)) return;
+		Shader &shader = GetRenderEngine().shaders[material->shaderId];
 
 		bool needToSave = false;
 
@@ -147,8 +150,8 @@ namespace illusioneditor::views::MaterialEditor {
 		if (scene == nullptr) return;
 		size_t idMaterial = illusion::resources::assets::IdMaterialPath(materialPath);
 
-		if (scene->renderer->ContainsMaterial(idMaterial)) {
-			currentMaterial = &scene->renderer->materials[idMaterial];
+		if (GetRenderEngine().ContainsMaterial(idMaterial)) {
+			currentMaterial = &GetRenderEngine().materials[idMaterial];
 			currentScene = scene;
 		}
 	}

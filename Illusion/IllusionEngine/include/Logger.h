@@ -11,9 +11,9 @@
 #define INTERNAL_WARN(...) illusion::log(__FILENAME__,"(",__LINE__,") ","[INTERNAL] WARNING: ",__VA_ARGS__,"\n");
 #define INTERNAL_ERR(...) illusion::log(__FILENAME__,"(",__LINE__,") ","[INTERNAL] ERROR: ",__VA_ARGS__,"\n");
 #else
-#define INTERNAL_INFO(...)
-#define INTERNAL_WARN(...)
-#define INTERNAL_ERR(...)
+#define INTERNAL_INFO(...) ;
+#define INTERNAL_WARN(...) ;
+#define INTERNAL_ERR(...) ;
 #endif
 
 // LOGING externe au moteur
@@ -22,9 +22,9 @@
 #define WARN(...) illusion::log(__FILENAME__,"(",__LINE__,") ","/!\\ WARNING: ",__VA_ARGS__,"\n");
 #define ERR(...) illusion::log(__FILENAME__,"(",__LINE__,") ","/x\\ ERROR: ",__VA_ARGS__,"\n");
 #else
-#define INFO(...)
-#define WARN(...)
-#define ERR(...)
+#define INFO(...) ;
+#define WARN(...) ;
+#define ERR(...) ;
 #endif
 
 #if (defined(ILSENGINE_DEBUG) || defined(ILSENGINE_INTERNAL_DEBUG))

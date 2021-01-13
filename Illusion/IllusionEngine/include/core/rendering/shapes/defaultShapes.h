@@ -10,11 +10,14 @@ namespace illusion::defaultshape {
 	namespace {
 		Mesh cube;
 		Mesh icoSphere;
+		Mesh quad;
 	}
 	void InitializeCube();
 	void InitializeIcoSphere();
+	void InitializeQuad();
 	void Initialize();
 
 	Mesh& Cube();
 	Mesh& IcoSphere();
+	Mesh& Quad();
 }

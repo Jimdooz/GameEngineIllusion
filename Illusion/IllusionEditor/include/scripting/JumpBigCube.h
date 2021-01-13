@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/Component.h"
+#include "Input.h"
 
 using namespace illusion;
 
@@ -28,7 +29,10 @@ struct JumpBigCube : public ecs::Component {
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, direction, powerJump, activeJump, timerJump);
+		RemoveData(direction,index); 
+		RemoveData(powerJump,index);
+		RemoveData(activeJump,index); 
+		RemoveData(timerJump,index);
 	}
 };
 
@@ -45,7 +49,7 @@ struct JumpBigCubeSystem : public ecs::System {
 		if (collisions().size() > 0 && timerJump() > 0.1f) activeJump() = true;
 		timerJump() += Time::deltaTime;
 
-		if (Input::isKeyDown(GLFW_KEY_SPACE) && activeJump()) {
+		if ((Input::isKeyDown(GLFW_KEY_SPACE) || Input::isGamepadButtonDown(GLFW_GAMEPAD_BUTTON_A)) && activeJump()) {
 			if (collisions().size() > 0) {
 				velocity() = glm::normalize(direction()) * powerJump();
 			}
@@ -54,10 +58,14 @@ struct JumpBigCubeSystem : public ecs::System {
 			timerJump() = 0.0f;
 		}
 
-		if (Input::isKey(GLFW_KEY_LEFT)) velocity() = Vec3(-5, velocity().y, 0);
-		if (Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(5, velocity().y, 0);
+		f32 gamepadTreshold = 0.2f; 
+		f32 gamepadX = Input::getGamepadAxis(GLFW_GAMEPAD_AXIS_LEFT_X);
+		f32 gamepadY = Input::getGamepadAxis(GLFW_GAMEPAD_AXIS_LEFT_Y);
+		INFO("Gamepad X : ", gamepadX);
+		if (Input::isKey(GLFW_KEY_LEFT) || gamepadX < -gamepadTreshold) velocity() = Vec3(-5 * -gamepadX, velocity().y, 0);
+		if (Input::isKey(GLFW_KEY_RIGHT) || gamepadX > gamepadTreshold) velocity() = Vec3(5 * gamepadX, velocity().y, 0);
 
-		if(!Input::isKey(GLFW_KEY_LEFT) && !Input::isKey(GLFW_KEY_RIGHT)) velocity() = Vec3(0, velocity().y, 0);
+		if((!Input::isKey(GLFW_KEY_LEFT) && !Input::isKey(GLFW_KEY_RIGHT)) && (gamepadX < gamepadTreshold && gamepadX > -gamepadTreshold) ) velocity() = Vec3(0, velocity().y, 0);
 		position().z = 0;
 	)
 

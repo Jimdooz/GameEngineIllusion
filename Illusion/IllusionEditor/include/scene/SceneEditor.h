@@ -105,7 +105,7 @@ void main() {
 		Vec3 size = Vec3(0.5, 0.5, 0.5);
 
 		core::physics::primitives::OBB obb(translation, scale * size, glm::inverse(glm::toMat4(rotation)));
-		core::physics::primitives::Ray ray(Vec3(transform.position[transform.getIndex(camera.ToEntity[0])]), rayWord);
+		core::physics::primitives::Ray ray(camera.GetPosition() , rayWord);
 
 		f32 cast = core::physics::collisions::Raycast(obb, ray);
 
@@ -148,7 +148,6 @@ void main() {
 			ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
 
 			ecs::component_id idTransform = transform.getIndex(views::GameHiearchy::selected);
-			ecs::component_id indexCamera = transform.getIndex(camera.ToEntity[0]);
 
 			glm::vec3 scale;
 			glm::quat rotation;
@@ -157,9 +156,9 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.ComputeModel(idTransform), scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = transform.position[indexCamera];
+			Vec3 CameraPosition = camera.GetPosition();
 
-			core::physics::primitives::Ray ray(Vec3(transform.position[indexCamera]), rayWord);
+			core::physics::primitives::Ray ray(CameraPosition, rayWord);
 
 			if (translateSelection) {
 				core::physics::primitives::Line intersectionRay, intersectionRay2;
@@ -185,7 +184,7 @@ void main() {
 				core::physics::primitives::OBB obbY(translation + (Vec3(0, 0.7, 0) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 1, 0.3) * factor);
 				core::physics::primitives::OBB obbZ(translation + (Vec3(0, 0, 0.7) * factor), Vec3(0.5, 0.5, 0.5) * Vec3(0.3, 0.3, 1) * factor);
 
-				if (Input::isMouseDown(0)) {
+				if (Input::isMouseDown(0) && !ImGui::IsAnyWindowHovered() && !ImGui::IsAnyItemHovered()) {
 					bool castX = CastBoxAxis(obbX, Vec3(1, 0, 0), ray);
 					bool castY = CastBoxAxis(obbY, Vec3(0, 1, 0), ray);
 					bool castZ = CastBoxAxis(obbZ, Vec3(0, 0, 1), ray);
@@ -202,7 +201,7 @@ void main() {
 		Mat4x4 model = glm::translate(origin + direction * 0.7 * scale) * glm::orientation(direction, Vec3(0, 1, 0)) * glm::scale(Vec3(0.05, 1, 0.05) * scale);
 		arrowShader->setVec4("color", color);
 		arrowShader->setMat4("model", model);
-		scene.renderer->meshes[0].Render();
+		GetRenderEngine().GetCube().Render();
 	}
 
 	void DrawArrowTranslate(ecs::Scene& scene, Mat4x4& projection, Mat4x4& view) {
@@ -221,7 +220,7 @@ void main() {
 			glm::vec4 perspective;
 			glm::decompose(transform.modelTransform[idTransform], scale, rotation, translation, skew, perspective);
 
-			Vec3 CameraPosition = transform.position[transform.getIndex(camera.ToEntity[0])];
+			Vec3 CameraPosition = camera.GetPosition();
 
 			arrowShader->setMat4("projection", projection);
 			arrowShader->setMat4("view", view);
@@ -230,8 +229,8 @@ void main() {
 
 			illusion::defaultshape::Cube().Bind();
 			DrawArrow(scene, translation, Vec3(1, 0, 0), factor, Vec4(242.0 / 255.0, 80.0 / 255.0, 98.0 / 255.0, 1));
-			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
-			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 1, 0), factor, Vec4(139 / 250.0, 210 / 250.0, 68 / 250.0, 1));
+			DrawArrow(scene, translation, Vec3(0, 0, 1), factor, Vec4(78.0 / 255.0, 144 / 255.0, 240 / 255.0, 1));
 			glEnable(GL_DEPTH_TEST);
 		}
 	}

@@ -12,6 +12,8 @@ namespace illusion::ecs::core {
 			COMPONENT_PUBLIC(rotation);
 			COMPONENT_PUBLIC(scale);
 
+			COMPONENT_PROTECTED(rotationEuler);
+
 			COMPONENT_PROTECTED(parent);
 			COMPONENT_PROTECTED(childs);
 		}
@@ -68,15 +70,19 @@ namespace illusion::ecs::core {
 		void RemoveChild(ecs::entity_id id, ecs::entity_id childId);
 
 		/**
-		 * Permet de savoir si une entit� � pour parent une autre entit� recursivement
-		 * Retourne faux si les deux entit�s sont �gales ou l'une d'entre elle est invalide
-		 * @param	id l'id de l'entit�
+		 * Permet de savoir si une entité à pour parent une autre entit� recursivement
+		 * Retourne faux si les deux entités sont égales ou l'une d'entre elle est invalide
+		 * @param	id l'id de l'entité
 		 * @param	parentId l'id du parent
 		 * @return	vrai si le parent existe, faux sinon
 		 */
 		bool HaveParentRecursive(ecs::entity_id id, ecs::entity_id parentId);
 
-		Mat4x4 &ComputeModel(ecs::component_id component);
+		Mat4x4 &ComputeModel(ecs::component_id component, bool forceRecompute = false);
+
+		Vec3 GetPosition(ecs::entity_id id);
+
+		ecs::entity_id FindByName(ecs::entity_id parent, std::string path);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 

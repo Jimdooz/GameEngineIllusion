@@ -13,8 +13,12 @@ namespace illusion::core::rendering {
 	}
 
 	void PointLight::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, specular, ambient, diffuse);
-		RemoveData(index, constant, linear, quadratic);
+		RemoveData(specular, index); 
+		RemoveData(ambient, index); 
+		RemoveData(diffuse, index);
+		RemoveData(constant, index); 
+		RemoveData(linear, index); 
+		RemoveData(quadratic, index);
 	}
 
 }

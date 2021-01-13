@@ -15,6 +15,8 @@ using json = illusion::json;
 
 namespace illusion::resources::assets {
 
+	using namespace illusion;
+
 	struct MaterialResource {
 		size_t id;
 		size_t shaderId;
@@ -64,32 +66,8 @@ namespace illusion::resources::assets {
 		};
 	}
 
-	static util::Array<MaterialResource> LoadAllMaterials(std::string path = CurrentProject().path + "/Assets") {
-		util::Array<MaterialResource> allMaterials;
-
-		for (auto& p : fs::directory_iterator(path)) {
-			std::string currPath = p.path().filename().string();
-			if (p.is_directory() && currPath.find('.') == std::string::npos) {
-
-				util::Array<MaterialResource>& recursiveMaterial = LoadAllMaterials(path + "/" + currPath);
-				for (u32 i = 0; i < recursiveMaterial.size(); i++) {
-					allMaterials.push_back(recursiveMaterial[i]);
-				}
-
-			}
-			else if (currPath.find(".material") != std::string::npos) {
-				//LOAD SHADER
-				try {
-					allMaterials.push_back(LoadMaterial(path + "/" + currPath));
-				}
-				catch (const std::exception& exception) {
-					INTERNAL_ERR("Impossible de lire le material ", path + "/" + currPath, "\n", exception.what());
-				}
-			}
-		}
-
-		return allMaterials;
-	}
+	void LoadAllMaterials(std::string path = CurrentProject().path + "/Assets");
+	void LoadAllMaterialsRecursive(std::string path = CurrentProject().path + "/Assets");
 
 	static bool SaveMaterial(MaterialResource& material) {
 		json toSave;

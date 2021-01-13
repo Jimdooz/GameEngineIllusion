@@ -15,13 +15,22 @@
 char DEFAULT_VERTEX_SHADER[];
 char DEFAULT_FRAGMENT_SHADER[];
 
+char DEFAULT_SHADOW_VERTEX_SHADER[];
+char DEFAULT_SHADOW_FRAGMENT_SHADER[];
+
+char DEFAULT_VERTEX_QUAD_SHADER[];
+char DEFAULT_FRAGMENT_FEATURE_SHADER[];
+char DEFAULT_FRAGMENT_SCREEN_SHADER[];
+
+char DEFAULT_FRAGMENT_BLUR_SHADER[];
+
 class Shader
 {
 public:
     unsigned int ID;
     illusion::resources::assets::ShaderResource resource;
 
-    Shader(){}
+    Shader() { ID = 0; }
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(const std::string& vertexCode, const std::string& fragmentCode, const std::string& geometryCode = "")
@@ -41,7 +50,7 @@ public:
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         // if geometry shader is given, compile geometry shader
-        unsigned int geometry;
+        unsigned int geometry = 0;
         if (geometryCode != "")
         {
             const char* gShaderCode = geometryCode.c_str();
@@ -78,61 +87,66 @@ public:
     }
     // utility uniform functions
     // ------------------------------------------------------------------------
-    void setBool(const std::string& name, bool value) const
+    inline void setBool(const std::string& name, const bool& value,GLsizei count=1) const
     {
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
+        glUniform1iv(glGetUniformLocation(ID, name.c_str()),count, (int *)&value);
     }
     // ------------------------------------------------------------------------
-    void setInt(const std::string& name, int value) const
+    inline  void setInt(const std::string& name,const int& value,GLsizei count=1) const
     {
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+        glUniform1iv(glGetUniformLocation(ID, name.c_str()),count, &value);
     }
     // ------------------------------------------------------------------------
-    void setFloat(const std::string& name, float value) const
+    inline  void setUnsignedInt(const std::string& name,const unsigned int& value,GLsizei count=1) const
     {
-        glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+        glUniform1uiv(glGetUniformLocation(ID, name.c_str()),count, &value);
     }
     // ------------------------------------------------------------------------
-    void setVec2(const std::string& name, const glm::vec2& value) const
+    inline void setFloat(const std::string& name,const float& value,GLsizei count=1) const
     {
-        glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+        glUniform1fv(glGetUniformLocation(ID, name.c_str()),count, &value);
     }
-    void setVec2(const std::string& name, float x, float y) const
+    // ------------------------------------------------------------------------
+    inline void setVec2(const std::string& name, const glm::vec2& value,GLsizei count=1) const
+    {
+        glUniform2fv(glGetUniformLocation(ID, name.c_str()), count, &value[0]);
+    }
+    inline void setVec2(const std::string& name, float x, float y) const
     {
         glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
     }
     // ------------------------------------------------------------------------
-    void setVec3(const std::string& name, const glm::vec3& value) const
+    inline void setVec3(const std::string& name, const glm::vec3& value,GLsizei count=1) const
     {
-        glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+        glUniform3fv(glGetUniformLocation(ID, name.c_str()), count, &value[0]);
     }
-    void setVec3(const std::string& name, float x, float y, float z) const
+    inline void setVec3(const std::string& name, float x, float y, float z) const
     {
         glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
     }
     // ------------------------------------------------------------------------
-    void setVec4(const std::string& name, const glm::vec4& value) const
+    inline void setVec4(const std::string& name, const glm::vec4& value,GLsizei count=1) const
     {
-        glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+        glUniform4fv(glGetUniformLocation(ID, name.c_str()), count, &value[0]);
     }
-    void setVec4(const std::string& name, float x, float y, float z, float w)
+    inline void setVec4(const std::string& name, float x, float y, float z, float w)
     {
         glUniform4f(glGetUniformLocation(ID, name.c_str()), x, y, z, w);
     }
     // ------------------------------------------------------------------------
-    void setMat2(const std::string& name, const glm::mat2& mat) const
+    inline void setMat2(const std::string& name, const glm::mat2& mat,GLsizei count=1) const
     {
-        glUniformMatrix2fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix2fv(glGetUniformLocation(ID, name.c_str()), count, GL_FALSE, &mat[0][0]);
     }
     // ------------------------------------------------------------------------
-    void setMat3(const std::string& name, const glm::mat3& mat) const
+    inline void setMat3(const std::string& name, const glm::mat3& mat,GLsizei count=1) const
     {
-        glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), count, GL_FALSE, &mat[0][0]);
     }
     // ------------------------------------------------------------------------
-    void setMat4(const std::string& name, const glm::mat4& mat) const
+    inline void setMat4(const std::string& name, const glm::mat4& mat,GLsizei count=1) const
     {
-        glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), count, GL_FALSE, &mat[0][0]);
     }
 
     static void Initialize() {
@@ -148,10 +162,30 @@ public:
             }
         };
         Shader::defaultShader = Shader(Shader::defaultShaderResource);
+        defaultShader.use();
+        defaultShader.setInt("directShadowMap", 0);
+
+        Shader::featureShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_FEATURE_SHADER);
+        Shader::screenShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_SCREEN_SHADER);
+
+        screenShader.use();
+        screenShader.setInt("scene", 0);
+        screenShader.setInt("bloomBlur", 1);
+
+        Shader::shadowShader = Shader(DEFAULT_SHADOW_VERTEX_SHADER, DEFAULT_SHADOW_FRAGMENT_SHADER);
+
+        Shader::blurShader = Shader(DEFAULT_VERTEX_QUAD_SHADER, DEFAULT_FRAGMENT_BLUR_SHADER);
+        blurShader.use();
+        blurShader.setInt("image", 0);
     }
 
     static illusion::resources::assets::ShaderResource defaultShaderResource;
     static Shader defaultShader;
+    static Shader featureShader;
+    static Shader screenShader;
+
+    static Shader shadowShader;
+    static Shader blurShader;
 
 private:
     // utility function for checking shader compilation/linking errors.

@@ -8,6 +8,9 @@
 
 #include "MaterialEditor.h"
 
+#include "core/sound/AudioSource.h"
+#include "core/sound/SoundSystem.h"
+
 namespace illusioneditor::views::GameInspector {
 
 	using namespace illusion;
@@ -19,6 +22,7 @@ namespace illusioneditor::views::GameInspector {
 		std::string searchComponent = "";
 		std::string searchMesh = "";
 		std::string searchMaterial = "";
+		std::string searchAudioSource = "";
 	}
 
 	void GenerateInputString(std::string name, std::string& str) {
@@ -30,11 +34,47 @@ namespace illusioneditor::views::GameInspector {
 		delete[] buf1;
 	}
 
+	inline bool ValueExist(const json& value, const std::string& key) {
+		return value.find(key) != value.end();
+	}
+
 	void GenerateUiComponent(const illusion::ecs::PublicComponentDatas& data, illusion::ecs::Component *component) {
 		ecs::component_id componentId = component->getIndex(currentSelected);
 		if (component->getIndex(currentSelected) == ecs::id::invalid_id) return;
 
-		if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
+		if (data.type == typeid(illusion::util::Array<ecs::entity_id>).hash_code() && ValueExist(data.uiInformations, "entity")) {
+			illusion::util::Array<ecs::entity_id>& entityIds = *(illusion::util::Array<ecs::entity_id>*)data.data;
+			ecs::entity_id entityId = entityIds[componentId];
+
+			//MESH
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+			if (currentScene->entities.IsAlive(entityId)) {
+				ecs::core::Transform *transforms = currentScene->GetComponent<ecs::core::Transform>();
+				ImGui::Button(transforms->name[transforms->getIndex(entityId)].c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+			}
+			else {
+				ImGui::Button("Invalid Id", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+			}
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MoveEntity")) {
+					ecs::entity_id id;
+					memcpy(&id, payload->Data, sizeof(ecs::entity_id));
+					entityIds[componentId] = id;
+				}
+				ImGui::EndDragDropTarget();
+			}
+			
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor(4);
+
+			ImGui::SameLine();
+			ImGui::Text(data.name.c_str());
+
+		}else if (data.type == typeid(illusion::util::Array<Vec3>).hash_code()) {
 			illusion::util::Array<Vec3>& vec3 = *(illusion::util::Array<Vec3>*)data.data;
 			float vec3a[3] = { vec3[componentId].x, vec3[componentId].y, vec3[componentId].z };
 			ImGui::DragFloat3(data.name.c_str(), vec3a, 0.01f);
@@ -72,6 +112,18 @@ namespace illusioneditor::views::GameInspector {
 			f32 floatValue = val[componentId];
 			ImGui::DragFloat(data.name.c_str(), &floatValue, 0.01f);
 			val[componentId] = floatValue;
+		} else if (data.type == typeid(illusion::util::Array<u32>).hash_code()) {
+			illusion::util::Array<u32>& val = *(illusion::util::Array<u32>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::DragInt(data.name.c_str(), &floatValue, 0.01f, 0);
+			if (floatValue < 0) floatValue = 0;
+			val[componentId] = floatValue;
+		} else if (data.type == typeid(illusion::util::Array<i32>).hash_code()) {
+			illusion::util::Array<i32>& val = *(illusion::util::Array<i32>*)data.data;
+			int floatValue = val[componentId];
+			ImGui::DragInt(data.name.c_str(), &floatValue, 0.01f);
+			if (floatValue < 0) floatValue = 0;
+			val[componentId] = floatValue;
 		} else if (data.type == typeid(illusion::util::Array<boolean>).hash_code()) {
 			illusion::util::Array<boolean>& val = *(illusion::util::Array<boolean>*)data.data;
 			bool value = val[componentId];
@@ -93,10 +145,10 @@ namespace illusioneditor::views::GameInspector {
 		ecs::component_id index = meshInstance->getIndex(selected);
 		size_t indexMesh = meshInstance->meshId[index];
 		size_t indexMaterial = meshInstance->materialId[index];
-		if (!currentScene->renderer->ContainsMesh(indexMesh)) indexMesh = 0;
-		if (!currentScene->renderer->ContainsMaterial(indexMaterial)) indexMaterial = 0;
-		std::string titleMesh = currentScene->renderer->meshes.at(indexMesh).name;
-		std::string titleMaterial = currentScene->renderer->materials.at(indexMaterial).name;
+		if (!GetRenderEngine().ContainsMesh(indexMesh)) indexMesh = 0;
+		if (!GetRenderEngine().ContainsMaterial(indexMaterial)) indexMaterial = 0;
+		std::string titleMesh = GetRenderEngine().meshes.at(indexMesh).name;
+		std::string titleMaterial = GetRenderEngine().materials.at(indexMaterial).name;
 
 		//MESH
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -124,7 +176,7 @@ namespace illusioneditor::views::GameInspector {
 
 			util::Array<std::string> groupNames;
 			util::Array<int> groupNumbers;
-			for (auto const& [key, val] : currentScene->renderer->meshes) {
+			for (auto const& [key, val] : GetRenderEngine().meshes) {
 				if (val.group == "") {
 					if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 					if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -151,7 +203,7 @@ namespace illusioneditor::views::GameInspector {
 				if (groupNumbers[i] > 1) {
 					//Case when the file contain more than one shape
 					if (ImGui::TreeNode((groupName + "###GroupMesh_" + groupName).c_str())) {
-						for (auto const& [key, val] : currentScene->renderer->meshes) {
+						for (auto const& [key, val] : GetRenderEngine().meshes) {
 							if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 							if (val.group == groupName) {
 								if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -166,7 +218,7 @@ namespace illusioneditor::views::GameInspector {
 				}
 				else {
 					//Case when the file contain only one shape
-					for (auto const& [key, val] : currentScene->renderer->meshes) {
+					for (auto const& [key, val] : GetRenderEngine().meshes) {
 						if (searchMesh != "" && val.name.find(searchMesh) == std::string::npos) continue;
 						if (val.group == groupName) {
 							if (key == indexMesh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
@@ -207,7 +259,7 @@ namespace illusioneditor::views::GameInspector {
 			GenerateInputString("###SearchMaterial", searchMaterial);
 			ImGui::Separator();
 
-			for (auto const& [key, val] : currentScene->renderer->materials) {
+			for (auto const& [key, val] : GetRenderEngine().materials) {
 				if (searchMaterial != "" && val.name.find(searchMaterial) == std::string::npos) continue;
 				if (key == indexMaterial) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
 
@@ -222,6 +274,75 @@ namespace illusioneditor::views::GameInspector {
 		
 	}
 	
+	void RenderAudioSourceInstance(const size_t componentKey, core::sound::AudioSource* audioSourceInstance, ecs::entity_id selected) {
+		ecs::component_id index = audioSourceInstance->getIndex(selected);
+
+		//SOUNDS
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.250f, 0.250f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.109f, 0.117f, 0.129f, 1.00f));
+		ImGui::Button(audioSourceInstance->relativePath[index].c_str(), ImVec2(ImGui::GetWindowContentRegionWidth() * 0.6f - 25.0f, 0.0f));
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
+
+		ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+		if (ImGui::Button("Change Source###changeSourceAudio")) {
+			ImGui::OpenPopup("RenderAudioSourceInstanceChoice");
+		}
+		ImGui::PopStyleVar();
+
+		//All shapes
+		if (ImGui::BeginPopup("RenderAudioSourceInstanceChoice")) {
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
+			GenerateInputString("###SearchAudio", searchAudioSource);
+			ImGui::Separator();
+
+			for (auto const& [key, val] : core::sound::GetSoundEngine().sources) {
+				if (searchAudioSource != "" && key.find(searchAudioSource) == std::string::npos) continue;
+				bool styleAdded = false;
+				if (key == audioSourceInstance->relativePath[index]) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 1.00f, 0.50f, 1.00f));
+					styleAdded = true;
+				}
+
+				if (ImGui::Button((key + "###audioSource_" + key).c_str())) {
+					audioSourceInstance->relativePath[index] = key;
+				}
+
+				if (styleAdded) ImGui::PopStyleColor();
+			}
+			ImGui::EndPopup();
+		}
+
+		bool paused = audioSourceInstance->paused[index];
+		ImGui::Checkbox("Pause###soundPaused", &paused);
+		audioSourceInstance->paused[index] = paused;
+
+		bool loop = audioSourceInstance->loop[index];
+		ImGui::Checkbox("Loop###soundLoop", &loop);
+		audioSourceInstance->loop[index] = loop;
+
+		bool sound3d = audioSourceInstance->is3D[index];
+		ImGui::Checkbox("3D Space###3DSoundSpace", &sound3d);
+		audioSourceInstance->is3D[index] = sound3d;
+
+		float volume = audioSourceInstance->volume[index];
+		ImGui::SliderFloat("Volume###soundVolume", &volume, 0, 1);
+		audioSourceInstance->volume[index] = volume;
+
+		if (ImGui::Button("Play###PlaySound")) {
+			audioSourceInstance->Play(index);
+		}
+
+		//f32 volume = audioSourceInstance->volume[index];
+		//ImGui::Checkbox("Volume###soundVolume", &volume);
+		//audioSourceInstance->loop[index] = volume;
+	}
+
 	void Show() {
 		ImGui::Begin("Inspector");
 
@@ -281,6 +402,7 @@ namespace illusioneditor::views::GameInspector {
 				if (val->getIndex(currentSelected) == ecs::id::invalid_id) continue;
 				if (ImGui::TreeNode(title.c_str())) {
 					if (val->getName() == "Mesh Instance") RenderMeshInstance(key, static_cast<MeshInstance*>(val), currentSelected);
+					else if (val->getName() == "AudioSource") RenderAudioSourceInstance(key, static_cast<core::sound::AudioSource*>(val), currentSelected);
 					else {
 						for (u32 i = 0; i < val->publicDatas.size(); i++) {
 							if (val->publicDatas[i].visible)

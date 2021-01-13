@@ -31,8 +31,6 @@
 
 #include "project/ProjectManager.h"
 
-#include "core/rendering/shapes/defaultShapes.h"
-
 #include <iostream>
 #include <vector>
 #include <bitset>
@@ -50,8 +48,18 @@
 //Scripting
 #include "scripting/JumpBigCube.h"
 #include "scripting/Planet.h"
+//Script Game
+#include "scripting/PlayerController.h"
+#include "scripting/CameraPlayer.h"
 
 #include "core/rendering/Renderer.h"
+
+#include "core/sound/SoundSystem.h"
+
+
+//test irrKlang
+#include <irrKlang.h>
+
 
 using namespace std::chrono;
 using namespace illusion;
@@ -62,8 +70,7 @@ using namespace illusion::core::physics;
 int main(int argc, char* argv[]) {
 	// Create Window
 	//--------
-	Window::Create(1280,720,"MyGame");
-
+	Window::Create(1792, 1008,"Illusion Engine");
 	// Test [Romain Saclier]
 	//--------
 
@@ -91,15 +98,24 @@ int main(int argc, char* argv[]) {
 	// Init ECS
 	//----------
 	illusion::ecs::Component::AppendCoreComponents();
+	illusion::ecs::Component::AppendComponents<PlayerController>();
+	illusion::ecs::Component::AppendComponents<CameraPlayer>();
 
 	illusion::ecs::Component::AppendComponents<PlanetComponent>();
 	illusion::ecs::Component::AppendComponents<JumpBigCube>();
 	//Systems
+	illusion::ecs::System::AppendCoreSystems();
+	illusion::ecs::System::AppendSystems<PlayerControllerSystem>();
+	illusion::ecs::System::AppendSystems<CameraPlayerSystem>();
+	
 	illusion::ecs::System::AppendSystems<PlanetSystem>();
 	illusion::ecs::System::AppendSystems<JumpBigCubeSystem>();
 
 	//Load Project
-	illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
+	illusion::resources::assets::LoadAllShaders();
+	illusion::resources::assets::LoadAllMaterials();
+	illusion::resources::assets::LoadAllMeshes();
+	//illusioneditor::project::tools::LoadProject("..\\..\\GameProjects\\Optimulus");
 
 	// Init Scene
 	//----------
@@ -107,6 +123,7 @@ int main(int argc, char* argv[]) {
 	scene.UseComponent<PlanetComponent>();
 	scene.UseComponent<JumpBigCube>();
 	scene.UseComponent<MeshInstance>();
+	scene.UseComponent<animation::Skeleton>();
 
 	scene.UseSystem<PlanetSystem>();
 	scene.UseSystem<JumpBigCubeSystem>();
@@ -126,13 +143,13 @@ int main(int argc, char* argv[]) {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glEnable(GL_DEPTH_TEST);
+	
 
 	f32 physicsTime = 0.0f;
 
 	bool stepMode = false;
 
 	bool ActiveGUI = true;
-
 	// Main Loop
 	//---------
 	while (!Window::shouldClose) {
@@ -154,7 +171,13 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		//Main components
+		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
+		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
+		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
+
 		if (Input::isKey(GLFW_KEY_LEFT_CONTROL) && Input::isKeyDown(GLFW_KEY_B)) ActiveGUI = !ActiveGUI;
+		if (Input::isKeyDown(GLFW_KEY_C) && camera.size() > 0) camera.editMode[0] = !camera.editMode[0];
 
 		if (ActiveGUI) {
 			{
@@ -211,9 +234,6 @@ int main(int argc, char* argv[]) {
 
 		//RENDER
 		//--------
-		ecs::core::Transform& transform = *scene.GetComponent<ecs::core::Transform>();
-		ecs::core::Camera& camera = *scene.GetComponent<ecs::core::Camera>();
-		MeshInstance& meshInstance = *scene.GetComponent<MeshInstance>();
 
 		ImGui::Render();
 		int display_w, display_h;
@@ -250,9 +270,14 @@ int main(int argc, char* argv[]) {
 			while (physicsTime >= Time::unscaledFixedDeltaTime) {
 				physicsTime -= Time::unscaledFixedDeltaTime;
 
-				if (scene.pause) continue;
+				//FIXED UPDATE
+				//--------
+				if (views::GameStats::StartChronoData("FixedUpdate Loop", "Game")) {
+					scene.FixedUpdate();
+				}
+				views::GameStats::EndChronoData("FixedUpdate Loop", "Game");
 				
-				ComputePhysics(scene);
+				if (!scene.pause) ComputePhysics(scene);
 				if (stepMode) scene.pause = true;
 			}
 		}
@@ -260,19 +285,28 @@ int main(int argc, char* argv[]) {
 
 		//CAMERA MOVEMENT
 		//--------
-		if (camera.size() > 0)  {
+		if (camera.size() > 0 && camera.editMode[0])  {
 			camera.UpdateVectors(camera.ToEntity[0]);
 			if (Input::isMouse(1)) {
 				camera.UpdateRotation(camera.ToEntity[0], Input::getMouseDelta().x, -Input::getMouseDelta().y);
 			}
 			else if (Input::isMouse(2)) {
 				glfwSetCursor(Window::glfwWindow, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-				transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
-					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;
+				camera.UpdatePosition(camera.ToEntity[0], Vec2(-Input::getMouseDelta().x, Input::getMouseDelta().y) * 0.01f);
+				/*transform.position[camera.ToEntity[0]] += camera.right[0] * -Input::getMouseDelta().x * Time::unscaledDeltaTime
+					+ camera.up[0] * Input::getMouseDelta().y * Time::unscaledDeltaTime;*/
 			}
-			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered())
-				transform.position[camera.ToEntity[0]] += Input::getMouseWheelDelta() * camera.front[0] * camera.movementSpeed[0] * Time::unscaledDeltaTime;
+			if (!ImGui::IsAnyItemHovered() && !ImGui::IsAnyWindowHovered()) {
+				camera.UpdatePosition(camera.ToEntity[0], Input::getMouseWheelDelta() * 0.01f);
+			}
 		}
+
+		//LATE UPDATE
+		//--------
+		if (views::GameStats::StartChronoData("LateUpdate Loop", "Game")) {
+			scene.LateUpdate();
+		}
+		views::GameStats::EndChronoData("LateUpdate Loop", "Game");
 
 		//RENDERING
 		//--------
@@ -283,7 +317,7 @@ int main(int argc, char* argv[]) {
 
 		//EDITOR SELECTION
 		//--------
-		if (camera.size() > 0) {
+		if (camera.size() > 0 && camera.editMode[0]) {
 			Vec4 ray_eye = glm::inverse(scene.renderer->projection) * ray_clip;
 			ray_eye = Vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
 			Vec3 ray_wor = (glm::inverse(scene.renderer->view) * ray_eye);
@@ -299,9 +333,11 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		//SWAP BUFFER
-		glfwSwapBuffers(Window::glfwWindow);
-
+		glfwSwapBuffers(Window::glfwWindow);		
 		views::GameStats::EndChronoData("Game");
+		if (Input::isKeyDown(GLFW_KEY_F11)) {
+			Window::SetFullScreen(!Window::fullscreen);
+		}
 	}
 
 	//Shutdown

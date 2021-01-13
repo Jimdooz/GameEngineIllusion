@@ -1,9 +1,23 @@
 #include "ecs/CoreComponents/Camera.h"
+#include "ecs/Scene.h"
+#include "Window.h"
 
 namespace illusion::ecs::core {
+	Camera::Camera(Scene* scene) : Component(scene) {
+		COMPONENT_PUBLIC(background);
+		COMPONENT_PUBLIC(editMode);
+		COMPONENT_PROTECTED(editPosition);
+
+		COMPONENT_PUBLIC(fov);
+		COMPONENT_PUBLIC(orthoMode);
+
+		COMPONENT_PUBLIC(yaw);
+		COMPONENT_PUBLIC(pitch);
+	}
 
 	void Camera::UpdateRotation(ecs::entity_id id, f32 xoffset, f32 yoffset) {
 		ecs::component_id index = getIndex(id);
+		if (!editMode[index]) return;
 
 		xoffset *= mouseSensitivity[index];
 		yoffset *= mouseSensitivity[index];
@@ -30,7 +44,64 @@ namespace illusion::ecs::core {
 		up[index] = glm::normalize(glm::cross(right[index], front[index]));
 	}
 
+	void Camera::UpdatePosition(ecs::entity_id id, f32 translation) {
+		ecs::component_id index = getIndex(id);
+		if (!editMode[index]) return;
+		editPosition[index] += front[index] * movementSpeed[index] * translation;
+	}
+
+	void Camera::UpdatePosition(ecs::entity_id id, Vec2 translation) {
+		ecs::component_id index = getIndex(id);
+		if (!editMode[index]) return;
+		editPosition[index] += right[index] * translation.x + up[0] * translation.y;
+	}
+
+	Mat4x4 Camera::GetProjection(ecs::component_id index) {
+		float aspect = (float)Window::width / (float)Window::height;
+		return glm::perspective(fov[index], aspect, near[index], far[index]);
+	}
+
+	Mat4x4 Camera::GetView(ecs::component_id index) {
+		//Compute Camera Position
+		ecs::entity_id cameraId = getId(index);
+
+		if (editMode[index]) {
+			return glm::lookAt(editPosition[index], editPosition[index] + front[index], up[index]);
+		}
+
+		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
+
+		return glm::inverse(modelCamera);
+	}
+
+	Mat4x4 Camera::GetRotation(ecs::component_id index) {
+		//Compute Camera Position
+		ecs::entity_id cameraId = getId(index);
+		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform, true);
+
+		glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
+		glm::vec3 skew; glm::vec4 perspective;
+		glm::decompose(modelCamera, scale, rotation, translation, skew, perspective);
+
+		return glm::toMat4(glm::conjugate(rotation));
+	}
+
+	Vec3 Camera::GetPosition(ecs::component_id index) {
+		ecs::entity_id cameraId = getId(index);
+		if (editMode[index]) return editPosition[index];
+		ecs::component_id cameraIdTransform = transform->getIndex(cameraId);
+		Mat4x4 modelCamera = transform->ComputeModel(cameraIdTransform);
+		Vec3 cameraWorldPos(modelCamera[3][0], modelCamera[3][1], modelCamera[3][2]);
+		return cameraWorldPos;
+	}
+
 	void Camera::AddDatas(ecs::entity_id id) {
+		if(transform == nullptr) transform = scene->GetComponent<ecs::core::Transform>();
+		AddData<boolean>(editMode, true);
+		AddData(editPosition, Vec3(0.0f, 0.0f, 0.0f));
+
 		AddData(fov, f32(45));
 		AddData(near, f32(0.01f));
 		AddData(far, f32(1000.0f));
@@ -55,6 +126,9 @@ namespace illusion::ecs::core {
 	}
 
 	void Camera::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
+		RemoveData(editMode, index);
+		RemoveData(editPosition, index);
+
 		RemoveData(fov, index);
 		RemoveData(near, index);
 		RemoveData(far, index);

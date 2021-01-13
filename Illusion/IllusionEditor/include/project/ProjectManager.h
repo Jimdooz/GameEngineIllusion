@@ -17,6 +17,11 @@ using json = illusion::json;
 #include <string>
 #include "resources/Project.h"
 
+#include "resources/assets/Audio.h"
+//#include "resources/assets/Shaders.h"
+#include "resources/assets/Materials.h"
+#include "resources/assets/Meshes.h"
+
 namespace illusioneditor::project {
 	
 	namespace config {
@@ -44,6 +49,13 @@ namespace illusioneditor::project {
 			configFile.close();
 
 			illusion::ecs::Scene scene;
+
+			//Create Camera
+			illusion::ecs::entity_id entity = scene.CreateEntity();
+			scene.GetComponent<illusion::ecs::core::Transform>()->name[entity] = "Camera";
+			scene.GetComponent<illusion::ecs::core::Transform>()->position[entity] = Vec3(0, 0, 3);
+			scene.EntityAddComponent<illusion::ecs::core::Camera>(entity);
+
 			std::ofstream mySceneFile;
 			mySceneFile.open(realProjectPath + "\\Assets\\Scenes\\default.scene");
 			mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);
@@ -84,13 +96,19 @@ namespace illusioneditor::project {
 
 			INFO("LOAD PROJECT : ", illusion::resources::CurrentProject().path);
 
+			illusion::resources::assets::LoadAllSounds();
+
+			illusion::resources::assets::LoadAllShaders();
+			illusion::resources::assets::LoadAllMaterials();
+			illusion::resources::assets::LoadAllMeshes();
+
 			return true;
 		}
 
 		bool SaveScene(illusion::ecs::Scene &scene) {
 			std::ofstream myfile;
 			myfile.open(illusioneditor::project::config::projectPath + "/" + illusioneditor::project::config::currentScenePath);
-			myfile << illusion::resources::assets::ExportScene(scene).dump(4);
+			myfile << illusion::resources::assets::ExportScene(scene).dump();
 			myfile.close();
 
 			return true;

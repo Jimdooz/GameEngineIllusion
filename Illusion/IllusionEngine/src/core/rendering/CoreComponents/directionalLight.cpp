@@ -9,7 +9,9 @@ namespace illusion::core::rendering {
 	}
 
 	void DirectionalLight::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, specular, ambient, diffuse);
+		RemoveData(specular, index);
+		RemoveData(ambient, index);
+		RemoveData(diffuse, index);
 	}
 
 }

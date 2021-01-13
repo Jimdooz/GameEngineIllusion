@@ -1,6 +1,9 @@
 #include "ecs/System.h"
 #include "ecs/Scene.h"
 
+#include "core/animation/CoreSystems/AnimatorSystem.h"
+#include "core/sound/SoundSystem.h"
+
 namespace illusion::ecs {
 	util::Map<size_t, System*> System::AllSystems;
 
@@ -36,5 +39,7 @@ namespace illusion::ecs {
 	void System::Initialize(Scene& scene) {}
 
 	void System::AppendCoreSystems() {
+		System::AppendSystems<illusion::core::animation::AnimatorSystem>();
+		System::AppendSystems<illusion::core::sound::SoundSystem>();
 	}
 }

@@ -23,7 +23,7 @@ namespace illusion::core::physics {
 
 			glm::vec3 scale; glm::quat rotation; glm::vec3 translation;
 			glm::vec3 skew; glm::vec4 perspective;
-			glm::decompose(transform->ComputeModel(transform->getIndex(id)), scale, rotation, translation, skew, perspective);
+			glm::decompose(transform->ComputeModel(transform->getIndex(id), true), scale, rotation, translation, skew, perspective);
 			f32 size = 0.5;
 
 			return primitives::OBB(translation, scale * size, glm::toMat4(glm::conjugate(rotation)));

@@ -54,7 +54,7 @@ namespace illusion::ecs::core {
 		// If index are not valid -> Stop
 		if (!illusion::ecs::id::IsValid(indexId) || !illusion::ecs::id::IsValid(indexChildId)) return;
 
-		// Si childId n'a pas d�j� le parent en id
+		// Si childId n'a pas déjà le parent en id
 		util::Array<ecs::entity_id>& childsId = childs[indexId];
 		if(parent[indexChildId] != id){
 			childsId.push_back(childId);
@@ -94,8 +94,8 @@ namespace illusion::ecs::core {
 		return false;
 	}
 
-	Mat4x4& Transform::ComputeModel(ecs::component_id component) {
-		if (currentTick[component] == Time::tick) return modelTransform[component];
+	Mat4x4& Transform::ComputeModel(ecs::component_id component, bool forceRecompute) {
+		if (!forceRecompute && currentTick[component] == Time::tick) return modelTransform[component];
 
 		glm::mat4 &model = modelTransform[component];
 
@@ -124,6 +124,49 @@ namespace illusion::ecs::core {
 		currentTick[component] = Time::tick;
 
 		return model;
+	}
+
+	Vec3 Transform::GetPosition(ecs::entity_id id) {
+		if (!scene->entities.IsAlive(id)) return Vec3();
+		component_id index = getIndex(id);
+
+		Mat4x4 modelElement = ComputeModel(index);
+		return Vec3(modelElement[3][0], modelElement[3][1], modelElement[3][2]);
+	}
+
+	ecs::entity_id Transform::FindByName(ecs::entity_id startId, std::string path) {
+		if (!id::IsValid(startId) || !scene->entities.IsAlive(startId)) return (ecs::entity_id)id::invalid_id;
+		ecs::entity_id currentId = startId;
+		
+		std::stringstream test(path);
+		std::string segment;
+		std::vector<std::string> segname;
+
+		while (std::getline(test, segment, '/')) segname.push_back(segment);
+
+
+		for (size_t i = 0, size = segname.size(); i < size; i++) {
+			//@Todo check if currentId is valid
+			if (segname[i] == std::string(".")) {
+				continue;
+			}
+			if (segname[i] == std::string("..")) {
+				currentId = parent[getIndex(currentId)];
+				continue;
+			}
+			util::Array<ecs::entity_id>& childsElement = childs[getIndex(currentId)];
+			bool found = false;
+			for (size_t j = 0; j < childsElement.size(); j++) {
+				if (name[getIndex(childsElement[j])] == segname[i]) {
+					currentId = childsElement[j];
+					found = true;
+					break;
+				}
+			}
+			if(!found) return (ecs::entity_id)id::invalid_id;
+		}
+
+		return currentId;
 	}
 
 	void Transform::AddDatas(ecs::entity_id id) {

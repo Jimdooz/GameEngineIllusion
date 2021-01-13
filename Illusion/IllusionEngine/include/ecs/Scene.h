@@ -27,7 +27,9 @@ namespace illusion::ecs {
 	struct Scene {
 
 		Scene() {
+			this->UseComponent<ecs::core::Transform>(); //First component added
 			for (auto const& [key, val] : Component::AllComponents) this->UseComponent(key);
+			for (auto const& [key, val] : System::AllSystems) this->UseSystem(key);
 			renderer = new Renderer(this);
 		}
 
@@ -181,5 +183,7 @@ namespace illusion::ecs {
 		 * >>> Behaviour Part
 		 */
 		void Update();
+		void LateUpdate();
+		void FixedUpdate();
 	};
 }

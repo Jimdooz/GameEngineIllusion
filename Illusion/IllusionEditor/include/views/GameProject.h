@@ -61,6 +61,13 @@ namespace illusioneditor::views::GameProject {
 
 	void CreateScene() {
 		illusion::ecs::Scene scene;
+
+		//Create Camera
+		ecs::entity_id entity = scene.CreateEntity();
+		scene.GetComponent<ecs::core::Transform>()->name[entity] = "Camera";
+		scene.GetComponent<ecs::core::Transform>()->position[entity] = Vec3(0, 0, 3);
+		scene.EntityAddComponent<ecs::core::Camera>(entity);
+
 		std::ofstream mySceneFile;
 		mySceneFile.open(realPathSelected + "/newScene.scene");
 		mySceneFile << illusion::resources::assets::ExportScene(scene).dump(4);
@@ -69,7 +76,6 @@ namespace illusioneditor::views::GameProject {
 
 	void CreateMaterial() {
 		std::string pathMaterial = realPathSelected + "/newMaterial.material";
-
 
 		json materialDefault;
 		materialDefault["shader"] = 0;
@@ -342,7 +348,7 @@ namespace illusioneditor::views::GameProject {
 						}
 						//@todo changer la fonction pour uniquement modifier le tableau meshbyshader
 						if (itemMaterial) {
-							scene->renderer->GenerateMaterials();
+							illusion::resources::assets::LoadAllMaterials();
 							scene->renderer->ReGenerateMeshByShader();
 						}
 

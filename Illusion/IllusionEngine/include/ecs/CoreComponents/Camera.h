@@ -1,22 +1,19 @@
 ﻿#pragma once
 
 #include "ecs/Component.h"
+#include "ecs/CoreComponents/Transform.h"
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace illusion::ecs::core {
 
 	struct Camera : public Component {
-		Camera(Scene* scene) : Component(scene) {
-			COMPONENT_PUBLIC(background);
-
-			COMPONENT_PUBLIC(fov);
-			COMPONENT_PUBLIC(orthoMode);
-
-			COMPONENT_PUBLIC(yaw);
-			COMPONENT_PUBLIC(pitch);
-		}
+		Camera(Scene* scene);
 
 		COMPONENT_NAME("Camera");
 		COMPONENT_REGISTER(Camera);
+
+		COMPONENT_DATA(boolean, editMode);
+		COMPONENT_DATA(Vec3, editPosition);
 
 		COMPONENT_DATA(f32, fov);
 		COMPONENT_DATA(f32, near);
@@ -41,8 +38,18 @@ namespace illusion::ecs::core {
 		COMPONENT_DATA(f32, mouseSensitivity);
 		COMPONENT_DATA(f32, zoom);
 
+		ecs::core::Transform *transform = nullptr;
+
 		void UpdateRotation(ecs::entity_id id, f32 xoffset, f32 yoffset);
 		void UpdateVectors(ecs::entity_id id);
+		void UpdatePosition(ecs::entity_id id, f32 translation);
+		void UpdatePosition(ecs::entity_id id, Vec2 translation);
+
+		Vec3 GetPosition(ecs::component_id index = (ecs::component_id)0);
+		Mat4x4 GetRotation(ecs::component_id index = (ecs::component_id)0);
+
+		Mat4x4 GetProjection(ecs::component_id index = (ecs::component_id)0);
+		Mat4x4 GetView(ecs::component_id index = (ecs::component_id)0);
 
 		virtual void AddDatas(ecs::entity_id id) override;
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) override;
