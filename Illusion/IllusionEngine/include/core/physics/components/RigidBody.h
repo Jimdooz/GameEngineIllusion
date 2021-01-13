@@ -207,12 +207,27 @@ namespace illusion::core::physics {
 
 		// On Data removed
 		virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-			RemoveData(index, fixed, fixedRotationX, fixedRotationY, fixedRotationZ);
-			RemoveData(index, velocity, forces, gravity);
-			RemoveData(index, mass, cor, friction);
-			RemoveData(index, angVel, torques, invTensor);
-			RemoveData(index, n_velocity, dt_velocity);
-			RemoveData(index, collisions);
+			RemoveData(fixed, index);
+			RemoveData(fixedRotationX, index);
+			RemoveData(fixedRotationY, index);
+			RemoveData(fixedRotationZ, index);
+
+			RemoveData(velocity, index);
+			RemoveData(forces, index);
+			RemoveData(gravity, index);
+
+			RemoveData(mass, index);
+			RemoveData(cor, index);
+			RemoveData(friction, index);
+
+			RemoveData(angVel, index);
+			RemoveData(torques, index);
+			RemoveData(invTensor, index);
+
+			RemoveData(n_velocity, index);
+			RemoveData(dt_velocity, index);
+
+			RemoveData(collisions, index);
 		}
 
 	};

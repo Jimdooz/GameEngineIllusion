@@ -10,7 +10,10 @@ namespace illusion::core::animation {
 	}
 
 	void Skeleton::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index,idsComputed,parentRelativePath,parentId,bones);
+		RemoveData(idsComputed, index);
+		RemoveData(parentRelativePath, index);
+		RemoveData(parentId, index);
+		RemoveData(bones,index);
 	}
 
 }

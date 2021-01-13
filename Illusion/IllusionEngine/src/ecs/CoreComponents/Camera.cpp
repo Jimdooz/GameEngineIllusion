@@ -114,7 +114,8 @@ namespace illusion::ecs::core {
 	}
 
 	void Camera::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, editMode, editPosition);
+		RemoveData(editMode, index);
+		RemoveData(editPosition, index);
 
 		RemoveData(fov, index);
 		RemoveData(near, index);

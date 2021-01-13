@@ -19,9 +19,17 @@ namespace illusion::core::rendering {
 	}
 
 	void PostProcess::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, shadowEffect, shadowIntensity, shadowSmooth);
-		RemoveData(index, hdrEffect, exposure, gamma);
-		RemoveData(index, bloomEffect, bloomIntensity, bloomExpansion, bloomThreshold, bloomDiffusion);
+		RemoveData(shadowEffect, index);
+		RemoveData(shadowIntensity, index);
+		RemoveData(shadowSmooth,  index);
+		RemoveData(hdrEffect, index);
+		RemoveData(exposure, index); 
+		RemoveData(gamma, index);
+		RemoveData(bloomEffect,  index);
+		RemoveData(bloomIntensity,  index);
+		RemoveData(bloomExpansion,  index);
+		RemoveData(bloomThreshold,  index);
+		RemoveData(bloomDiffusion, index);
 	}
 
 }

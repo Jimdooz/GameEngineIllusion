@@ -20,7 +20,8 @@ namespace illusion::resources::assets {
 			if (p.is_directory() && currPath.find('.') == std::string::npos) {
 				LoadAllSounds(path + "/" + currPath);
 			}
-			else if (currPath.find(".wav") != std::string::npos) {
+			else if (currPath.find(".wav") != std::string::npos
+					|| currPath.find(".mp3") != std::string::npos) {
 				//LOAD ALL SOUNDS
 				try {
 					INTERNAL_INFO("TRY LOAD SOUND : ", path + "/" + currPath);

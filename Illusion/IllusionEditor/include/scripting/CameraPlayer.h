@@ -31,7 +31,8 @@ struct CameraPlayer : public ecs::Component {
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, target, distanceTarget);
+		RemoveData(target, index);
+		RemoveData(distanceTarget, index);
 	}
 };
 

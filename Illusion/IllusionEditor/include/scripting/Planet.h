@@ -27,7 +27,8 @@ struct PlanetComponent : public ecs::Component {
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, speed, evolution);
+		RemoveData(speed, index);
+		RemoveData(evolution, index);
 	}
 };
 

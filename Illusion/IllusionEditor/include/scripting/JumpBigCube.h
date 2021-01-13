@@ -29,7 +29,10 @@ struct JumpBigCube : public ecs::Component {
 
 	// On Data removed
 	virtual void RemoveDatas(ecs::component_id index, ecs::entity_id id) {
-		RemoveData(index, direction, powerJump, activeJump, timerJump);
+		RemoveData(direction,index); 
+		RemoveData(powerJump,index);
+		RemoveData(activeJump,index); 
+		RemoveData(timerJump,index);
 	}
 };
 

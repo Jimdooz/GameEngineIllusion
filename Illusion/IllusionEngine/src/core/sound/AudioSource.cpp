@@ -19,8 +19,14 @@ namespace illusion::core::sound {
 
 	void AudioSource::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		FreeCurrentSound(index);
-		RemoveData(index, relativePath, sound_ptr, old_is3D, is3D, loop, paused, volume);
-		RemoveData(index, playPosition);
-		RemoveData(index, old_relativePath, old_is3D);
+		RemoveData(relativePath, index);
+		RemoveData(is3D, index);
+		RemoveData(sound_ptr, index);
+		RemoveData(loop, index);
+		RemoveData(paused, index);
+		RemoveData(volume, index);
+		RemoveData(playPosition, index);
+		RemoveData(old_relativePath, index);
+		RemoveData(old_is3D, index);
 	}
 }

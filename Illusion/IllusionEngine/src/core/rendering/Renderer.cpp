@@ -34,7 +34,9 @@ namespace illusion {
 
 	void MeshInstance::RemoveDatas(ecs::component_id index, ecs::entity_id id) {
 		scene->renderer->RemoveMeshMaterial(materialId[index], meshId[index], id);
-		RemoveData(index, meshId, materialId, initialized);
+		RemoveData(meshId, index);
+		RemoveData(materialId, index);
+		RemoveData(initialized, index);
 	}
 
 	void MeshInstance::SetMesh(ecs::component_id index, size_t newMeshId) {
