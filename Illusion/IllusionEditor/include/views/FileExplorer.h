@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 namespace illusioneditor::views::FileExplorer {
 
 	namespace {
-		std::filesystem::directory_entry currentPath("D:\\GitHub\\GameEngineIllusion\\GameProjects\\Optimulus");
+		std::filesystem::directory_entry currentPath("C:\\");
 		std::string pathName = currentPath.path().string();
 		std::string projectName = "";
 	}
