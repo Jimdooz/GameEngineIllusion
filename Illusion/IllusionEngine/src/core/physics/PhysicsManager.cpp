@@ -12,6 +12,7 @@ namespace illusion::core::physics {
 	util::Array<ecs::entity_id> colliders1;
 	util::Array<ecs::entity_id> colliders2;
 	util::Array<CollisionManifold> results;
+	CollisionManifold result;
 
 	void ComputePhysics(ecs::Scene& scene) {
 		colliders1.clear();
@@ -31,7 +32,8 @@ namespace illusion::core::physics {
 		colliders2.reserve(toReserve);
 		results.reserve(toReserve);
 
-		CollisionManifold result;
+		result.colliding = false;
+
 		for (int i = 0, size = rigidbodies->size(); i < size; ++i) {
 			for (int j = i + 1; j < size; ++j) {
 				ecs::entity_id A = rigidbodies->getId((ecs::component_id)i);
