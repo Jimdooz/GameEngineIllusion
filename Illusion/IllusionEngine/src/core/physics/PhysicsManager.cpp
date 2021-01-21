@@ -31,24 +31,27 @@ namespace illusion::core::physics {
 		colliders2.reserve(toReserve);
 		results.reserve(toReserve);
 
-		for (int i = 0, size = boxColliders->size(); i < size; ++i) {
+		CollisionManifold result;
+		for (int i = 0, size = rigidbodies->size(); i < size; ++i) {
 			for (int j = i + 1; j < size; ++j) {
-				CollisionManifold result;
-				ResetCollisionManifold(&result);
-
-				ecs::entity_id A = boxColliders->getId((ecs::component_id)i);
-				ecs::entity_id B = boxColliders->getId((ecs::component_id)j);
-
-				if (rigidbodies->exist(A) && rigidbodies->exist(B)) {
-					result = FindCollisionFeatures(boxColliders->GetBox(A), boxColliders->GetBox(B));
-
-					if (result.colliding) {
-						colliders1.push_back(A);
-						colliders2.push_back(B);
-						results.push_back(result);
-					}
+				ecs::entity_id A = rigidbodies->getId((ecs::component_id)i);
+				ecs::entity_id B = rigidbodies->getId((ecs::component_id)j);
+				if (boxColliders->exist(A)) {
+					if(boxColliders->exist(B)) result = FindCollisionFeatures(boxColliders->GetBox(A), boxColliders->GetBox(B));
+					else if (sphereColliders->exist(B)) result = FindCollisionFeatures(boxColliders->GetBox(A), sphereColliders->GetSphere(B));
+				}
+				else if (sphereColliders->exist(A)) {
+					if (boxColliders->exist(B)) result = FindCollisionFeatures(boxColliders->GetBox(B), sphereColliders->GetSphere(A));
+					else if (sphereColliders->exist(B)) result = FindCollisionFeatures(sphereColliders->GetSphere(A), sphereColliders->GetSphere(B));
 				}
 
+				if (result.colliding) {
+					colliders1.push_back(A);
+					colliders2.push_back(B);
+					results.push_back(result);
+
+					result.colliding = false;
+				}
 			}
 		}
 
